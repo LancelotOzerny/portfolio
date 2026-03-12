@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/index.php [NC]
+
+RewriteRule ^(.*)$ /index.php [L,QSA]
+
+php_flag display_errors on
+php_flag log_errors on

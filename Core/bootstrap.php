@@ -20,7 +20,7 @@ $loader->register();
 
 /* ######################## ROUTES ######################## */
 $router = new Router();
-$router->get('/', \Controllers\HomeController::class,  'index');
+$router->get('/', \Controllers\Public\HomeController::class,  'index');
 
 
 

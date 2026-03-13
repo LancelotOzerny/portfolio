@@ -3,4 +3,4 @@ node_modules/
 .git/
 dist/
 test/
-App/Config/Hidden/
+App/Configs/Hidden/

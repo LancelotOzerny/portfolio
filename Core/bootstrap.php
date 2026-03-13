@@ -12,6 +12,8 @@ $app = Modules\Main\App::getInstance();
 $loader = \Modules\Main\Autoloader::getInstance();
 $loader->addPath('Modules\\', $app->root . '/Core/Modules');
 $loader->addPath('Controllers\\', $app->root . '/App/Controllers');
+$loader->addPath('Develop\\', $app->root . '/Develop');
+$loader->addPath('App\\', $app->root . '/App');
 $loader->register();
 
 

@@ -1,7 +1,10 @@
 <?php
 namespace Controllers;
 
+use Develop\Modules\DBWork\Installer;
 use http\Params;
+use Modules\Main\Config;
+use Modules\Main\ConfigObject;
 
 class HomeController
 {

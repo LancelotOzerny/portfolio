@@ -2,20 +2,15 @@
 namespace Controllers\Public;
 
 use Modules\Main\BaseController;
-use Modules\Main\Template;
+use Modules\Main\ViewData;
 
 class HomeController extends BaseController
 {
     public function index() : void
     {
-		$template = new Template();
+		ViewData::getInstance()
+			->set('title', 'Test Title');
 
-		$template
-			->setParam('title', 'Test Title')
-			->setParam('header', 'Test Header');
-
-		$template->showHeader();
-        $this->render('index');
-		$template->showFooter();
-    }
+	   	$this->render('index');
+	}
 }

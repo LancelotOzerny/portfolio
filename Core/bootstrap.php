@@ -3,6 +3,7 @@ require_once __DIR__ . '/Modules/Main/Autoloader.php';
 require_once __DIR__ . '/Modules/Main/App.php';
 
 use Modules\Main\Router;
+use Modules\Main\ViewData;
 
 $app = Modules\Main\App::getInstance();
 
@@ -36,4 +37,14 @@ if (!$match)
 [$controllerClass, $action, $paramsAssoc] = $match;
 $controller = new $controllerClass();
 $params = array_values($paramsAssoc);
+
+ob_start();
+\Modules\Main\Template::getInstance()->showHeader();
 call_user_func_array([$controller, $action], $params);
+\Modules\Main\Template::getInstance()->showFooter();
+$html = ob_get_clean();
+
+$viewData = ViewData::getInstance();
+$html = $viewData->replacePlaceholders($html);
+
+echo $html;

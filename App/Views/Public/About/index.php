@@ -1,8 +1,3 @@
-<div class="text-center py-5 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-    <h1 class="display-3 fw-bold">О себе</h1>
-    <p class="lead fs-4">Мои навыки, цели, достижения</p>
-</div>
-
 <main class="container my-5">
     <!-- Секция с фото и кратким описанием -->
     <section class="row mb-5 align-items-center">

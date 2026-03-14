@@ -9,7 +9,8 @@ class AboutController extends BaseController
 {
     public function index() : void
     {
-		Template::getInstance()->setParam('title', 'О себе');
+		Template::getInstance()->setParam('title', 'Знакомьтесь: Максим Беляков');
+		Template::getInstance()->setParam('subtitle', 'Кто я, чем занимаюсь и что мне действительно важно в работе');
 
 		\Modules\Main\Template::getInstance()->showHeader();
 		$this->render('index');

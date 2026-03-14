@@ -2,7 +2,12 @@
 return [
 	[
 		'path'     => '/',
-		'method'   => 'prefix',
+		'method'   => 'equal',
 		'template' => 'Default',
+	],
+	[
+		'path'     => '/',
+		'method'   => 'prefix',
+		'template' => 'Inner',
 	],
 ];

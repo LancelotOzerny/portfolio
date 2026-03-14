@@ -8,8 +8,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $this->getParam('title') ?></title>
-    <link href="<?= $this->localPath ?>/css/bootstrap.min.css" rel="stylesheet">
-    <link href="<?= $this->localPath ?>/css/styles.css" rel="stylesheet">
+    <link href="/Templates/Default/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/Templates/Default/css/styles.css" rel="stylesheet">
 </head>
 <body>
 <header class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
@@ -28,6 +28,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/portfolio/">Портфолио</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/certificates/">Сертификаты</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/contacts/">Контакты</a>

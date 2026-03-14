@@ -1,0 +1,2 @@
+<?php
+$defaultTemplatePath = '/Templates/Default';

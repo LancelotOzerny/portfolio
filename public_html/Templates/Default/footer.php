@@ -34,8 +34,8 @@
     </div>
 </footer>
 
-<script src="<?= $this->localPath ?>/js/bootstrap.bundle.min.js"></script>
-<script src="<?= $this->localPath ?>/js/jquery-4.0.0.min.js"></script>
-<script src="<?= $this->localPath ?>/js/main.js"></script>
+<script src="/Templates/Default/js/bootstrap.bundle.min.js"></script>
+<script src="/Templates/Default/js/jquery-4.0.0.min.js"></script>
+<script src="/Templates/Default/js/main.js"></script>
 </body>
 </html>

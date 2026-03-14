@@ -9,7 +9,8 @@ class PortfolioController extends BaseController
 {
     public function index() : void
     {
-		Template::getInstance()->setParam('title', 'Портфолио');
+		Template::getInstance()->setParam('title', 'Мои работы');
+		Template::getInstance()->setParam('subtitle', 'Примеры реализованных задач с описанием технологий и результатов');
 
 		\Modules\Main\Template::getInstance()->showHeader();
 		$this->render('index');

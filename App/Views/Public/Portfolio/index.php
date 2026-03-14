@@ -1,8 +1,3 @@
-<div class="text-center py-5 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-    <h1 class="display-3 fw-bold">Портфолио</h1>
-    <p class="lead fs-4">в котором вы можете найти разные работы на разные тематики</p>
-</div>
-
 <div class="filter-buttons text-center mt-5">
     <button class="btn btn-outline-primary active" data-filter="all">Все проекты</button>
     <button class="btn btn-outline-primary" data-filter="web">Веб‑разработка</button>

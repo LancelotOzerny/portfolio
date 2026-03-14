@@ -1,4 +1,4 @@
-<div class="wow row py-5 align-items-center" style="min-height: 80vh;">
+<div class="hero-area row py-5 align-items-center">
     <div class="col-12 text-center position-relative">
         <h1 class="display-3 fw-bold mb-4 text-shadow">LANCY</h1>
         <p class="lead fs-3 mb-4 text-shadow">Full-Stack Web Developer</p>
@@ -14,25 +14,16 @@
     </div>
 </div>
 
-<style>
-    .text-shadow { text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-    @media (max-width: 768px) {
-        .position-absolute.start-0 { width: 220px; height: 220px; }
-        img[alt="Lancy Studio"] { width: 200px; height: 200px; }
-        [style*="padding-left: 20%"] { padding-left: 10% !important; padding-right: 10% !important; }
-    }
-</style>
-
 <!-- Раздел "О себе" -->
-<section class="wow py-8 bg-light">
+<section class="scroll-show-area py-8 bg-light">
     <div class="container">
         <div class="row align-items-center g-5">
             <!-- Фото слева -->
             <div class="col-lg-4 text-center">
                 <div class="position-relative mx-auto mb-4" style="width: 320px; height: 320px;">
                     <img src="https://avatars.mds.yandex.net/i?id=3dfc94dcbc11529b8f2840c8ab7ccb75_l-8492945-images-thumbs&n=13"
-                         alt="Фото Lancy"
-                         class="img-fluid rounded-circle shadow-lg position-absolute"
+                         alt="Фото профиля"
+                         class="profile-image img-fluid rounded-circle shadow-lg position-absolute"
                          style="width: 300px; height: 300px; object-fit: cover; top: 10px; left: 10px; z-index: 2; border: 5px solid #fff;">
                     <div class="position-absolute top-0 start-0 w-100 h-100 bg-primary rounded-circle"
                          style="z-index: 1; opacity: 0.15;"></div>
@@ -112,17 +103,8 @@
     </div>
 </section>
 
-<style>
-    .py-8 { padding-top: 6rem !important; padding-bottom: 6rem !important; }
-    .mb-6 { margin-bottom: 4rem !important; }
-    .fs-1 { font-size: calc(1.375rem + 1.5vw) !important; }
-    .lh-lg { line-height: 1.8; }
-</style>
-
-
-
 <!-- Раздел навыков -->
-    <section class="wow py-5 bg-light">
+<section class="scroll-show-area py-5 bg-light">
         <div class="container">
             <h2 class="text-center fw-bold mb-5 display-6">Навыки и компетенции</h2>
 
@@ -251,10 +233,10 @@
                 </div>
             </div>
         </div>
-    </section>
+</section>
 
 <!-- Раздел проектов -->
-<section class="wow py-5 bg-white">
+<section class="scroll-show-area py-5 bg-white">
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="display-5 fw-bold mb-3">Проекты</h2>
@@ -262,82 +244,35 @@
         </div>
 
         <div class="row g-4">
-            <!-- Шаблон проекта (повторить 10 раз) -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                    <img src="https://avtor24.ru/assets/files/articles/individual-project-inline-new.jpg" class="card-img-top" alt="Проект">
-                    <div class="card-body d-flex flex-column p-4">
-                        <h5 class="card-title fw-bold mb-3 fs-5">Онлайн-магазин книг</h5>
-                        <p class="card-text text-muted flex-grow-1 mb-3">Корпоративный интернет-магазин с каталогом книг, слайдером новинок и адаптивной версткой на Bootstrap.</p>
-                        <div class="d-flex gap-2 mb-4 flex-wrap">
-                            <span class="badge bg-secondary">PHP</span>
-                            <span class="badge bg-secondary">Bootstrap</span>
-                            <span class="badge bg-secondary">jQuery</span>
-                            <span class="badge bg-secondary">1C-Bitrix</span>
-                        </div>
-                        <div class="d-flex gap-3">
-                            <a href="#" class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium" target="_blank">DEMO</a>
-                            <a href="#" class="btn btn-primary flex-fill py-2 fs-6 fw-medium" target="_blank">GIT</a>
+            <?php for ($i = 0; $i < 10; ++$i): ?>
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
+                        <img src="https://avtor24.ru/assets/files/articles/individual-project-inline-new.jpg" class="card-img-top" alt="Проект">
+                        <div class="card-body d-flex flex-column p-4">
+                            <h5 class="card-title fw-bold mb-3 fs-5">Онлайн-магазин книг</h5>
+                            <p class="card-text text-muted flex-grow-1 mb-3">Корпоративный интернет-магазин с каталогом книг, слайдером новинок и адаптивной версткой на Bootstrap.</p>
+                            <div class="d-flex gap-2 mb-4 flex-wrap">
+                                <span class="badge bg-secondary">PHP</span>
+                                <span class="badge bg-secondary">Bootstrap</span>
+                                <span class="badge bg-secondary">jQuery</span>
+                                <span class="badge bg-secondary">1C-Bitrix</span>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <a href="#" class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium" target="_blank">DEMO</a>
+                                <a href="#" class="btn btn-primary flex-fill py-2 fs-6 fw-medium" target="_blank">GIT</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Повтори этот блок 9 раз, меняя только: -->
-            <!-- h5.card-title: название проекта -->
-            <!-- p.card-text: описание -->
-            <!-- badge: теги (PHP, JS, HTML, CSS, Bitrix, MySQL, Gulp, Git и т.д.) -->
+            <?php endfor; ?>
         </div>
     </div>
 </section>
 
-<style>
-    .hover-lift {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .hover-lift:hover {
-        transform: translateY(-12px);
-        box-shadow: 0 25px 50px rgba(0,0,0,0.2) !important;
-    }
-    .hover-lift:hover .card-img-top {
-        transform: scale(1.08);
-    }
-    .hover-lift .card-img-top {
-        transition: transform 0.4s ease;
-        height: 220px;
-        object-fit: cover;
-    }
-    .badge { font-size: 0.75rem; padding: 0.4em 0.7em; }
-</style>
-
-
-<style>
-        .hover-lift {
-            transition: all 0.3s ease;
-        }
-        .hover-lift:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
-        }
-        .hover-lift:hover .card-img-top {
-            transform: scale(1.05);
-        }
-        .hover-lift .card-img-top {
-            transition: transform 0.3s ease;
-        }
-        .card-title { color: #212529; font-size: 1.25rem; }
-    </style>
-
-
-    <div class="wow row py-5 text-center">
-        <div class="col-12">
-            <h2 class="fw-bold mb-4">Готов к новым проектам</h2>
-            <a href="contacts.php" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5">Связаться со мной</a>
-        </div>
+<!-- Готов к новым проектам -->
+<div class="scroll-show-area row py-5 text-center">
+    <div class="col-12">
+        <h2 class="fw-bold mb-4">Готов к новым проектам</h2>
+        <a href="contacts.php" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5">Связаться со мной</a>
     </div>
-
-    <style>
-        .bg-gradient {
-            background: linear-gradient(90deg, #007bff, #0056b3) !important;
-        }
-    </style>
+</div>

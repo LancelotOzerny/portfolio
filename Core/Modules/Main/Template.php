@@ -24,7 +24,7 @@ class Template
 		$this->loadRules();
 		$this->findTemplate();
 
-		$this->localPath = str_replace(App::getInstance()->root . '/public_html', '', $this->templateFolderPath);
+		$this->localPath = str_replace(App::getInstance()->root . '/public_html', '', $this->templateFolderPath . "/$this->template");
 	}
 
 	protected function loadRules(): void

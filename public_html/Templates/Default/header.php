@@ -8,14 +8,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Главная страница</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
-    <style>
-        body { padding-top: 76px; }
-        .navbar { transition: all 0.3s; }
-        .navbar-brand { font-size: 1.8rem; font-weight: 700; color: #007bff !important; }
-    </style>
+    <link href="<?= $this->localPath ?>/css/bootstrap.min.css" rel="stylesheet">
+    <link href="<?= $this->localPath ?>/css/styles.css" rel="stylesheet">
 </head>
 <body>
 <header class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
@@ -25,7 +19,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="index.php">Главная</a>
                 </li>
@@ -42,7 +36,6 @@
                     <a class="nav-link" href="contacts.php">Контакты</a>
                 </li>
             </ul>
-            <a href="login.php" class="btn btn-primary ms-auto">Войти</a>
         </div>
     </div>
 </header>

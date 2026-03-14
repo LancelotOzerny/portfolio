@@ -12,7 +12,7 @@ class HomeController extends BaseController
 			->set('title', 'Test Title');
 
 		\Modules\Main\Template::getInstance()->showHeader();
-	   	$this->render('index');
+		$this->render('index');
 		\Modules\Main\Template::getInstance()->showFooter();
 	}
 }

@@ -19,7 +19,7 @@ class Template
 
 	private function __construct()
 	{
-		$this->templateFolderPath = App::getInstance()->root . '/Develop/Templates';
+		$this->templateFolderPath = App::getInstance()->root . '/public_html/Templates';
 		$this->loadRules();
 		$this->findTemplate();
 	}

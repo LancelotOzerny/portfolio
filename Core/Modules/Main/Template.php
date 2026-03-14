@@ -8,6 +8,7 @@ class Template
 	public readonly string $templateFolderPath;
 	public array $params = [];
 	protected array $rules = [];
+	protected $localPath = '';
 
 	public static function getInstance(): self
 	{
@@ -22,6 +23,8 @@ class Template
 		$this->templateFolderPath = App::getInstance()->root . '/public_html/Templates';
 		$this->loadRules();
 		$this->findTemplate();
+
+		$this->localPath = str_replace(App::getInstance()->root . '/public_html', '', $this->templateFolderPath);
 	}
 
 	protected function loadRules(): void
@@ -77,8 +80,10 @@ class Template
 	public function showHeader(): void
 	{
 		$filePath = "$this->templateFolderPath/$this->template/header.php";
-
-		if (!file_exists($filePath)) {
+		$template_path = "$this->templateFolderPath/$this->template";
+		
+		if (!file_exists($filePath))
+		{
 			echo "Header of template '$this->template' is not founded!";
 			return;
 		}

@@ -23,6 +23,13 @@ $loader->register();
 $router = new Router();
 $router->get('/', \Controllers\Public\HomeController::class,  'index');
 
+// Пользователи
+$router->get('/api/users', \Controllers\Api\UserController::class, 'index');
+$router->get('/api/users/{id}', \Controllers\Api\UserController::class, 'show');
+$router->post('/api/users', \Controllers\Api\UserController::class, 'store');
+$router->put('/api/users/{id}', \Controllers\Api\UserController::class, 'update');
+$router->delete('/api/users/{id}', \Controllers\Api\UserController::class, 'destroy');
+
 
 
 /* ######################## SET ROUTE ######################## */
@@ -34,14 +41,13 @@ if (!$match)
     return;
 }
 
+/* ######################## PREPARE PAGE ######################## */
 [$controllerClass, $action, $paramsAssoc] = $match;
 $controller = new $controllerClass();
 $params = array_values($paramsAssoc);
 
 ob_start();
-\Modules\Main\Template::getInstance()->showHeader();
 call_user_func_array([$controller, $action], $params);
-\Modules\Main\Template::getInstance()->showFooter();
 $html = ob_get_clean();
 
 $viewData = ViewData::getInstance();

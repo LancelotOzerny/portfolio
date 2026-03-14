@@ -11,6 +11,8 @@ class HomeController extends BaseController
 		ViewData::getInstance()
 			->set('title', 'Test Title');
 
+		\Modules\Main\Template::getInstance()->showHeader();
 	   	$this->render('index');
+		\Modules\Main\Template::getInstance()->showFooter();
 	}
 }

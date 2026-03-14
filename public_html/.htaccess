@@ -1,15 +1,11 @@
 RewriteEngine On
 RewriteBase /
 
-# Проверяем, что запрашиваемый файл не существует (ни файл, ни директория)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/index.php [NC]
 
-# Проверяем, что запрос заканчивается на .php (регистронезависимо)
-RewriteCond %{REQUEST_URI} \.php$ [NC]
-
-# Перенаправляем запрос на index.php, сохраняя параметры запроса
-RewriteRule ^(.*\.php)$ /index.php [L,QSA]
+RewriteRule ^(.*)$ /index.php [L,QSA]
 
 php_flag display_errors on
 php_flag log_errors on

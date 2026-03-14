@@ -5,11 +5,11 @@ use Modules\Main\BaseController;
 use Modules\Main\Template;
 use Modules\Main\ViewData;
 
-class HomeController extends BaseController
+class PortfolioController extends BaseController
 {
     public function index() : void
     {
-		Template::getInstance()->setParam('title', 'Максим Беляков: Портфолио WEB-Разработчика');
+		Template::getInstance()->setParam('title', 'Портфолио');
 
 		\Modules\Main\Template::getInstance()->showHeader();
 		$this->render('index');

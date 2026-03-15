@@ -12,13 +12,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-4">
-                <h6 class="fw-bold mb-3">Меню</h6>
-                <ul class="list-unstyled">
-                    <li><a href="index.php" class="text-light text-decoration-none">Главная</a></li>
-                    <li><a href="about.php" class="text-light text-decoration-none">О нас</a></li>
-                    <li><a href="services.php" class="text-light text-decoration-none">Услуги</a></li>
-                    <li><a href="portfolio.php" class="text-light text-decoration-none">Портфолио</a></li>
-                </ul>
+                <?php (new \Components\Navigation\Navigation())->setParam('template', 'MapColumn')->render(); ?>
             </div>
             <div class="col-lg-3 col-md-6 mb-4">
                 <h6 class="fw-bold mb-3">Контакты</h6>

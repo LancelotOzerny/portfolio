@@ -1,13 +1,13 @@
 <div class="hero-area row py-5 align-items-center">
     <div class="col-12 text-center position-relative">
-        <h1 class="display-3 fw-bold mb-4 text-shadow">LANCY</h1>
+        <h1 class="display-3 fw-bold mb-4 text-shadow">Максим Беляков</h1>
         <p class="lead fs-3 mb-4 text-shadow">Full-Stack Web Developer</p>
         <p class="text-muted fs-5 mb-5 px-lg-5 mx-auto" style="max-width: 600px;">Разработка корпоративных порталов, игр и CMS на современных технологиях.</p>
         <div class="d-flex gap-3 flex-column flex-sm-row justify-content-center">
-            <a href="portfolio.php" class="btn btn-primary btn-lg px-5 py-3 fs-5 shadow-lg">
+            <a href="/portfolio/" class="btn btn-primary btn-lg px-5 py-3 fs-5 shadow-lg">
                 <i class="fas fa-briefcase me-2"></i>Проекты
             </a>
-            <a href="contacts.php" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5 shadow">
+            <a href="/contacts/" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5 shadow">
                 <i class="fas fa-envelope me-2"></i>Связаться
             </a>
         </div>
@@ -29,7 +29,7 @@
             <!-- Фото слева -->
             <div class="col-lg-4 text-center">
                 <div class="position-relative mx-auto mb-4" style="width: 320px; height: 320px;">
-                    <img src="https://avatars.mds.yandex.net/i?id=3dfc94dcbc11529b8f2840c8ab7ccb75_l-8492945-images-thumbs&n=13"
+                    <img src="/upload/images/main/profile.png"
                          alt="Фото профиля"
                          class="profile-image img-fluid rounded-circle shadow-lg position-absolute"
                          style="width: 300px; height: 300px; object-fit: cover; top: 10px; left: 10px; z-index: 2; border: 5px solid #fff;">
@@ -37,7 +37,7 @@
                          style="z-index: 1; opacity: 0.15;"></div>
                 </div>
                 <div class="">
-                    <h3 class="fw-bold text-primary mb-2 fs-2">LANCY</h3>
+                    <h3 class="fw-bold text-primary mb-2 fs-2">Максим Беляков</h3>
                     <p class="text-muted mb-0 fs-5">Full-Stack Developer</p>
                 </div>
             </div>
@@ -101,7 +101,7 @@
                 </div>
 
                 <div class="text-center text-lg-start">
-                    <a href="resume.pdf" class="btn btn-primary btn-lg px-6 py-3 fs-5 fw-semibold shadow-lg" download>
+                    <a href="/upload/docs/resume.pdf" class="btn btn-primary btn-lg px-6 py-3 fs-5 fw-semibold shadow-lg" download>
                         <i class="fas fa-file-download me-2"></i>Скачать резюме
                     </a>
                 </div>
@@ -142,19 +142,21 @@
                         <div class="mb-3">
                             <label class="form-label fw-medium text-dark small">JavaScript</label>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar"
+                                     aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-1">40%</div>
                         </div>
                         <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">• jQuery</label>
+                            <label class="form-label fw-normal text-muted small">Query</label>
                             <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 35%" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 35%"
+                                     role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-n2">35%</div>
                         </div>
                         <div class="ms-3">
-                            <label class="form-label fw-normal text-muted small">• TypeScript</label>
+                            <label class="form-label fw-normal text-muted small">TypeScript</label>
                             <div class="progress" style="height: 6px;">
                                 <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
@@ -163,7 +165,8 @@
                         <div class="mb-3 mt-2">
                             <label class="form-label fw-medium text-dark small">Gulp</label>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 100%" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 100%"
+                                     role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-1">100%</div>
                         </div>
@@ -183,28 +186,32 @@
                         <div class="mb-3">
                             <label class="form-label fw-medium text-dark small">PHP</label>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 75%" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 75%"
+                                     role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-1">75%</div>
                         </div>
                         <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">• 1C-Bitrix</label>
+                            <label class="form-label fw-normal text-muted small">1C-Bitrix</label>
                             <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 60%" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 60%"
+                                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-n2">60%</div>
                         </div>
                         <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">• Composer</label>
+                            <label class="form-label fw-normal text-muted small">Composer</label>
                             <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 90%" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 90%"
+                                     role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-n2">90%</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-medium text-dark small">MySQL</label>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 60%" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-gradient" style="width: 60%"
+                                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                             <div class="text-end small text-muted mt-1">60%</div>
                         </div>
@@ -291,6 +298,6 @@
 <div class="scroll-show-area row py-5 text-center">
     <div class="col-12">
         <h2 class="fw-bold mb-4">Готов к новым проектам</h2>
-        <a href="contacts.php" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5">Связаться со мной</a>
+        <a href="/contacts/" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5">Связаться со мной</a>
     </div>
 </div>

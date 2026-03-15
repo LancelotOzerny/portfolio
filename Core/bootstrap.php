@@ -39,8 +39,7 @@ $match = $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 
 if (!$match)
 {
-    echo '404';
-    return;
+	$match = [\Controllers\Public\StatusController::class, 'page404', []];
 }
 
 /* ######################## PREPARE PAGE ######################## */

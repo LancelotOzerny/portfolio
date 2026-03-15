@@ -4,7 +4,7 @@ namespace Modules\Main;
 class Template
 {
 	protected static ?self $instance = null;
-	protected string $template = 'Default';
+	public string $template = 'Default';
 	public readonly string $templateFolderPath;
 	public array $params = [];
 	protected array $rules = [];

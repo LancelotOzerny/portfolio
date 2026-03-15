@@ -18,6 +18,10 @@ class BaseController
 			return;
 		}
 
+		echo '<pre>';
+		print_r($viewPath);
+		echo '</pre>';
+
 		echo "View '$view' not found";
 	}
 }

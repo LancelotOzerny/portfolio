@@ -15,6 +15,7 @@ $loader->addPath('Modules\\', $app->root . '/Core/Modules');
 $loader->addPath('Controllers\\', $app->root . '/App/Controllers');
 $loader->addPath('Develop\\', $app->root . '/Develop');
 $loader->addPath('App\\', $app->root . '/App');
+$loader->addPath('Components\\', $app->root . '/public_html/Components');
 $loader->register();
 
 

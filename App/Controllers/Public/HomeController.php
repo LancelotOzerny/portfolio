@@ -1,9 +1,9 @@
 <?php
 namespace Controllers\Public;
 
+use Models\ProjectsModel;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
-use Modules\Main\ViewData;
 
 class HomeController extends BaseController
 {
@@ -11,8 +11,11 @@ class HomeController extends BaseController
     {
 		Template::getInstance()->setParam('title', 'Максим Беляков: Портфолио WEB-Разработчика');
 
+		$data = [];
+		$data['projects'] = (new ProjectsModel())->findAll();
+
 		\Modules\Main\Template::getInstance()->showHeader();
-		$this->render('index');
+		$this->render('index', $data);
 		\Modules\Main\Template::getInstance()->showFooter();
 	}
 }

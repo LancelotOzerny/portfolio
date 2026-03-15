@@ -35,6 +35,12 @@ abstract class BaseModel {
 		return $this->execQuery($qb, true);
 	}
 
+	protected function findAllBy(string $column, $value, $operator = '='): array
+	{
+		$qb = (new QueryBuilder($this->table))->select()->where($column, $operator, $value);
+		return $this->execQuery($qb);
+	}
+
 	public function findById(int $id): ?object
 	{
 		return $this->findBy('id', $id);
@@ -56,6 +62,11 @@ abstract class BaseModel {
 
 		$stmt = $this->db->prepare($queryData['sql']);
 		$stmt->execute($queryData['params']);
+
+		if ($stmt->rowCount() <= 0)
+		{
+			return null;
+		}
 
 		$data = $single ? $stmt->fetch(PDO::FETCH_ASSOC) : $stmt->fetchAll(PDO::FETCH_ASSOC);
 		return $single ? $this->toObject($data) : $this->toObjects($data);

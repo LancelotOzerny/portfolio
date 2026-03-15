@@ -264,32 +264,41 @@
             <h2 class="mx-3 fs-1">Проекты</h2>
             <hr class="flex-grow-1">
         </div>
-        <p class="text-center text-muted">Где и чему я учился, какие сертификаты получил</p>
+        <p class="text-center text-muted">Прогресс моего обучения, в виде проектов</p>
     </div>
 
     <div class="container mt-5">
         <div class="row g-4">
-            <?php for ($i = 0; $i < 10; ++$i): ?>
+            <?php foreach($data['projects'] ?? [] as $project): ?>
                 <div class="col-lg-4 col-md-6">
                     <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                        <img src="https://avtor24.ru/assets/files/articles/individual-project-inline-new.jpg" class="card-img-top" alt="Проект">
+                        <?php if($project->preview_image_url): ?>
+                            <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">
+                        <?php endif; ?>
                         <div class="card-body d-flex flex-column p-4">
-                            <h5 class="card-title fw-bold mb-3 fs-5">Онлайн-магазин книг</h5>
-                            <p class="card-text text-muted flex-grow-1 mb-3">Корпоративный интернет-магазин с каталогом книг, слайдером новинок и адаптивной версткой на Bootstrap.</p>
-                            <div class="d-flex gap-2 mb-4 flex-wrap">
-                                <span class="badge bg-secondary">PHP</span>
-                                <span class="badge bg-secondary">Bootstrap</span>
-                                <span class="badge bg-secondary">jQuery</span>
-                                <span class="badge bg-secondary">1C-Bitrix</span>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <a href="#" class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium" target="_blank">DEMO</a>
-                                <a href="#" class="btn btn-primary flex-fill py-2 fs-6 fw-medium" target="_blank">GIT</a>
-                            </div>
+                            <h5 class="card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
+                            <p class="card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>
+
+                            <?php if($project->tags): ?>
+                                <div class="d-flex gap-2 mb-4 flex-wrap">
+                                    <?php foreach ($project->tags as $tag): ?>
+                                        <span class="badge bg-secondary"><?= $tag->name ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if($project->links): ?>
+                                <div class="d-flex gap-3">
+                                    <?php foreach ($project->links as $link): ?>
+                                        <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
+                                           href="<?= $link->link ?>"  target="_blank"><?= $link->name ?></a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-            <?php endfor; ?>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>

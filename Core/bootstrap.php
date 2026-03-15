@@ -13,6 +13,7 @@ $app = Modules\Main\App::getInstance();
 $loader = \Modules\Main\Autoloader::getInstance();
 $loader->addPath('Modules\\', $app->root . '/Core/Modules');
 $loader->addPath('Controllers\\', $app->root . '/App/Controllers');
+$loader->addPath('Models\\', $app->root . '/App/Models');
 $loader->addPath('Develop\\', $app->root . '/Develop');
 $loader->addPath('App\\', $app->root . '/App');
 $loader->addPath('Components\\', $app->root . '/public_html/Components');
@@ -29,11 +30,7 @@ $router->get('/certificates/', \Controllers\Public\CertificatesController::class
 $router->get('/contacts/', \Controllers\Public\ContactsController::class,  'index');
 
 // Пользователи
-$router->get('/api/users', \Controllers\Api\UserController::class, 'index');
-$router->get('/api/users/{id}', \Controllers\Api\UserController::class, 'show');
-$router->post('/api/users', \Controllers\Api\UserController::class, 'store');
-$router->put('/api/users/{id}', \Controllers\Api\UserController::class, 'update');
-$router->delete('/api/users/{id}', \Controllers\Api\UserController::class, 'destroy');
+$router->get('/api/users/', \Controllers\Api\UserController::class, 'getAll');
 
 
 

@@ -2,6 +2,8 @@
 
 namespace Modules\DBWork;
 
+use Modules\Main\BaseModel;
+
 class QueryBuilder
 {
 	private string $sql = '';
@@ -22,7 +24,14 @@ class QueryBuilder
 		$this->sql = 'SELECT ';
 		$columnList = [];
 
-		foreach ($columns as $column) {
+		foreach ($columns as $column)
+		{
+			if (str_contains($column, '.'))
+			{
+				$columnList[] = "$column";
+				continue;
+			}
+
 			$columnList[] = "$this->table.$column";
 		}
 
@@ -33,9 +42,9 @@ class QueryBuilder
 	/**
 	 * JOIN-операция
 	 */
-	public function join(string $leftColumn, string $rightColumn, string $type = 'INNER'): self
+	public function join(string $table, string $leftColumn, string $rightColumn, string $type = 'INNER'): self
 	{
-		$this->sql .= " $type JOIN $this->table ON $leftColumn = $rightColumn";
+		$this->sql .= " $type JOIN $table ON $leftColumn = $rightColumn";
 		return $this;
 	}
 

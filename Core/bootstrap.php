@@ -54,4 +54,10 @@ $html = ob_get_clean();
 $viewData = ViewData::getInstance();
 $html = $viewData->replacePlaceholders($html);
 
+$cssLines = \Modules\Main\AssetLoader::getInstance()->getCssLines();
+$jsLines = \Modules\Main\AssetLoader::getInstance()->getJsLines();
+
+$html = str_replace('</body>', $jsLines . '</body>', $html);
+$html = str_replace('</head>', $cssLines . '</head>', $html);
+
 echo $html;

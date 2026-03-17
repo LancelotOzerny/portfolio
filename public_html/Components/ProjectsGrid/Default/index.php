@@ -19,9 +19,9 @@ $isFirstFilterElement = true;
     <?php foreach($this->getParam('items') ?? [] as $project): ?>
         <div class="project-item col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                <?php if($project->preview_image_url): ?>
-                    <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">
-                <?php endif; ?>
+                <img src="<?= $project->preview_image_url ?: '/Templates/Inner/img/no-image.webp' ?>"
+                     class="card-img-top" alt="<?= $project->name ?? '' ?>">
+
                 <div class="card-body d-flex flex-column p-4">
                     <h5 class="card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
                     <p class="card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>

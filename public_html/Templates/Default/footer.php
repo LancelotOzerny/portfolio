@@ -4,7 +4,7 @@
         <div class="row">
             <div class="col-lg-6 col-md-12 mb-4">
                 <h5 class="fw-bold mb-3">LANCY</h5>
-                <p>Описание компании. Мы создаем современные веб-решения для вашего бизнеса с использованием HTML, Bootstrap и jQuery.</p>
+                <p>Создаю современные веб-решения для вашего бизнеса с использованием PHP, MySQL, HTML, Bootstrap и jQuery.</p>
                 <div class="d-flex gap-2">
                     <a href="#" class="text-light" title="VK"><i class="fab fa-vk fs-5"></i></a>
                     <a href="#" class="text-light" title="Telegram"><i class="fab fa-telegram fs-5"></i></a>

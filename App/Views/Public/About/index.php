@@ -20,7 +20,7 @@
     </section>
 
     <!-- Секция об опыте работы -->
-    <section class="mb-5">
+    <section class="scroll-show-area mb-5">
         <h3 class="border-bottom pb-2 mb-4">Опыт работы (2 года)</h3>
 
         <div class="card mb-3">
@@ -62,8 +62,8 @@
     </section>
 
     <!-- Секция о навыках -->
-    <section class="mb-5">
-        <h3 class="border-bottom pb-2 mb-4">Навыки</h3>
+    <section class="scroll-show-area mb-5">
+        <h3 class="border-bottom pb-2 mb-4">Технологический стек</h3>
         <ul class="list-group">
             <li class="list-group-item"><b>Backend:</b> PHP (1C-Bitrix), Sql (MySQL)</li>
             <li class="list-group-item"><b>Frontend:</b> Html (Pug), Css (Less, Bootstrap), Js (jQuery, TypeScript)</li>
@@ -72,7 +72,7 @@
     </section>
 
     <!-- Секция об образовании -->
-    <section>
+    <section class="scroll-show-area">
         <h3 class="border-bottom pb-2 mb-4">Образование</h3>
         <div class="card">
             <div class="card-body">

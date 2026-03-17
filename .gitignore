@@ -5,3 +5,5 @@ dist/
 test/
 App/Configs/Hidden/
 *.log
+
+public_html/upload/

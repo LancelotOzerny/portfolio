@@ -111,3 +111,13 @@ body {
     transition: opacity .5s linear, transform .5s linear;
     transform: translateY(0);
 }
+
+.project-item
+{
+    transition: .4s;
+}
+
+.project-item.hidden
+{
+    opacity: 0;
+}

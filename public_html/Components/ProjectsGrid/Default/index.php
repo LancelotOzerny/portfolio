@@ -4,9 +4,9 @@ $isFirstFilterElement = true;
 
 <!-- FILTERS -->
 <?php if($this->getParam('use_filters')):?>
-    <div class="filter-buttons text-center mt-5">
+    <div id="projects-grid-filters" class="filter-buttons text-center mt-5">
         <?php foreach ($this->getParam('filters') as $key => $filter): ?>
-            <button class="btn btn-outline-primary <?= $isFirstFilterElement ? 'active' : '' ?>" data-filter="filter-<?= $key ?>"><?= $filter ?></button>
+            <button class="filter btn btn-outline-primary <?= $isFirstFilterElement ? 'active' : '' ?>" data-filter="filter-<?= $key ?>"><?= $filter ?></button>
             <?php
             $isFirstFilterElement = false;
         endforeach;
@@ -19,7 +19,7 @@ $isFirstFilterElement = true;
 	<div class="container">
 		<div class="row g-4">
             <?php foreach($this->getParam('items') ?? [] as $project): ?>
-                <div class="col-lg-4 col-md-6">
+                <div class="project-item col-lg-4 col-md-6">
                     <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
                         <?php if($project->preview_image_url): ?>
                             <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">

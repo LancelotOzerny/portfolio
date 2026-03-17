@@ -15,11 +15,13 @@ return [
 		'depth' => 0,
 		'link' => '/portfolio/'
 	],
+	/*
 	[
 		'name' => 'Сертификаты',
 		'depth' => 0,
 		'link' => '/certificates/'
 	],
+	*/
 	[
 		'name' => 'Контакты',
 		'depth' => 0,

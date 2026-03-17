@@ -31,6 +31,7 @@ $router->get('/contacts/', \Controllers\Public\ContactsController::class,  'inde
 
 // Пользователи
 $router->get('/api/users/', \Controllers\Api\UserController::class, 'getAll');
+$router->post('/api/feedback/send/', \Controllers\Api\FeedbackController::class, 'send');
 
 
 

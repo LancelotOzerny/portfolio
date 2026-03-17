@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, {
         threshold: 0.05,
-        rootMargin: '-150px 0px',
+        rootMargin: '-75px 0px',
     });
 
     document.querySelectorAll('.scroll-show-area').forEach(item => {

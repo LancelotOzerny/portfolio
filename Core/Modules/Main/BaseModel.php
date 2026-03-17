@@ -26,7 +26,7 @@ abstract class BaseModel {
 			$builder->limit($limit);
 		}
 
-		return $this->execQuery($builder);
+		return $this->execQuery($builder) ?? [];
 	}
 
 	protected function findBy(string $column, $value, $operator = '='): ?object

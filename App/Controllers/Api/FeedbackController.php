@@ -46,7 +46,7 @@ class FeedbackController
 			'Content-Type: text/plain; charset=utf-8'
 		];
 
-		// $mailSent = mail($to, $subject, $body, implode("\r\n", $headers));
+		$mailSent = mail($to, $subject, $body, implode("\r\n", $headers));
 
 		if ($mailSent ?? null)
 		{

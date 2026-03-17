@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const toastEl = document.getElementById('liveToast');
     const toastBody = toastEl.querySelector('.toast-body');
-    const toastInstance = bootstrap.Toast.getInstance(toastEl) || new bootstrap.Toast(toastEl);
     const toast = new bootstrap.Toast(toastEl);
 
     document.getElementById('message-form').addEventListener('submit', (event) => {
@@ -22,15 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.success)
                 {
                     toastBody.textContent = data.message;
-                    toastEl.classList.remove('bg-success');
-                    toastEl.classList.add('bg-warning');
                     toast.show();
                 }
                 else
                 {
                     toastBody.textContent = data.message;
-                    toastEl.classList.remove('bg-warning');
-                    toastEl.classList.add('bg-success');
                     toast.show();
                 }
             }

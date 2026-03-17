@@ -118,10 +118,10 @@
             <h2 class="mx-3 fs-1">Технологический стек</h2>
             <hr class="flex-grow-1">
         </div>
-        <p class="text-center text-muted">Где и чему я учился, какие сертификаты получил</p>
+        <p class="text-center text-muted">Навыки, которыми я овладел или изучаю в текущий момент</p>
     </div>
 
-    <div class="container mt-5">
+    <div class="container">
         <div class="row g-4 justify-content-center">
             <!-- Frontend -->
             <div class="col-lg-4 col-md-6">
@@ -264,42 +264,18 @@
             <h2 class="mx-3 fs-1">Проекты</h2>
             <hr class="flex-grow-1">
         </div>
-        <p class="text-center text-muted">Прогресс моего обучения, в виде проектов</p>
+        <p class="text-center text-muted">Прогресс моего обучения, в виде реализованных проектов</p>
     </div>
 
-    <div class="container mt-5">
-        <div class="row g-4">
-            <?php foreach($data['projects'] ?? [] as $project): ?>
-                <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                        <?php if($project->preview_image_url): ?>
-                            <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">
-                        <?php endif; ?>
-                        <div class="card-body d-flex flex-column p-4">
-                            <h5 class="card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
-                            <p class="card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>
+    <div class="container">
+        <?php
+        $projectsGrid = new \Components\ProjectsGrid\ProjectsGrid([
+            'use_filters' => false,
+            'limit' => 10
+        ]);
 
-                            <?php if($project->tags): ?>
-                                <div class="d-flex gap-2 mb-4 flex-wrap">
-                                    <?php foreach ($project->tags as $tag): ?>
-                                        <span class="badge bg-secondary"><?= $tag->name ?></span>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if($project->links): ?>
-                                <div class="d-flex gap-3">
-                                    <?php foreach ($project->links as $link): ?>
-                                        <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
-                                           href="<?= $link->link ?>"  target="_blank"><?= $link->name ?></a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+        $projectsGrid->render();
+        ?>
     </div>
 </section>
 

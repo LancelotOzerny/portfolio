@@ -9,9 +9,12 @@ class ProjectsGrid extends BaseComponent
 {
 	protected function prepareData(array $params = []): void
 	{
+		$limit = $params['limit'] ?? 0;
+
 		$projectsModel = new ProjectsModel();
-		$this->setParam('items', $projectsModel->findAll());
+		$this->setParam('items', $projectsModel->findAll($limit));
 		$this->setParam('use_filters', false);
+		$this->setParam('limit', $limit);
 
 		if ($params['use_filters'] ?? null)
 		{

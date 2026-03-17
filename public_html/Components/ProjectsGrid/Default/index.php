@@ -15,39 +15,35 @@ $isFirstFilterElement = true;
 <?php endif; ?>
 
 <!-- PROJECTS -->
-<div class="py-5">
-	<div class="container">
-		<div class="row g-4">
-            <?php foreach($this->getParam('items') ?? [] as $project): ?>
-                <div class="project-item col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                        <?php if($project->preview_image_url): ?>
-                            <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">
-                        <?php endif; ?>
-                        <div class="card-body d-flex flex-column p-4">
-                            <h5 class="card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
-                            <p class="card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>
+<div class="row g-4 <?php if($this->getParam('use_filters')) echo 'pt-5'?>">
+    <?php foreach($this->getParam('items') ?? [] as $project): ?>
+        <div class="project-item col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
+                <?php if($project->preview_image_url): ?>
+                    <img src="<?= $project->preview_image_url ?>" class="card-img-top" alt="<?= $project->name ?? '' ?>">
+                <?php endif; ?>
+                <div class="card-body d-flex flex-column p-4">
+                    <h5 class="card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
+                    <p class="card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>
 
-                            <?php if($project->tags): ?>
-                                <div class="d-flex gap-2 mb-4 flex-wrap">
-                                    <?php foreach ($project->tags as $tag): ?>
-                                        <span <?php if($this->getParam('use_filters')) echo "data-filter-target=\"filter-$tag->id\""?> class="badge bg-secondary"><?= $tag->name ?></span>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if($project->links): ?>
-                                <div class="d-flex gap-3">
-                                    <?php foreach ($project->links as $link): ?>
-                                        <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
-                                           href="<?= $link->link ?>"  target="_blank"><?= $link->name ?></a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
+                    <?php if($project->tags): ?>
+                        <div class="d-flex gap-2 mb-4 flex-wrap">
+                            <?php foreach ($project->tags as $tag): ?>
+                                <span <?php if($this->getParam('use_filters')) echo "data-filter-target=\"filter-$tag->id\""?> class="badge bg-secondary"><?= $tag->name ?></span>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
+                    <?php endif; ?>
+
+                    <?php if($project->links): ?>
+                        <div class="d-flex gap-3">
+                            <?php foreach ($project->links as $link): ?>
+                                <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
+                                   href="<?= $link->link ?>"  target="_blank"><?= $link->name ?></a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-		</div>
-	</div>
+            </div>
+        </div>
+    <?php endforeach; ?>
 </div>

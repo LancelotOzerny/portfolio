@@ -2,5 +2,10 @@
 $projectsGrid = new \Components\ProjectsGrid\ProjectsGrid([
 	'use_filters' => true,
 ]);
+?>
 
-$projectsGrid->render();
+<div class="container">
+	<?php
+	$projectsGrid->render();
+	?>
+</div>

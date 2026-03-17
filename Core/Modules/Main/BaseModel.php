@@ -38,7 +38,7 @@ abstract class BaseModel {
 	protected function findAllBy(string $column, $value, $operator = '='): array
 	{
 		$qb = (new QueryBuilder($this->table))->select()->where($column, $operator, $value);
-		return $this->execQuery($qb);
+		return $this->execQuery($qb) ?? [];
 	}
 
 	public function findById(int $id): ?object

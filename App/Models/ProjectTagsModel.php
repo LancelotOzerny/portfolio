@@ -16,6 +16,6 @@ class ProjectTagsModel extends BaseModel
 			->join('tags', 'tags.id', 'tag_id', 'RIGHT')
 			->where('project_id', '=', $project_id);
 
-		return $this->execQuery($qb);
+		return $this->execQuery($qb) ?? [];
 	}
 }

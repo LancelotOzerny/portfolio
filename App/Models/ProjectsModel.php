@@ -16,7 +16,7 @@ class ProjectsModel extends BaseModel
 
 		foreach ($items as &$item)
 		{
-			$item->links = $linksModel->findByProject($item->id);
+			$item->links = $linksModel->findAllByProject($item->id);
 			$item->tags = $projectTagsModel->findAllByProjectId($item->id);
 		}
 

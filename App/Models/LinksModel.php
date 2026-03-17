@@ -8,7 +8,7 @@ class LinksModel extends BaseModel
 {
 	protected string $table = 'links';
 
-	public function findByProject(int $id) : array
+	public function findAllByProject(int $id) : array
 	{
 		$result = $this->findAllBy('project_id', $id);
 

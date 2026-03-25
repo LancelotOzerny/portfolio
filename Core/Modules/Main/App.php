@@ -22,4 +22,23 @@ class App
         }
         return self::$instance;
     }
+
+	public function init() : void
+	{
+		$this->loadRoutes();
+	}
+
+	protected function loadRoutes() : void
+	{
+		$folder = $this->root . '/App/Routes';
+		$files = scandir($folder);
+
+		foreach ($files as $file)
+		{
+			if (str_ends_with($file, '.php'))
+			{
+				require_once "{$folder}/{$file}";
+			}
+		}
+	}
 }

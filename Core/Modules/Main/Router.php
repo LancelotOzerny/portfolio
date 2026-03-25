@@ -4,7 +4,20 @@ namespace Modules\Main;
 
 class Router
 {
+	private static ?self $instance = null;
     protected array $routes = [];
+
+	private function __construct() {}
+	private function __clone() {}
+	public static function getInstance() : self
+	{
+		if (self::$instance === null)
+		{
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
 
     public function addRoute(string $httpMethod, string $path, string $controller, string $action): void
     {
@@ -34,6 +47,11 @@ class Router
     {
         $this->addRoute('PUT', $path, $controller, $action);
     }
+
+	public function getRoutes(): array
+	{
+		return $this->routes;
+	}
 
     public function delete(string $path, string $controller, string $action): void
     {

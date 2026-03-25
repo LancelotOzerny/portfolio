@@ -19,24 +19,9 @@ $loader->addPath('App\\', $app->root . '/App');
 $loader->addPath('Components\\', $app->root . '/public_html/Components');
 $loader->register();
 
+\Modules\Main\App::getInstance()->init();
 
-
-/* ######################## ROUTES ######################## */
-$router = new Router();
-$router->get('/', \Controllers\Public\HomeController::class,  'index');
-$router->get('/about/', \Controllers\Public\AboutController::class,  'index');
-$router->get('/portfolio/', \Controllers\Public\PortfolioController::class,  'index');
-$router->get('/certificates/', \Controllers\Public\CertificatesController::class,  'index');
-$router->get('/contacts/', \Controllers\Public\ContactsController::class,  'index');
-
-// Пользователи
-$router->get('/api/users/', \Controllers\Api\UserController::class, 'getAll');
-$router->post('/api/feedback/send/', \Controllers\Api\FeedbackController::class, 'send');
-
-
-
-/* ######################## SET ROUTE ######################## */
-$match = $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+$match = Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 
 if (!$match)
 {

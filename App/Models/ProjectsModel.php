@@ -22,4 +22,19 @@ class ProjectsModel extends BaseModel
 
 		return $items;
 	}
+
+	public function findById(int $id): ?object
+	{
+		$linksModel = new LinksModel();
+		$projectTagsModel = new ProjectTagsModel();
+		$project = parent::findById($id);
+
+		if ($project)
+		{
+			$project->links = $linksModel->findAllByProject($project->id);
+			$project->tags = $projectTagsModel->findAllByProjectId($project->id);
+		}
+
+		return $project;
+	}
 }

@@ -34,14 +34,8 @@ $isFirstFilterElement = true;
                         </div>
                     <?php endif; ?>
 
-                    <?php if($project->links): ?>
-                        <div class="d-flex gap-3">
-                            <?php foreach ($project->links as $link): ?>
-                                <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
-                                   href="<?= $link->link ?>"  target="_blank"><?= $link->name ?></a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+                    <a class="btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
+                       href="/portfolio/projects/<?= $project->id ?>/">Подробнее</a>
                 </div>
             </div>
         </div>

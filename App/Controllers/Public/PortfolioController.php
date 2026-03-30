@@ -22,4 +22,19 @@ class PortfolioController extends BaseController
 		$this->render('index', $data);
 		\Modules\Main\Template::getInstance()->showFooter();
 	}
+
+	public function detail(int $id) : void
+	{
+		$data = [];
+
+		Template::getInstance()->setParam('title', 'Мои работы');
+		Template::getInstance()->setParam('subtitle', 'Примеры реализованных задач с описанием технологий и результатов');
+
+		$projectsModel = new ProjectsModel();
+		$data['info'] = $projectsModel->findById($id);
+
+		\Modules\Main\Template::getInstance()->showHeader();
+		$this->render('detail', $data);
+		\Modules\Main\Template::getInstance()->showFooter();
+	}
 }

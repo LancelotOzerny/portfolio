@@ -9,7 +9,8 @@ class AuthController extends BaseController
 {
     public function login(): void
     {
-        Template::getInstance()->setParam('title', 'Admin Login');
+        Template::getInstance()->template = 'Admin';
+        Template::getInstance()->setParam('title', 'Страница авторизации');
 
         Template::getInstance()->showHeader();
         $this->render('login');

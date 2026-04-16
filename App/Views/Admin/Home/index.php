@@ -10,10 +10,14 @@
 
                     <nav class="list-group list-group-flush">
                         <a class="list-group-item list-group-item-action active" href="/admin/" aria-current="page">Главная</a>
-                        <a class="list-group-item list-group-item-action" href="#">Проекты</a>
+                        <a class="list-group-item list-group-item-action" href="/admin/projects/">Проекты</a>
                         <a class="list-group-item list-group-item-action" href="#">Пользователи</a>
                         <a class="list-group-item list-group-item-action" href="#">Настройки</a>
                     </nav>
+
+                    <div class="border-top p-3">
+                        <a class="btn btn-primary w-100" href="/admin/projects/">Открыть проекты</a>
+                    </div>
                 </div>
             </div>
         </aside>

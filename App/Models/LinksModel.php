@@ -6,7 +6,7 @@ use Modules\Main\BaseModel;
 
 class LinksModel extends BaseModel
 {
-	protected string $table = 'links';
+	protected string $table = 'projects_links';
 
 	public function findAllByProject(int $id) : array
 	{

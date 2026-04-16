@@ -8,6 +8,7 @@ use Models\ProjectsInfoModel;
 use Models\ProjectsLinkModel;
 use Models\ProjectsModel;
 use Models\ProjectsTagsRelationModel;
+use Models\TagsModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
@@ -63,6 +64,7 @@ class ProjectsController extends BaseController
 		$tags = [];
 		$links = [];
 		$projectInfo = [];
+		$allTags = [];
 
 		$tags = $this->loadProjectTags($id);
 
@@ -82,12 +84,19 @@ class ProjectsController extends BaseController
 			$projectInfo = [];
 		}
 
+		try {
+			$allTags = (new TagsModel())->findAll();
+		} catch (Throwable) {
+			$allTags = [];
+		}
+
 		Template::getInstance()->setParam('title', 'Редактирование проекта #' . $id);
 
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
 			'project' => $project,
 			'tags' => $tags,
+			'allTags' => $allTags,
 			'links' => $links,
 			'projectInfo' => $projectInfo,
 		]);

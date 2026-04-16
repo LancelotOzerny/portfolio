@@ -12,6 +12,8 @@ if ($project === null) {
 }
 
 $isActive = (int) ($project->active ?? 0) === 1;
+$previewImageUrl = trim((string) ($project->preview_image_url ?? ''));
+$detailImageUrl = trim((string) ($project->detail_image_url ?? ''));
 ?>
 
 <section class="admin-project-detail">
@@ -23,7 +25,7 @@ $isActive = (int) ($project->active ?? 0) === 1;
         <a href="/admin/projects/" class="btn btn-outline-secondary">К списку проектов</a>
     </div>
 
-    <form action="#" method="post" class="card border-0 shadow-sm">
+    <form action="#" method="post" enctype="multipart/form-data" class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom-0 pb-0">
             <ul class="nav nav-tabs card-header-tabs" id="project-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -75,8 +77,23 @@ $isActive = (int) ($project->active ?? 0) === 1;
                 <div class="tab-pane fade" id="tab-preview" role="tabpanel" aria-labelledby="tab-preview-link">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Preview image URL</label>
-                            <input type="text" name="preview_image_url" class="form-control" value="<?= htmlspecialchars((string) ($project->preview_image_url ?? '')) ?>">
+                            <label class="form-label">Preview изображение</label>
+                            <?php if ($previewImageUrl !== ''): ?>
+                                <div class="border rounded p-3">
+                                    <button type="button" class="btn p-0 border-0 bg-transparent project-image-trigger d-flex justify-content-center w-100" data-target-input="preview_image_file" title="Нажмите, чтобы заменить изображение">
+                                        <img id="preview-image-preview" src="<?= htmlspecialchars($previewImageUrl) ?>" alt="Preview изображение" class="img-fluid rounded shadow-sm" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; cursor: pointer; display: block; margin: 0 auto;">
+                                    </button>
+                                    <div class="form-text mt-2">Изображение загружено. Нажмите на него, чтобы выбрать новое.</div>
+                                </div>
+                                <input type="file" id="preview_image_file" name="preview_image_file" accept="image/*" class="form-control mt-2 d-none project-image-input" data-preview-image="preview-image-preview">
+                                <input type="hidden" name="preview_image_url_existing" value="<?= htmlspecialchars($previewImageUrl) ?>">
+                            <?php else: ?>
+                                <div class="border rounded p-3 bg-light-subtle">
+                                    <div class="text-secondary mb-2">Изображение не загружено</div>
+                                    <input type="file" id="preview_image_file" name="preview_image_file" accept="image/*" class="form-control project-image-input" data-preview-image="preview-image-preview">
+                                    <img id="preview-image-preview" src="" alt="Preview изображение" class="img-fluid rounded shadow-sm mt-3 d-none" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto;">
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="col-12">
@@ -89,8 +106,23 @@ $isActive = (int) ($project->active ?? 0) === 1;
                 <div class="tab-pane fade" id="tab-detail" role="tabpanel" aria-labelledby="tab-detail-link">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Detail image URL</label>
-                            <input type="text" name="detail_image_url" class="form-control" value="<?= htmlspecialchars((string) ($project->detail_image_url ?? '')) ?>">
+                            <label class="form-label">Detail изображение</label>
+                            <?php if ($detailImageUrl !== ''): ?>
+                                <div class="border rounded p-3">
+                                    <button type="button" class="btn p-0 border-0 bg-transparent project-image-trigger d-flex justify-content-center w-100" data-target-input="detail_image_file" title="Нажмите, чтобы заменить изображение">
+                                        <img id="detail-image-preview" src="<?= htmlspecialchars($detailImageUrl) ?>" alt="Detail изображение" class="img-fluid rounded shadow-sm" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; cursor: pointer; display: block; margin: 0 auto;">
+                                    </button>
+                                    <div class="form-text mt-2">Изображение загружено. Нажмите на него, чтобы выбрать новое.</div>
+                                </div>
+                                <input type="file" id="detail_image_file" name="detail_image_file" accept="image/*" class="form-control mt-2 d-none project-image-input" data-preview-image="detail-image-preview">
+                                <input type="hidden" name="detail_image_url_existing" value="<?= htmlspecialchars($detailImageUrl) ?>">
+                            <?php else: ?>
+                                <div class="border rounded p-3 bg-light-subtle">
+                                    <div class="text-secondary mb-2">Изображение не загружено</div>
+                                    <input type="file" id="detail_image_file" name="detail_image_file" accept="image/*" class="form-control project-image-input" data-preview-image="detail-image-preview">
+                                    <img id="detail-image-preview" src="" alt="Detail изображение" class="img-fluid rounded shadow-sm mt-3 d-none" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto;">
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="col-12">
@@ -232,3 +264,46 @@ $isActive = (int) ($project->active ?? 0) === 1;
         </div>
     </form>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const triggerButtons = document.querySelectorAll('.project-image-trigger');
+    triggerButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const inputId = button.dataset.targetInput;
+            const input = inputId ? document.getElementById(inputId) : null;
+            if (!input) {
+                return;
+            }
+
+            const shouldReplace = window.confirm('Загрузить новую картинку?');
+            if (!shouldReplace) {
+                return;
+            }
+
+            input.classList.remove('d-none');
+            input.click();
+        });
+    });
+
+    const fileInputs = document.querySelectorAll('.project-image-input');
+    fileInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            const previewId = input.dataset.previewImage;
+            const preview = previewId ? document.getElementById(previewId) : null;
+            const file = input.files && input.files[0] ? input.files[0] : null;
+
+            if (!preview || !file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                preview.src = event.target && typeof event.target.result === 'string' ? event.target.result : '';
+                preview.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+});
+</script>

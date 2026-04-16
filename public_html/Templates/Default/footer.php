@@ -16,9 +16,17 @@
             </div>
             <div class="col-lg-3 col-md-6 mb-4">
                 <h6 class="fw-bold mb-3">Контакты</h6>
-                <p><i class="fas fa-map-marker-alt me-2"></i>Липецк, Россия</p>
-                <p><i class="fas fa-phone me-2"></i>+7 (4742) 00-00-00</p>
-                <p><i class="fas fa-envelope me-2"></i>info@lancy.ru</p>
+                <p>Липецк, Россия</p>
+                <p>
+                    <a href="tel:89205201831" class='text-white' style='text-decoration: none;'>
+                        8 (920) 520 18 31
+                    </a>
+                </p>
+                <p>
+                    <a href="mailto:lancelot.ozernuy@gmail.com" class='text-white' style='text-decoration: none;'>
+                        lancelot.ozernuy@gmail.com
+                    </a>
+                </p>
             </div>
         </div>
         <hr class="my-4 opacity-25">

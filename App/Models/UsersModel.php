@@ -9,6 +9,11 @@ class UsersModel extends BaseModel
 {
 	protected string $table = 'users';
 
+	public function findByLogin(string $login): ?object
+	{
+		return $this->findBy('login', $login);
+	}
+
 	public function findByEmail(string $email): ?object
 	{
 		return $this->findBy('email', $email);
@@ -17,9 +22,19 @@ class UsersModel extends BaseModel
 	public function findWithRights(int $userId): ?object
 	{
 		$qb = new QueryBuilder($this->table);
-		$qb->select(['*', 'rights.level as role_level', 'rights.name as role_name'])
-			->join('rights', 'rights_id', 'rights.id', 'RIGHT')
+		$qb->select(['*', 'user_rights.level as role_level', 'user_rights.role as role_name'])
+			->join('user_rights', 'users.rights_id', 'user_rights.id', 'LEFT')
 			->where('users.id', '=', $userId);
+
+		return $this->execQuery($qb, true);
+	}
+
+	public function findByLoginWithRights(string $login): ?object
+	{
+		$qb = new QueryBuilder($this->table);
+		$qb->select(['*', 'user_rights.level as role_level', 'user_rights.role as role_name'])
+			->join('user_rights', 'users.rights_id', 'user_rights.id', 'LEFT')
+			->where('users.login', '=', $login);
 
 		return $this->execQuery($qb, true);
 	}

@@ -23,7 +23,7 @@ class ProjectsController extends BaseController
 			return;
 		}
 
-		Template::getInstance()->setParam('title', 'РџСЂРѕРµРєС‚С‹');
+		Template::getInstance()->setParam('title', 'Список проектов');
 
 		$projects = [];
 		try {
@@ -91,7 +91,7 @@ class ProjectsController extends BaseController
 			$allTags = [];
 		}
 
-		Template::getInstance()->setParam('title', 'Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїСЂРѕРµРєС‚Р° #' . $id);
+		Template::getInstance()->setParam('title', 'Редактирование проекта ' . $id);
 
 		Template::getInstance()->showHeader();
 		$this->render('detail', [

@@ -9,6 +9,7 @@ use Models\ProjectsLinkModel;
 use Models\ProjectsModel;
 use Models\ProjectsTagsRelationModel;
 use Models\TagsModel;
+use Modules\DBWork\DBConnection;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
@@ -130,15 +131,26 @@ class ProjectsController extends BaseController
 		$detailText = (string) ($_POST['detail_text'] ?? '');
 		$previewImageUrl = trim((string) ($_POST['preview_image_url_existing'] ?? (string) ($project->preview_image_url ?? '')));
 		$detailImageUrl = trim((string) ($_POST['detail_image_url_existing'] ?? (string) ($project->detail_image_url ?? '')));
+		$selectedTagIds = $this->normalizeTagIds($_POST['project_tag_ids'] ?? []);
+		$projectLinks = $this->normalizeLinks($_POST['links'] ?? []);
+		$projectInfoItems = $this->normalizeProjectInfoItems($_POST['project_info'] ?? []);
 
 		if ($name === '') {
 			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Enter project name.'));
 			return;
 		}
 
+		$connection = DBConnection::getConnection();
+		$transactionStarted = false;
+
 		try {
 			$previewImageUrl = $this->saveProjectImageUpload($id, 'preview_image_file', $previewImageUrl);
 			$detailImageUrl = $this->saveProjectImageUpload($id, 'detail_image_file', $detailImageUrl);
+
+			if (!$connection->inTransaction()) {
+				$connection->beginTransaction();
+				$transactionStarted = true;
+			}
 
 			if (!$projectsModel->updateEditorData(
 				$id,
@@ -152,9 +164,25 @@ class ProjectsController extends BaseController
 				throw new \RuntimeException('Unable to save changes.');
 			}
 
+			$this->saveProjectTags($id, $selectedTagIds);
+			$this->saveProjectLinks($id, $projectLinks);
+
+			$projectInfoModel = new ProjectsInfoModel();
+			if (!$projectInfoModel->replaceByProjectId($id, $projectInfoItems)) {
+				throw new \RuntimeException('Unable to save project info.');
+			}
+
+			if ($transactionStarted && $connection->inTransaction()) {
+				$connection->commit();
+			}
+
 			header('Location: /admin/projects/' . $id . '/?saved=1');
 			return;
 		} catch (\RuntimeException $e) {
+			if ($transactionStarted && $connection->inTransaction()) {
+				$connection->rollBack();
+			}
+
 			$message = trim($e->getMessage());
 			if ($message === '') {
 				$message = 'Unable to save changes.';
@@ -163,8 +191,120 @@ class ProjectsController extends BaseController
 			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode($message));
 			return;
 		} catch (Throwable) {
+			if ($transactionStarted && $connection->inTransaction()) {
+				$connection->rollBack();
+			}
+
 			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Unable to save changes.'));
 			return;
+		}
+	}
+
+	private function normalizeTagIds(mixed $rawTagIds): array
+	{
+		if (!is_array($rawTagIds)) {
+			return [];
+		}
+
+		$result = [];
+		foreach ($rawTagIds as $tagId) {
+			$normalizedId = (int) $tagId;
+			if ($normalizedId > 0) {
+				$result[] = $normalizedId;
+			}
+		}
+
+		$result = array_values(array_unique($result));
+		sort($result);
+
+		return $result;
+	}
+
+	private function normalizeLinks(mixed $rawLinks): array
+	{
+		if (!is_array($rawLinks)) {
+			return [];
+		}
+
+		$result = [];
+		foreach ($rawLinks as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+
+			$name = trim((string) ($row['name'] ?? ''));
+			$link = trim((string) ($row['link'] ?? ''));
+
+			if ($name === '' && $link === '') {
+				continue;
+			}
+
+			$result[] = [
+				'name' => $name,
+				'link' => $link,
+			];
+		}
+
+		return $result;
+	}
+
+	private function normalizeProjectInfoItems(mixed $rawItems): array
+	{
+		if (!is_array($rawItems)) {
+			return [];
+		}
+
+		$result = [];
+		foreach ($rawItems as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+
+			$date = trim((string) ($row['date'] ?? ''));
+			$developTime = trim((string) ($row['develop_time'] ?? ''));
+			$version = trim((string) ($row['version'] ?? ''));
+
+			if ($date === '' && $developTime === '' && $version === '') {
+				continue;
+			}
+
+			$result[] = [
+				'date' => $date,
+				'develop_time' => $developTime,
+				'version' => $version,
+			];
+		}
+
+		return $result;
+	}
+
+	private function saveProjectTags(int $projectId, array $tagIds): void
+	{
+		try {
+			(new ProjectTagsModel())->replaceProjectTags($projectId, $tagIds);
+			return;
+		} catch (Throwable $primaryException) {
+			try {
+				(new ProjectsTagsRelationModel())->replaceProjectTags($projectId, $tagIds);
+				return;
+			} catch (Throwable) {
+				throw new \RuntimeException('Unable to save project tags.', 0, $primaryException);
+			}
+		}
+	}
+
+	private function saveProjectLinks(int $projectId, array $links): void
+	{
+		try {
+			(new ProjectsLinkModel())->replaceProjectLinks($projectId, $links);
+			return;
+		} catch (Throwable $primaryException) {
+			try {
+				(new LinksModel())->replaceProjectLinks($projectId, $links);
+				return;
+			} catch (Throwable) {
+				throw new \RuntimeException('Unable to save project links.', 0, $primaryException);
+			}
 		}
 	}
 

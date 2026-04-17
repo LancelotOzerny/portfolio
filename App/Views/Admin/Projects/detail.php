@@ -207,15 +207,15 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 							<div class="row g-2">
 								<div class="col-12 col-md-4">
 									<label class="form-label">Дата</label>
-									<input type="date" class="form-control" value="">
+									<input type="date" name="project_info[0][date]" class="form-control" value="">
 								</div>
 								<div class="col-12 col-md-4">
 									<label class="form-label">Время разработки</label>
-									<input type="text" class="form-control" value="">
+									<input type="text" name="project_info[0][develop_time]" class="form-control" value="">
 								</div>
 								<div class="col-12 col-md-4">
 									<label class="form-label">Версия</label>
-									<input type="text" class="form-control" value="">
+									<input type="text" name="project_info[0][version]" class="form-control" value="">
 								</div>
 							</div>
 						<?php else: ?>

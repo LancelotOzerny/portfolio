@@ -34,6 +34,13 @@ $createdDate = new DateTime($currentProject->created_at);
     <div class="row">
 
         <div class="col-lg-8">
+            <?php if ($data['info']->detail_image_url): ?>
+            <img    src="<?= $data['info']->detail_image_url ?>" 
+                    alt="<?= $data['info']->name ?>"
+                    title="<?= $data['info']->name ?>"
+                    style="width: 100%;">
+            <?php endif; ?>
+
             <?= $currentProject->detail_text ?>
         </div>
 

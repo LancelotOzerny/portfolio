@@ -2,6 +2,7 @@
 /* @var array $data */
 
 $projects = $data['projects'] ?? [];
+$createError = trim((string) ($data['createError'] ?? ''));
 ?>
 
 <section class="admin-projects">
@@ -25,12 +26,21 @@ $projects = $data['projects'] ?? [];
         }
     </style>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div>
-            <h1 class="h3 mb-1">Проекты</h1>
-        </div>
-        <a href="/admin/" class="btn btn-outline-secondary">Назад в админку</a>
-    </div>
+	<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+		<div>
+			<h1 class="h3 mb-1">Проекты</h1>
+		</div>
+		<div class="d-flex gap-2">
+			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+				Создать проект
+			</button>
+			<a href="/admin/" class="btn btn-outline-secondary">Назад в админку</a>
+		</div>
+	</div>
+
+	<?php if ($createError !== ''): ?>
+		<div class="alert alert-danger"><?= htmlspecialchars($createError) ?></div>
+	<?php endif; ?>
 
     <?php if (empty($projects)): ?>
         <div class="alert alert-warning mb-0">Проекты не найдены.</div>
@@ -93,5 +103,34 @@ $projects = $data['projects'] ?? [];
                 </div>
             <?php endforeach; ?>
         </div>
-    <?php endif; ?>
+	<?php endif; ?>
 </section>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form action="/admin/projects/create/" method="post">
+				<div class="modal-header">
+					<h2 class="modal-title fs-5" id="createProjectModalLabel">Новый проект</h2>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+				</div>
+				<div class="modal-body">
+					<label for="new-project-name" class="form-label">Название проекта</label>
+					<input
+						type="text"
+						class="form-control"
+						id="new-project-name"
+						name="name"
+						required
+						maxlength="255"
+						placeholder="Введите название"
+					>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+					<button type="submit" class="btn btn-primary">Создать</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>

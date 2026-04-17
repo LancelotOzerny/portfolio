@@ -39,8 +39,37 @@ class ProjectsController extends BaseController
 		unset($project);
 
 		Template::getInstance()->showHeader();
-		$this->render('index', ['projects' => $projects]);
+		$this->render('index', [
+			'projects' => $projects,
+			'createError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+		]);
 		Template::getInstance()->showFooter();
+	}
+
+	public function create(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$name = trim((string) ($_POST['name'] ?? ''));
+		if ($name === '') {
+			header('Location: /admin/projects/?error=' . rawurlencode('Введите название проекта.'));
+			return;
+		}
+
+		try {
+			$projectId = (new ProjectsModel())->createForAdmin($name, 0);
+		} catch (Throwable) {
+			$projectId = 0;
+		}
+
+		if ($projectId <= 0) {
+			header('Location: /admin/projects/?error=' . rawurlencode('Не удалось создать проект.'));
+			return;
+		}
+
+		header('Location: /admin/projects/' . $projectId . '/');
 	}
 
 	public function detail(int $id): void

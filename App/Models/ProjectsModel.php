@@ -9,6 +9,28 @@ class ProjectsModel extends BaseModel
 {
 	protected string $table = 'projects';
 
+	public function createForAdmin(string $name, int $active = 0): int
+	{
+		$sql = "INSERT INTO {$this->table} (name, active, preview_text, detail_text, preview_image_url, detail_image_url)
+			VALUES (:name, :active, :preview_text, :detail_text, :preview_image_url, :detail_image_url)";
+		$stmt = $this->db->prepare($sql);
+
+		$ok = $stmt->execute([
+			':name' => $name,
+			':active' => $active,
+			':preview_text' => '',
+			':detail_text' => '',
+			':preview_image_url' => '',
+			':detail_image_url' => '',
+		]);
+
+		if (!$ok) {
+			return 0;
+		}
+
+		return (int) $this->db->lastInsertId();
+	}
+
 	public function updateMainInfo(int $id, string $name, int $active): bool
 	{
 		$sql = "UPDATE {$this->table} SET name = :name, active = :active WHERE id = :id";

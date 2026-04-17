@@ -22,7 +22,7 @@ class ProjectsController extends BaseController
 			return;
 		}
 
-		Template::getInstance()->setParam('title', 'Проекты');
+		Template::getInstance()->setParam('title', 'РџСЂРѕРµРєС‚С‹');
 
 		$projects = [];
 		try {
@@ -90,7 +90,7 @@ class ProjectsController extends BaseController
 			$allTags = [];
 		}
 
-		Template::getInstance()->setParam('title', 'Редактирование проекта #' . $id);
+		Template::getInstance()->setParam('title', 'Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїСЂРѕРµРєС‚Р° #' . $id);
 
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
@@ -126,23 +126,140 @@ class ProjectsController extends BaseController
 
 		$name = trim((string) ($_POST['name'] ?? ''));
 		$active = isset($_POST['active']) ? 1 : 0;
+		$previewText = trim((string) ($_POST['preview_text'] ?? ''));
+		$detailText = (string) ($_POST['detail_text'] ?? '');
+		$previewImageUrl = trim((string) ($_POST['preview_image_url_existing'] ?? (string) ($project->preview_image_url ?? '')));
+		$detailImageUrl = trim((string) ($_POST['detail_image_url_existing'] ?? (string) ($project->detail_image_url ?? '')));
 
 		if ($name === '') {
-			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Введите название проекта.'));
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Enter project name.'));
 			return;
 		}
 
 		try {
-			if (!$projectsModel->updateMainInfo($id, $name, $active)) {
-				throw new \RuntimeException('Unable to update project');
+			$previewImageUrl = $this->saveProjectImageUpload($id, 'preview_image_file', $previewImageUrl);
+			$detailImageUrl = $this->saveProjectImageUpload($id, 'detail_image_file', $detailImageUrl);
+
+			if (!$projectsModel->updateEditorData(
+				$id,
+				$name,
+				$active,
+				$previewText,
+				$detailText,
+				$previewImageUrl,
+				$detailImageUrl
+			)) {
+				throw new \RuntimeException('Unable to save changes.');
 			}
 
 			header('Location: /admin/projects/' . $id . '/?saved=1');
 			return;
+		} catch (\RuntimeException $e) {
+			$message = trim($e->getMessage());
+			if ($message === '') {
+				$message = 'Unable to save changes.';
+			}
+
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode($message));
+			return;
 		} catch (Throwable) {
-			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Не удалось сохранить изменения.'));
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Unable to save changes.'));
 			return;
 		}
+	}
+
+	private function saveProjectImageUpload(int $projectId, string $fileKey, string $existingUrl): string
+	{
+		$file = $_FILES[$fileKey] ?? null;
+		if (!is_array($file)) {
+			return $existingUrl;
+		}
+
+		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+		if ($errorCode === UPLOAD_ERR_NO_FILE) {
+			return $existingUrl;
+		}
+
+		if ($errorCode !== UPLOAD_ERR_OK) {
+			throw new \RuntimeException('Upload error for ' . $fileKey . '.');
+		}
+
+		$tmpPath = (string) ($file['tmp_name'] ?? '');
+		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+			throw new \RuntimeException('Invalid uploaded file for ' . $fileKey . '.');
+		}
+
+		$mime = $this->detectImageMimeType($tmpPath);
+		$allowedMimeToExt = [
+			'image/jpeg' => 'jpg',
+			'image/png' => 'png',
+			'image/gif' => 'gif',
+			'image/webp' => 'webp',
+		];
+
+		if (!isset($allowedMimeToExt[$mime])) {
+			throw new \RuntimeException('Only JPG/PNG/GIF/WEBP are allowed for ' . $fileKey . '.');
+		}
+
+		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
+		if ($documentRoot === '') {
+			throw new \RuntimeException('Document root is not configured.');
+		}
+
+		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'projects';
+		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+			throw new \RuntimeException('Unable to create upload directory.');
+		}
+
+		$imageType = $fileKey === 'preview_image_file' ? 'preview' : 'detail';
+		$fileName = sprintf(
+			'project_%d_%s_%s_%s.%s',
+			$projectId,
+			$imageType,
+			date('Ymd_His'),
+			bin2hex(random_bytes(4)),
+			$allowedMimeToExt[$mime]
+		);
+		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+
+		if (!move_uploaded_file($tmpPath, $targetPath)) {
+			throw new \RuntimeException('Unable to move uploaded file for ' . $fileKey . '.');
+		}
+
+		return '/upload/images/projects/' . $fileName;
+	}
+
+	private function detectImageMimeType(string $filePath): string
+	{
+		$mime = '';
+
+		if (function_exists('finfo_open')) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			if ($finfo !== false) {
+				$detected = finfo_file($finfo, $filePath);
+				finfo_close($finfo);
+
+				if (is_string($detected)) {
+					$mime = $detected;
+				}
+			}
+		}
+
+		if ($mime === '' && function_exists('mime_content_type')) {
+			$detected = mime_content_type($filePath);
+			if (is_string($detected)) {
+				$mime = $detected;
+			}
+		}
+
+		if ($mime === '' && function_exists('getimagesize')) {
+			$imageInfo = @getimagesize($filePath);
+			if (is_array($imageInfo) && isset($imageInfo['mime']) && is_string($imageInfo['mime'])) {
+				$mime = $imageInfo['mime'];
+			}
+		}
+
+		return strtolower(trim($mime));
 	}
 
 	private function ensureAdmin(): bool
@@ -176,3 +293,4 @@ class ProjectsController extends BaseController
 		}
 	}
 }
+

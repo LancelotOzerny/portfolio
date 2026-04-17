@@ -21,6 +21,36 @@ class ProjectsModel extends BaseModel
 		]);
 	}
 
+	public function updateEditorData(
+		int $id,
+		string $name,
+		int $active,
+		string $previewText,
+		string $detailText,
+		string $previewImageUrl,
+		string $detailImageUrl
+	): bool {
+		$sql = "UPDATE {$this->table}
+			SET name = :name,
+				active = :active,
+				preview_text = :preview_text,
+				detail_text = :detail_text,
+				preview_image_url = :preview_image_url,
+				detail_image_url = :detail_image_url
+			WHERE id = :id";
+		$stmt = $this->db->prepare($sql);
+
+		return $stmt->execute([
+			':name' => $name,
+			':active' => $active,
+			':preview_text' => $previewText,
+			':detail_text' => $detailText,
+			':preview_image_url' => $previewImageUrl,
+			':detail_image_url' => $detailImageUrl,
+			':id' => $id,
+		]);
+	}
+
 	public function findAllBase(int $limit = 0): array
 	{
 		$qb = new QueryBuilder($this->table);

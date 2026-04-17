@@ -7,3 +7,4 @@ App/Configs/Hidden/
 *.log
 
 public_html/upload/
+upload/

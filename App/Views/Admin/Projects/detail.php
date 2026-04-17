@@ -6,6 +6,8 @@ $tags = $data['tags'] ?? [];
 $allTags = $data['allTags'] ?? [];
 $links = $data['links'] ?? [];
 $projectInfo = $data['projectInfo'] ?? [];
+$saveSuccess = (bool) ($data['saveSuccess'] ?? false);
+$saveError = trim((string) ($data['saveError'] ?? ''));
 
 if ($project === null) {
 	echo '<div class="alert alert-danger">Проект не найден.</div>';
@@ -35,7 +37,15 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 		<a href="/admin/projects/" class="btn btn-outline-secondary">К списку проектов</a>
 	</div>
 
-	<form action="#" method="post" enctype="multipart/form-data" class="card border-0 shadow-sm">
+	<?php if ($saveSuccess): ?>
+		<div class="alert alert-success">Изменения сохранены.</div>
+	<?php endif; ?>
+
+	<?php if ($saveError !== ''): ?>
+		<div class="alert alert-danger"><?= htmlspecialchars($saveError) ?></div>
+	<?php endif; ?>
+
+	<form action="/admin/projects/<?= (int) ($project->id ?? 0) ?>/" method="post" enctype="multipart/form-data" class="card border-0 shadow-sm">
 		<div class="card-header bg-white border-bottom-0 pb-0">
 			<ul class="nav nav-tabs card-header-tabs" id="project-tabs" role="tablist">
 				<li class="nav-item" role="presentation">
@@ -238,7 +248,7 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 		</div>
 
 		<div class="card-footer bg-white border-top d-flex justify-content-end">
-			<button type="button" class="btn btn-primary" disabled>Сохранить (в разработке)</button>
+			<button type="submit" class="btn btn-primary">Сохранить</button>
 		</div>
 	</form>
 </section>

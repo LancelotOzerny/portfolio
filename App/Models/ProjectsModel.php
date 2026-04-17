@@ -9,6 +9,18 @@ class ProjectsModel extends BaseModel
 {
 	protected string $table = 'projects';
 
+	public function updateMainInfo(int $id, string $name, int $active): bool
+	{
+		$sql = "UPDATE {$this->table} SET name = :name, active = :active WHERE id = :id";
+		$stmt = $this->db->prepare($sql);
+
+		return $stmt->execute([
+			':name' => $name,
+			':active' => $active,
+			':id' => $id,
+		]);
+	}
+
 	public function findAllBase(int $limit = 0): array
 	{
 		$qb = new QueryBuilder($this->table);

@@ -99,8 +99,50 @@ class ProjectsController extends BaseController
 			'allTags' => $allTags,
 			'links' => $links,
 			'projectInfo' => $projectInfo,
+			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
+			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
 		Template::getInstance()->showFooter();
+	}
+
+	public function updateMainInfo(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$projectsModel = new ProjectsModel();
+
+		try {
+			$project = $projectsModel->findBaseById($id);
+		} catch (Throwable) {
+			$project = null;
+		}
+
+		if ($project === null) {
+			header('Location: /admin/projects/');
+			return;
+		}
+
+		$name = trim((string) ($_POST['name'] ?? ''));
+		$active = isset($_POST['active']) ? 1 : 0;
+
+		if ($name === '') {
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Введите название проекта.'));
+			return;
+		}
+
+		try {
+			if (!$projectsModel->updateMainInfo($id, $name, $active)) {
+				throw new \RuntimeException('Unable to update project');
+			}
+
+			header('Location: /admin/projects/' . $id . '/?saved=1');
+			return;
+		} catch (Throwable) {
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Не удалось сохранить изменения.'));
+			return;
+		}
 	}
 
 	private function ensureAdmin(): bool

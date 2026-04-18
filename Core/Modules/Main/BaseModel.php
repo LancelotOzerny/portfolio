@@ -21,6 +21,7 @@ abstract class BaseModel {
 	{
 		$builder = new QueryBuilder($this->table);
 		$builder->select();
+		$builder->orderBy("id", "DESC");
 		if ($limit > 0)
 		{
 			$builder->limit($limit);
@@ -37,7 +38,7 @@ abstract class BaseModel {
 
 	protected function findAllBy(string $column, $value, $operator = '='): array
 	{
-		$qb = (new QueryBuilder($this->table))->select()->where($column, $operator, $value);
+		$qb = (new QueryBuilder($this->table))->select()->where($column, $operator, $value)->orderBy("id", "DESC");
 		return $this->execQuery($qb) ?? [];
 	}
 

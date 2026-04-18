@@ -77,6 +77,7 @@ class ProjectsModel extends BaseModel
 	{
 		$qb = new QueryBuilder($this->table);
 		$qb->select();
+		$qb->orderBy("id", "DESC");
 
 		if ($limit > 0) {
 			$qb->limit($limit);
@@ -110,14 +111,13 @@ class ProjectsModel extends BaseModel
 
 	public function findById(int $id): ?object
 	{
-		$linksModel = new LinksModel();
-		$projectTagsModel = new ProjectTagsModel();
 		$project = parent::findById($id);
 
 		if ($project)
 		{
-			$project->links = $linksModel->findAllByProject($project->id);
-			$project->tags = $projectTagsModel->findAllByProjectId($project->id);
+			$project->links = (new LinksModel())->findAllByProject($project->id);
+			$project->tags = (new ProjectTagsModel())->findAllByProjectId($project->id);
+			$project->info = (new ProjectsInfoModel())->findAllByProjectId($id);
 		}
 
 		return $project;

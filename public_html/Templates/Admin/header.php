@@ -9,6 +9,7 @@ $showAdminSidebar = Auth::getInstance()->isAdmin();
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
+$configsActive = str_starts_with($currentPath, '/admin/configs/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 ?>
 <!DOCTYPE html>
@@ -139,6 +140,10 @@ $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-activ
 				<a class="admin-sideout__link<?= $usersActive ?>" href="/admin/users/">
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>
+				</a>
+				<a class="admin-sideout__link<?= $configsActive ?>" href="/admin/configs/">
+					<span class="admin-sideout__icon">Кф</span>
+					<span class="admin-sideout__label">Конфиги</span>
 				</a>
 				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
 					<span class="admin-sideout__icon">На</span>

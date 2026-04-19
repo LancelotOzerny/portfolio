@@ -533,7 +533,7 @@ class QueryBuilder
 	{
 		$column = trim($column);
 		if ($column === '*') {
-			return $column;
+			return $this->table . '.*';
 		}
 
 		if (!$this->shouldPrefixColumn($column)) {

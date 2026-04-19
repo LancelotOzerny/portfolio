@@ -25,7 +25,7 @@ $heroVariant = 'v1'; // v1 | v2
 
     <div class="col-lg-6 mt-5 mt-lg-0 position-relative z-2">
         <div class="hero-v1-visual mx-auto">
-            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80"
+            <img src="/Templates/Default/img/hero-area.png"
                  alt="Рабочее место web-разработчика с кодом на экране"
                  class="hero-v1-image img-fluid">
             <div class="hero-v1-panel hero-v1-panel-a"><i class="fas fa-code me-2"></i>Frontend</div>

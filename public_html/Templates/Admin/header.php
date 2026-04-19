@@ -9,6 +9,7 @@ $showAdminSidebar = Auth::getInstance()->isAdmin();
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
+$settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -139,7 +140,7 @@ $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>
 				</a>
-				<a class="admin-sideout__link" href="#">
+				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
 					<span class="admin-sideout__icon">На</span>
 					<span class="admin-sideout__label">Настройки</span>
 				</a>
@@ -151,3 +152,4 @@ $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '
 <?php else: ?>
 	<main class="container py-5">
 <?php endif; ?>
+

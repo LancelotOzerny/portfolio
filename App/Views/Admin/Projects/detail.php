@@ -28,6 +28,36 @@ foreach ($tags as $tag) {
 $selectedTagIds = array_values(array_unique($selectedTagIds));
 ?>
 
+<style>
+	.admin-project-detail .detail-text-editor-box {
+		position: relative;
+		z-index: 1;
+		margin-bottom: 0.75rem;
+	}
+
+	.admin-project-detail #detail_text_editor:not(.ql-container) {
+		min-height: 420px;
+	}
+
+	.admin-project-detail #detail_text_editor.ql-container {
+		height: 420px;
+	}
+
+	.admin-project-detail #detail_text_editor.ql-container .ql-editor {
+		min-height: 100%;
+	}
+
+	.admin-project-detail #detail_text_code_editor {
+		min-height: 420px;
+		resize: vertical;
+	}
+
+	.admin-project-detail .card-footer {
+		position: relative;
+		z-index: 2;
+	}
+</style>
+
 <section class="admin-project-detail">
 	<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 		<div>
@@ -146,9 +176,19 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 						</div>
 
 						<div class="col-12">
-							<label class="form-label">Detail text</label>
-							<textarea id="detail_text_editor_input" name="detail_text" rows="10" class="form-control d-none"><?= htmlspecialchars((string) ($project->detail_text ?? '')) ?></textarea>
-							<div id="detail_text_editor" class="bg-white border rounded" style="min-height: 420px;"></div>
+							<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+								<label class="form-label mb-0">Detail text</label>
+								<div class="btn-group btn-group-sm" role="group" aria-label="Режим редактора detail text">
+									<button type="button" class="btn btn-outline-secondary active" data-detail-mode="formatting">Форматирование</button>
+									<button type="button" class="btn btn-outline-secondary" data-detail-mode="code">Код</button>
+								</div>
+							</div>
+							<div class="detail-text-editor-box">
+								<textarea id="detail_text_editor_input" name="detail_text" rows="10" class="form-control d-none"><?= htmlspecialchars((string) ($project->detail_text ?? '')) ?></textarea>
+								<div id="detail_text_editor" class="bg-white border rounded"></div>
+								<textarea id="detail_text_code_editor" rows="14" class="form-control d-none font-monospace" spellcheck="false"></textarea>
+								<div class="form-text mt-2">В режиме "Код" отображается HTML, который будет сохранен и показан на сайте.</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -259,10 +299,71 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 document.addEventListener('DOMContentLoaded', () => {
 	const detailEditorRoot = document.getElementById('detail_text_editor');
 	const detailEditorInput = document.getElementById('detail_text_editor_input');
+	const detailCodeEditor = document.getElementById('detail_text_code_editor');
+	const detailModeButtons = document.querySelectorAll('[data-detail-mode]');
 	const initialDetailHtml = <?= json_encode((string) ($project->detail_text ?? ''), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+	let detailMode = 'formatting';
+	let quill = null;
+
+	const syncDetailValue = () => {
+		if (!detailEditorInput) {
+			return;
+		}
+
+		if (detailMode === 'code' && detailCodeEditor) {
+			detailEditorInput.value = detailCodeEditor.value;
+			return;
+		}
+
+		if (quill) {
+			detailEditorInput.value = quill.root.innerHTML;
+			return;
+		}
+
+		detailEditorInput.value = initialDetailHtml;
+	};
+
+	const syncCodeFromFormatting = () => {
+		if (!detailCodeEditor) {
+			return;
+		}
+
+		detailCodeEditor.value = quill ? quill.root.innerHTML : (detailEditorInput ? detailEditorInput.value : '');
+	};
+
+	const syncFormattingFromCode = () => {
+		if (!detailCodeEditor) {
+			return;
+		}
+
+		const html = detailCodeEditor.value;
+		if (quill) {
+			quill.root.innerHTML = html;
+			return;
+		}
+
+		if (detailEditorRoot) {
+			detailEditorRoot.innerHTML = html;
+		}
+	};
+
+	const updateDetailModeUI = () => {
+		if (detailEditorRoot) {
+			detailEditorRoot.classList.toggle('d-none', detailMode === 'code');
+		}
+
+		if (detailCodeEditor) {
+			detailCodeEditor.classList.toggle('d-none', detailMode !== 'code');
+		}
+
+		detailModeButtons.forEach((button) => {
+			const buttonMode = button.dataset.detailMode === 'code' ? 'code' : 'formatting';
+			button.classList.toggle('active', buttonMode === detailMode);
+		});
+	};
 
 	if (window.Quill && detailEditorRoot && detailEditorInput) {
-		const quill = new Quill('#detail_text_editor', {
+		quill = new Quill('#detail_text_editor', {
 			theme: 'snow',
 			modules: {
 				toolbar: [
@@ -279,18 +380,60 @@ document.addEventListener('DOMContentLoaded', () => {
 			quill.root.innerHTML = initialDetailHtml;
 		}
 
-		const syncEditorValue = () => {
-			detailEditorInput.value = quill.root.innerHTML;
-		};
+		syncCodeFromFormatting();
+		syncDetailValue();
+		quill.on('text-change', () => {
+			if (detailMode === 'code') {
+				return;
+			}
 
-		syncEditorValue();
-		quill.on('text-change', syncEditorValue);
+			syncCodeFromFormatting();
+			syncDetailValue();
+		});
 
 		const form = detailEditorInput.closest('form');
 		if (form) {
-			form.addEventListener('submit', syncEditorValue);
+			form.addEventListener('submit', syncDetailValue);
 		}
+	} else {
+		detailMode = 'code';
+		detailModeButtons.forEach((button) => {
+			if (button.dataset.detailMode === 'formatting') {
+				button.disabled = true;
+			}
+		});
 	}
+
+	if (detailCodeEditor) {
+		detailCodeEditor.value = initialDetailHtml || (detailEditorInput ? detailEditorInput.value : '');
+		detailCodeEditor.addEventListener('input', () => {
+			if (detailMode === 'code') {
+				syncDetailValue();
+			}
+		});
+	}
+
+	detailModeButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const nextMode = button.dataset.detailMode === 'code' ? 'code' : 'formatting';
+			if (nextMode === detailMode || (nextMode === 'formatting' && !quill)) {
+				return;
+			}
+
+			if (nextMode === 'code') {
+				syncCodeFromFormatting();
+			} else {
+				syncFormattingFromCode();
+			}
+
+			detailMode = nextMode;
+			updateDetailModeUI();
+			syncDetailValue();
+		});
+	});
+
+	updateDetailModeUI();
+	syncDetailValue();
 
 	const triggerButtons = document.querySelectorAll('.project-image-trigger');
 	triggerButtons.forEach((button) => {

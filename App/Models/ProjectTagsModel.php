@@ -21,8 +21,11 @@ class ProjectTagsModel extends BaseModel
 
 	public function replaceProjectTags(int $projectId, array $tagIds): bool
 	{
-		$deleteStmt = $this->db->prepare("DELETE FROM {$this->table} WHERE project_id = :project_id");
-		if (!$deleteStmt->execute([':project_id' => $projectId])) {
+		$deleteQb = (new QueryBuilder($this->table))
+			->delete()
+			->where('project_id', '=', $projectId);
+
+		if (!$this->execWriteQuery($deleteQb)) {
 			throw new \RuntimeException('Unable to clear project tags.');
 		}
 
@@ -30,18 +33,18 @@ class ProjectTagsModel extends BaseModel
 			return true;
 		}
 
-		$insertStmt = $this->db->prepare("INSERT INTO {$this->table} (project_id, tag_id) VALUES (:project_id, :tag_id)");
-
 		foreach ($tagIds as $tagId) {
 			$normalizedTagId = (int) $tagId;
 			if ($normalizedTagId <= 0) {
 				continue;
 			}
 
-			if (!$insertStmt->execute([
-				':project_id' => $projectId,
-				':tag_id' => $normalizedTagId,
-			])) {
+			$insertQb = (new QueryBuilder($this->table))->insert([
+				'project_id' => $projectId,
+				'tag_id' => $normalizedTagId,
+			]);
+
+			if (!$this->execWriteQuery($insertQb)) {
 				throw new \RuntimeException('Unable to save project tags.');
 			}
 		}

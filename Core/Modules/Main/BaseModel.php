@@ -72,4 +72,22 @@ abstract class BaseModel {
 		$data = $single ? $stmt->fetch(PDO::FETCH_ASSOC) : $stmt->fetchAll(PDO::FETCH_ASSOC);
 		return $single ? $this->toObject($data) : $this->toObjects($data);
 	}
+
+	protected function execWriteQuery(QueryBuilder $qb): bool
+	{
+		$queryData = $qb->getQuery();
+
+		$stmt = $this->db->prepare($queryData['sql']);
+		return $stmt->execute($queryData['params']);
+	}
+
+	protected function execInsertQuery(QueryBuilder $qb): int
+	{
+		if (!$this->execWriteQuery($qb))
+		{
+			return 0;
+		}
+
+		return (int) $this->db->lastInsertId();
+	}
 }

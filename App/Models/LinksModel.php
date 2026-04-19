@@ -2,6 +2,7 @@
 
 namespace Models;
 
+use Modules\DBWork\QueryBuilder;
 use Modules\Main\BaseModel;
 
 class LinksModel extends BaseModel
@@ -22,16 +23,17 @@ class LinksModel extends BaseModel
 
 	public function replaceProjectLinks(int $projectId, array $links): bool
 	{
-		$deleteStmt = $this->db->prepare("DELETE FROM {$this->table} WHERE project_id = :project_id");
-		if (!$deleteStmt->execute([':project_id' => $projectId])) {
+		$deleteQb = (new QueryBuilder($this->table))
+			->delete()
+			->where('project_id', '=', $projectId);
+
+		if (!$this->execWriteQuery($deleteQb)) {
 			throw new \RuntimeException('Unable to clear project links.');
 		}
 
 		if (empty($links)) {
 			return true;
 		}
-
-		$insertStmt = $this->db->prepare("INSERT INTO {$this->table} (project_id, name, link) VALUES (:project_id, :name, :link)");
 
 		foreach ($links as $row) {
 			$name = trim((string) ($row['name'] ?? ''));
@@ -41,11 +43,13 @@ class LinksModel extends BaseModel
 				continue;
 			}
 
-			if (!$insertStmt->execute([
-				':project_id' => $projectId,
-				':name' => $name,
-				':link' => $link,
-			])) {
+			$insertQb = (new QueryBuilder($this->table))->insert([
+				'project_id' => $projectId,
+				'name' => $name,
+				'link' => $link,
+			]);
+
+			if (!$this->execWriteQuery($insertQb)) {
 				throw new \RuntimeException('Unable to save project links.');
 			}
 		}

@@ -11,36 +11,28 @@ class ProjectsModel extends BaseModel
 
 	public function createForAdmin(string $name, int $active = 0): int
 	{
-		$sql = "INSERT INTO {$this->table} (name, active, preview_text, detail_text, preview_image_url, detail_image_url)
-			VALUES (:name, :active, :preview_text, :detail_text, :preview_image_url, :detail_image_url)";
-		$stmt = $this->db->prepare($sql);
-
-		$ok = $stmt->execute([
-			':name' => $name,
-			':active' => $active,
-			':preview_text' => '',
-			':detail_text' => '',
-			':preview_image_url' => '',
-			':detail_image_url' => '',
+		$qb = (new QueryBuilder($this->table))->insert([
+			'name' => $name,
+			'active' => $active,
+			'preview_text' => '',
+			'detail_text' => '',
+			'preview_image_url' => '',
+			'detail_image_url' => '',
 		]);
 
-		if (!$ok) {
-			return 0;
-		}
-
-		return (int) $this->db->lastInsertId();
+		return $this->execInsertQuery($qb);
 	}
 
 	public function updateMainInfo(int $id, string $name, int $active): bool
 	{
-		$sql = "UPDATE {$this->table} SET name = :name, active = :active WHERE id = :id";
-		$stmt = $this->db->prepare($sql);
+		$qb = (new QueryBuilder($this->table))
+			->update([
+				'name' => $name,
+				'active' => $active,
+			])
+			->where('id', '=', $id);
 
-		return $stmt->execute([
-			':name' => $name,
-			':active' => $active,
-			':id' => $id,
-		]);
+		return $this->execWriteQuery($qb);
 	}
 
 	public function updateEditorData(
@@ -52,25 +44,18 @@ class ProjectsModel extends BaseModel
 		string $previewImageUrl,
 		string $detailImageUrl
 	): bool {
-		$sql = "UPDATE {$this->table}
-			SET name = :name,
-				active = :active,
-				preview_text = :preview_text,
-				detail_text = :detail_text,
-				preview_image_url = :preview_image_url,
-				detail_image_url = :detail_image_url
-			WHERE id = :id";
-		$stmt = $this->db->prepare($sql);
+		$qb = (new QueryBuilder($this->table))
+			->update([
+				'name' => $name,
+				'active' => $active,
+				'preview_text' => $previewText,
+				'detail_text' => $detailText,
+				'preview_image_url' => $previewImageUrl,
+				'detail_image_url' => $detailImageUrl,
+			])
+			->where('id', '=', $id);
 
-		return $stmt->execute([
-			':name' => $name,
-			':active' => $active,
-			':preview_text' => $previewText,
-			':detail_text' => $detailText,
-			':preview_image_url' => $previewImageUrl,
-			':detail_image_url' => $detailImageUrl,
-			':id' => $id,
-		]);
+		return $this->execWriteQuery($qb);
 	}
 
 	public function findAllBase(int $limit = 0): array
@@ -98,9 +83,19 @@ class ProjectsModel extends BaseModel
 	{
 		$linksModel = new LinksModel();
 		$projectTagsModel = new ProjectTagsModel();
-		$items = parent::findAll($limit);
+		$qb = (new QueryBuilder($this->table))
+			->select()
+			->where('active', '=', 1)
+			->orderBy('id', 'DESC');
 
-		foreach ($items as &$item)
+		if ($limit > 0)
+		{
+			$qb->limit($limit);
+		}
+
+		$items = $this->execQuery($qb) ?? [];
+
+		foreach ($items as $item)
 		{
 			$item->links = $linksModel->findAllByProject($item->id);
 			$item->tags = $projectTagsModel->findAllByProjectId($item->id);
@@ -111,7 +106,11 @@ class ProjectsModel extends BaseModel
 
 	public function findById(int $id): ?object
 	{
-		$project = parent::findById($id);
+		$qb = (new QueryBuilder($this->table))
+			->select()
+			->where('id', '=', $id)
+			->where('active', '=', 1);
+		$project = $this->execQuery($qb, true);
 
 		if ($project)
 		{

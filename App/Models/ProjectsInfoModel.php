@@ -2,6 +2,7 @@
 
 namespace Models;
 
+use Modules\DBWork\QueryBuilder;
 use Modules\Main\BaseModel;
 
 class ProjectsInfoModel extends BaseModel
@@ -15,18 +16,17 @@ class ProjectsInfoModel extends BaseModel
 
 	public function replaceByProjectId(int $projectId, array $items): bool
 	{
-		$deleteStmt = $this->db->prepare("DELETE FROM {$this->table} WHERE project_id = :project_id");
-		if (!$deleteStmt->execute([':project_id' => $projectId])) {
+		$deleteQb = (new QueryBuilder($this->table))
+			->delete()
+			->where('project_id', '=', $projectId);
+
+		if (!$this->execWriteQuery($deleteQb)) {
 			throw new \RuntimeException('Unable to clear project info.');
 		}
 
 		if (empty($items)) {
 			return true;
 		}
-
-		$insertStmt = $this->db->prepare(
-			"INSERT INTO {$this->table} (project_id, date, develop_time, version) VALUES (:project_id, :date, :develop_time, :version)"
-		);
 
 		foreach ($items as $item) {
 			$date = trim((string) ($item['date'] ?? ''));
@@ -37,12 +37,14 @@ class ProjectsInfoModel extends BaseModel
 				continue;
 			}
 
-			if (!$insertStmt->execute([
-				':project_id' => $projectId,
-				':date' => $date,
-				':develop_time' => $developTime,
-				':version' => $version,
-			])) {
+			$insertQb = (new QueryBuilder($this->table))->insert([
+				'project_id' => $projectId,
+				'date' => $date,
+				'develop_time' => $developTime,
+				'version' => $version,
+			]);
+
+			if (!$this->execWriteQuery($insertQb)) {
 				throw new \RuntimeException('Unable to save project info.');
 			}
 		}

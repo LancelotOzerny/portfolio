@@ -1,9 +1,19 @@
-<div class="hero-area row py-5 align-items-center">
-    <div class="col-12 text-center position-relative">
-        <h1 class="display-3 fw-bold mb-4 text-shadow">Максим Беляков</h1>
-        <p class="lead fs-3 mb-4 text-shadow">Full-Stack Web Developer</p>
-        <p class="text-muted fs-5 mb-5 px-lg-5 mx-auto" style="max-width: 600px;">Разработка корпоративных порталов, игр и CMS на современных технологиях.</p>
-        <div class="d-flex gap-3 flex-column flex-sm-row justify-content-center">
+<?php
+$heroVariant = 'v1'; // v1 | v2
+?>
+
+<?php if ($heroVariant === 'v1'): ?>
+<div class="hero-area hero-area-v1 row py-5 align-items-center position-relative overflow-hidden">
+    <div class="hero-grid-overlay" aria-hidden="true"></div>
+
+    <div class="col-lg-6 text-center text-lg-start position-relative z-2 hero-content">
+        <span class="hero-kicker mb-3">Web Development</span>
+        <h1 class="display-3 fw-bold mb-4 text-shadow hero-title">Максим Беляков</h1>
+        <p class="lead fs-3 mb-4 text-shadow hero-subtitle">Full-Stack Web Developer</p>
+        <p class="text-muted fs-5 mb-5 pe-lg-5 hero-description">
+            Разработка корпоративных порталов, игр и CMS на современных технологиях.
+        </p>
+        <div class="d-flex gap-3 flex-column flex-sm-row justify-content-center justify-content-lg-start hero-actions">
             <a href="/portfolio/" class="btn btn-primary btn-lg px-5 py-3 fs-5 shadow-lg">
                 <i class="fas fa-briefcase me-2"></i>Проекты
             </a>
@@ -12,8 +22,64 @@
             </a>
         </div>
     </div>
-</div>
 
+    <div class="col-lg-6 mt-5 mt-lg-0 position-relative z-2">
+        <div class="hero-v1-visual mx-auto">
+            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80"
+                 alt="Рабочее место web-разработчика с кодом на экране"
+                 class="hero-v1-image img-fluid">
+            <div class="hero-v1-panel hero-v1-panel-a"><i class="fas fa-code me-2"></i>Frontend</div>
+            <div class="hero-v1-panel hero-v1-panel-b"><i class="fas fa-server me-2"></i>Backend</div>
+        </div>
+    </div>
+</div>
+<?php else: ?>
+<div class="hero-area hero-area-v2 row py-5 align-items-center position-relative overflow-hidden">
+    <div class="hero-grid-overlay" aria-hidden="true"></div>
+
+    <div class="col-lg-7 text-center text-lg-start position-relative z-2 hero-content">
+        <span class="hero-kicker mb-3">Build. Ship. Improve.</span>
+        <h1 class="display-3 fw-bold mb-4 text-shadow hero-title">Максим Беляков</h1>
+        <p class="lead fs-3 mb-4 text-shadow hero-subtitle">Full-Stack Web Developer</p>
+        <p class="text-muted fs-5 mb-4 pe-lg-5 hero-description">
+            Масштабируемые веб-решения с акцентом на производительность, стабильность и чистую архитектуру.
+        </p>
+
+        <div class="hero-v2-stats mb-4">
+            <div class="hero-v2-stat"><span>95%</span> Frontend</div>
+            <div class="hero-v2-stat"><span>75%</span> Backend</div>
+            <div class="hero-v2-stat"><span>70%</span> Git</div>
+        </div>
+
+        <div class="d-flex gap-3 flex-column flex-sm-row justify-content-center justify-content-lg-start hero-actions">
+            <a href="/portfolio/" class="btn btn-primary btn-lg px-5 py-3 fs-5 shadow-lg">
+                <i class="fas fa-briefcase me-2"></i>Проекты
+            </a>
+            <a href="/contacts/" class="btn btn-outline-primary btn-lg px-5 py-3 fs-5 shadow">
+                <i class="fas fa-envelope me-2"></i>Связаться
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mt-5 mt-lg-0 position-relative z-2">
+        <div class="hero-v2-terminal mx-auto">
+            <div class="hero-v2-terminal-head">
+                <span class="hero-v2-dot"></span>
+                <span class="hero-v2-dot"></span>
+                <span class="hero-v2-dot"></span>
+                <small class="ms-2">deploy.log</small>
+            </div>
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1400&q=80"
+                 alt="Монитор с кодом и интерфейсом разработки"
+                 class="hero-v2-image img-fluid">
+            <div class="hero-v2-status">
+                <span class="hero-v2-status-line"></span>
+                Release stable
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 <!-- Раздел "О себе" -->
 <section class="scroll-show-area py-8 bg-light">
     <div class="py-5">

@@ -1,0 +1,19 @@
+.navbar
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	background-color: #22222222;
+
+	display: flex;
+	justify-content: space-between;
+	padding: 15px 25px;
+}
+
+.navbar-nav
+{
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}

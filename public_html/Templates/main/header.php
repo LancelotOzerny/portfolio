@@ -10,6 +10,12 @@
 	<link rel="stylesheet" href="/Templates/main/styles.css">
 </head>
 <body>
+<?php
+(new \Components\Navigation\Navigation([
+    'type' => 'Main',
+    'template' => 'Main'
+]))->render();
+?>
 <div class="container fullscreen d-flex flex-center">
     <div class="profile">
         <div class="profile__image">

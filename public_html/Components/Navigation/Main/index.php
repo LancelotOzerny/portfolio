@@ -1,13 +1,19 @@
-<header class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
-	<a class="navbar-brand" href="/">Lancy</a>
+<header class="navbar main-navigation" data-main-navigation>
+	<a class="navbar-brand main-navigation__brand" href="/" aria-label="Lancy studio">Lancy</a>
 
-	<div class="collapse navbar-collapse" id="navbarNav">
-		<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+	<button class="main-navigation__toggle" type="button" aria-label="Open menu" aria-expanded="false" data-nav-toggle>
+		<span></span>
+		<span></span>
+		<span></span>
+	</button>
+
+	<nav class="main-navigation__panel" id="navbarNav" aria-label="Main menu">
+		<ul class="navbar-nav main-navigation__list">
 			<?php foreach ($this->getParam('items') as $item): ?>
-				<li class="nav-item">
-					<a class="nav-link <?= $item['active'] ? 'active' : '' ?>" aria-current="page" href="<?= $item['link'] ?>"><?= $item['name'] ?></a>
+				<li class="nav-item main-navigation__item">
+					<a class="nav-link main-navigation__link <?= $item['active'] ? 'active' : '' ?>" aria-current="<?= $item['active'] ? 'page' : 'false' ?>" href="<?= $item['link'] ?>"><?= $item['name'] ?></a>
 				</li>
 			<?php endforeach; ?>
 		</ul>
-	</div>
+	</nav>
 </header>

@@ -7,7 +7,10 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title><?= $this->getParam('title') ?></title>
 
-	<link rel="stylesheet" href="/Templates/main/styles.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/Templates/Main/styles.css">
 </head>
 <body>
 <?php

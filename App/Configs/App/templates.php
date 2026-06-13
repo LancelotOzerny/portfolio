@@ -13,7 +13,7 @@ return [
 	[
 		'path'     => '/',
 		'method'   => 'equal',
-		'template' => 'main',
+		'template' => 'Main',
 	],
 	[
 		'path'     => '/',

@@ -1,3 +1,9 @@
+<!-- Готов к новым проектам -->
+<div class="sta">
+    <h2 class="sta__title">Готов к новым проектам</h2>
+    <a href="/contacts/" class="btn btn_outline">Связаться со мной</a>
+</div>
+
 <footer class="site-footer scroll-show-area">
 	<div class="container site-footer__container">
 		<div class="site-footer__brand">

@@ -215,9 +215,3 @@
         </div>
     </div>
 </section>
-
-<!-- Готов к новым проектам -->
-<div class="sta">
-    <h2 class="sta__title">Готов к новым проектам</h2>
-    <a href="/contacts/" class="btn btn_outline">Связаться со мной</a>
-</div>

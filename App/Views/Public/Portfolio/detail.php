@@ -145,7 +145,7 @@ $formatDate = static function (string $rawDate): string {
 
 <section class="container detail-related scroll-show-area">
     <div class="detail-related__title">
-        <h2>Похожие проекты</h2>
+        <h2>Другие проекты</h2>
     </div>
 
     <div class="detail-related__content">

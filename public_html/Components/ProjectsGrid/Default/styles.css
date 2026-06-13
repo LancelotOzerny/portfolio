@@ -9,6 +9,9 @@
 .project-item
 {
 	min-width: 0;
+	width: 100%;
+	max-width: none;
+	padding: 0;
 }
 
 .project-card
@@ -143,6 +146,7 @@
 .project-card__button
 {
 	display: inline-flex;
+	flex: none;
 	align-items: center;
 	justify-content: center;
 	width: 100%;

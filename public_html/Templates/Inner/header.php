@@ -1,12 +1,34 @@
-<?php
-$defaultTemplatePath = '/Templates/Default';
-define('DEFAULT_TEMPLATE_PATH', \Modules\Main\App::getInstance()->root . '/public_html' . $defaultTemplatePath);
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		  content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title><?= $this->getParam('title') ?></title>
 
-require_once DEFAULT_TEMPLATE_PATH . '/header.php';
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+	<link href="/Templates/Default/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="/Templates/Inner/styles.css">
+</head>
+<body class="inner-page">
+<?php
+(new \Components\Navigation\Navigation([
+	'type' => 'Main',
+	'template' => 'Main'
+]))->render();
 ?>
 
-<div class="text-center py-5 bg-gradient"
-     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-	<h1 class="display-3 fw-light fs-1"><?= $this->getParam('title') ?></h1>
-	<p class="lead fs-4"><?= $this->getParam('subtitle') ?></p>
-</div>
+<section class="inner-hero">
+	<div class="container inner-hero__container">
+		<div class="inner-hero__content">
+			<a class="inner-hero__back" href="/">LANCY</a>
+			<h1 class="inner-hero__title"><?= $this->getParam('title') ?></h1>
+			<?php if ($this->getParam('subtitle')): ?>
+				<p class="inner-hero__subtitle"><?= $this->getParam('subtitle') ?></p>
+			<?php endif; ?>
+		</div>
+	</div>
+</section>

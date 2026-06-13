@@ -51,13 +51,15 @@ class BaseComponent
 
 		if (file_exists($path = $templatePath . '/script.js'))
 		{
-			$path = str_replace(App::getInstance()->root . '/public_html', '', $path);
+			$publicPath = str_replace('\\', '/', App::getInstance()->root . '/public_html');
+			$path = str_replace($publicPath, '', $path);
 			AssetLoader::getInstance()->addJs($path);
 		}
 
 		if (file_exists($path = $templatePath . '/styles.css'))
 		{
-			$path = str_replace(App::getInstance()->root . '/public_html', '', $path);
+			$publicPath = str_replace('\\', '/', App::getInstance()->root . '/public_html');
+			$path = str_replace($publicPath, '', $path);
 			AssetLoader::getInstance()->addCss($path);
 		}
 

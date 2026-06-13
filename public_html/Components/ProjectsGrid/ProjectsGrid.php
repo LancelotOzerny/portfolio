@@ -10,11 +10,34 @@ class ProjectsGrid extends BaseComponent
 	protected function prepareData(array $params = []): void
 	{
 		$limit = $params['limit'] ?? 0;
+		$excludeId = (int) ($params['exclude_id'] ?? 0);
+		$useRandom = (bool) ($params['random'] ?? false);
 
 		$projectsModel = new ProjectsModel();
-		$this->setParam('items', $projectsModel->findAll($limit));
+		$items = $projectsModel->findAll($useRandom || $excludeId > 0 ? 0 : $limit);
+
+		if ($excludeId > 0)
+		{
+			$items = array_values(array_filter($items, static function ($item) use ($excludeId): bool {
+				return (int) ($item->id ?? 0) !== $excludeId;
+			}));
+		}
+
+		if ($useRandom)
+		{
+			shuffle($items);
+		}
+
+		if ($limit > 0 && ($useRandom || $excludeId > 0))
+		{
+			$items = array_slice($items, 0, $limit);
+		}
+
+		$this->setParam('items', $items);
 		$this->setParam('use_filters', false);
 		$this->setParam('limit', $limit);
+		$this->setParam('exclude_id', $excludeId);
+		$this->setParam('random', $useRandom);
 
 		if ($params['use_filters'] ?? null)
 		{

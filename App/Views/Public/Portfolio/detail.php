@@ -1,20 +1,22 @@
 <?php
 /* @var array $data */
 
-$projectsGrid = new \Components\ProjectsGrid\ProjectsGrid([
-    'use_filters' => false,
-    'limit' => 3
-]);
-
 $currentProject = $data['info'] ?? null;
 if ($currentProject === null) {
     ?>
-    <div class="container py-5">
-        <div class="alert alert-warning mb-0">Проект не найден.</div>
+    <div class="container detail-not-found">
+        <div class="alert alert-warning mb-0">&#1055;&#1088;&#1086;&#1077;&#1082;&#1090; &#1085;&#1077; &#1085;&#1072;&#1081;&#1076;&#1077;&#1085;.</div>
     </div>
     <?php
     return;
 }
+
+$projectsGrid = new \Components\ProjectsGrid\ProjectsGrid([
+    'use_filters' => false,
+    'limit' => 3,
+    'random' => true,
+    'exclude_id' => (int) $currentProject->id
+]);
 
 $projectInfoItems = array_values(array_filter(
     is_array($currentProject->info ?? null) ? $currentProject->info : [],
@@ -43,113 +45,111 @@ $formatDate = static function (string $rawDate): string {
 };
 ?>
 
-<div class="container pt-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <h1 class="display-5 fw-bold mb-4"><?= htmlspecialchars((string) $currentProject->name) ?></h1>
+<section class="detail-hero">
+    <div class="container detail-hero__container">
+        <a class="detail-hero__back" href="/portfolio/">&#8592; &#1050; &#1087;&#1086;&#1088;&#1090;&#1092;&#1086;&#1083;&#1080;&#1086;</a>
+        <h1 class="detail-hero__title"><?= htmlspecialchars((string) $currentProject->name) ?></h1>
 
-            <p class="fs-5 lh-lg">
+        <?php if (trim((string) $currentProject->preview_text) !== ''): ?>
+            <div class="detail-hero__lead">
                 <?= $currentProject->preview_text ?>
-            </p>
+            </div>
+        <?php endif; ?>
 
-            <?php if (!empty($currentProject->tags)): ?>
-                <div class="d-flex gap-3 mb-5 flex-wrap">
-                    <?php foreach ($currentProject->tags as $tag): ?>
-                        <span class="badge bg-primary"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+        <?php if (!empty($currentProject->tags)): ?>
+            <div class="detail-tags">
+                <?php foreach ($currentProject->tags as $tag): ?>
+                    <span class="detail-tag"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
+
+<main class="container detail-layout scroll-show-area">
+    <article class="detail-content">
+        <?php if (!empty($currentProject->detail_image_url)): ?>
+            <figure class="detail-image">
+                <img src="<?= htmlspecialchars((string) $currentProject->detail_image_url) ?>"
+                     alt="<?= htmlspecialchars((string) $currentProject->name) ?>"
+                     title="<?= htmlspecialchars((string) $currentProject->name) ?>">
+            </figure>
+        <?php endif; ?>
+
+        <div class="detail-text">
+            <?= $currentProject->detail_text ?>
+        </div>
+    </article>
+
+    <aside class="detail-sidebar">
+        <div class="detail-panel">
+            <h2 class="detail-panel__title">&#1044;&#1077;&#1090;&#1072;&#1083;&#1080; &#1087;&#1088;&#1086;&#1077;&#1082;&#1090;&#1072;</h2>
+
+            <?php if (!empty($projectInfoItems)): ?>
+                <?php foreach ($projectInfoItems as $infoIndex => $infoItem): ?>
+                    <?php
+                    $infoDate = $formatDate((string) ($infoItem->date ?? ''));
+                    $infoDevelopTime = trim((string) ($infoItem->develop_time ?? ''));
+                    $infoVersion = trim((string) ($infoItem->version ?? ''));
+                    ?>
+
+                    <dl class="detail-meta">
+                        <?php if ($infoDate !== ''): ?>
+                            <div class="detail-meta__item">
+                                <dt>&#1044;&#1072;&#1090;&#1072;</dt>
+                                <dd><?= htmlspecialchars($infoDate) ?></dd>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($infoDevelopTime !== ''): ?>
+                            <div class="detail-meta__item">
+                                <dt>&#1042;&#1088;&#1077;&#1084;&#1103; &#1088;&#1072;&#1079;&#1088;&#1072;&#1073;&#1086;&#1090;&#1082;&#1080;</dt>
+                                <dd><?= htmlspecialchars($infoDevelopTime) ?></dd>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($infoVersion !== ''): ?>
+                            <div class="detail-meta__item">
+                                <dt>&#1042;&#1077;&#1088;&#1089;&#1080;&#1103;</dt>
+                                <dd><?= htmlspecialchars($infoVersion) ?></dd>
+                            </div>
+                        <?php endif; ?>
+                    </dl>
+
+                    <?php if ($infoIndex < count($projectInfoItems) - 1): ?>
+                        <hr class="detail-panel__divider">
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <dl class="detail-meta">
+                    <div class="detail-meta__item">
+                        <dt>&#1044;&#1072;&#1090;&#1072;</dt>
+                        <dd><?= htmlspecialchars($formatDate((string) ($currentProject->created_at ?? ''))) ?></dd>
+                    </div>
+                </dl>
+            <?php endif; ?>
+
+            <?php if (!empty($currentProject->links)): ?>
+                <h2 class="detail-panel__title detail-panel__title_links">&#1057;&#1089;&#1099;&#1083;&#1082;&#1080;</h2>
+                <div class="detail-links">
+                    <?php foreach ($currentProject->links as $link): ?>
+                        <a href="<?= htmlspecialchars((string) ($link->link ?? '')) ?>" target="_blank" rel="noopener">
+                            <?= htmlspecialchars((string) ($link->name ?? '')) ?>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
+    </aside>
+</main>
+
+<section class="container detail-related scroll-show-area">
+    <div class="detail-related__title">
+        <h2>&#1055;&#1086;&#1093;&#1086;&#1078;&#1080;&#1077; &#1087;&#1088;&#1086;&#1077;&#1082;&#1090;&#1099;</h2>
+        <p>&#1057;&#1083;&#1091;&#1095;&#1072;&#1081;&#1085;&#1072;&#1103; &#1087;&#1086;&#1076;&#1073;&#1086;&#1088;&#1082;&#1072; &#1088;&#1072;&#1073;&#1086;&#1090; &#1073;&#1077;&#1079; &#1090;&#1077;&#1082;&#1091;&#1097;&#1077;&#1075;&#1086; &#1087;&#1088;&#1086;&#1077;&#1082;&#1090;&#1072;</p>
     </div>
-</div>
 
-<div class="container">
-    <div class="row">
-
-        <div class="col-lg-8">
-            <?php if (!empty($currentProject->detail_image_url)): ?>
-                <img src="<?= htmlspecialchars((string) $currentProject->detail_image_url) ?>"
-                     alt="<?= htmlspecialchars((string) $currentProject->name) ?>"
-                     title="<?= htmlspecialchars((string) $currentProject->name) ?>"
-                     style="width: 100%;">
-            <?php endif; ?>
-
-            <?= $currentProject->detail_text ?>
-        </div>
-
-        <!-- Боковая панель -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow hover-lift sticky-top" style="top: 96px;">
-                <div class="card-body">
-                    <h4 class="card-title h5 mb-3">Детали проекта</h4>
-
-                    <?php if (!empty($projectInfoItems)): ?>
-                        <?php foreach ($projectInfoItems as $infoIndex => $infoItem): ?>
-                            <?php
-                            $infoDate = $formatDate((string) ($infoItem->date ?? ''));
-                            $infoDevelopTime = trim((string) ($infoItem->develop_time ?? ''));
-                            $infoVersion = trim((string) ($infoItem->version ?? ''));
-                            ?>
-
-                            <ul class="list-unstyled mb-4">
-                                <?php if ($infoDate !== ''): ?>
-                                    <li class="mb-3">
-                                        <i class="bi bi-calendar-event text-muted me-2"></i>
-                                        <strong>Дата:</strong> <?= htmlspecialchars($infoDate) ?>
-                                    </li>
-                                <?php endif; ?>
-
-                                <?php if ($infoDevelopTime !== ''): ?>
-                                    <li class="mb-3">
-                                        <i class="bi bi-clock text-muted me-2"></i>
-                                        <strong>Время разработки:</strong> <?= htmlspecialchars($infoDevelopTime) ?>
-                                    </li>
-                                <?php endif; ?>
-
-                                <?php if ($infoVersion !== ''): ?>
-                                    <li class="mb-3">
-                                        <i class="bi bi-code-slash text-muted me-2"></i>
-                                        <strong>Версия:</strong> <?= htmlspecialchars($infoVersion) ?>
-                                    </li>
-                                <?php endif; ?>
-                            </ul>
-
-                            <?php if ($infoIndex < count($projectInfoItems) - 1): ?>
-                                <hr>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <ul class="list-unstyled mb-4">
-                            <li class="mb-3">
-                                <i class="bi bi-calendar-event text-muted me-2"></i>
-                                <strong>Дата:</strong> <?= htmlspecialchars($formatDate((string) ($currentProject->created_at ?? ''))) ?>
-                            </li>
-                        </ul>
-                    <?php endif; ?>
-
-                    <?php if (!empty($currentProject->links)): ?>
-                        <h4 class="card-title h5 mt-4 mb-3">Ссылки</h4>
-                        <div class="d-grid gap-2">
-                            <?php foreach ($currentProject->links as $link): ?>
-                                <a href="<?= htmlspecialchars((string) ($link->link ?? '')) ?>" target="_blank" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-bug-fill me-2"></i><?= htmlspecialchars((string) ($link->name ?? '')) ?>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
+    <div class="detail-related__content">
+        <?php $projectsGrid->render(); ?>
     </div>
-</div>
-
-<div class="container">
-    <!-- Навигация между проектами -->
-    <div class="row mt-5 pt-4 border-top">
-        <div class="col-12 text-center">
-            <p class="text-muted mb-4">Посмотрите другие мои проекты:</p>
-
-            <?php $projectsGrid->render(); ?>
-        </div>
-    </div>
-</div>
+</section>

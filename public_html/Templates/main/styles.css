@@ -99,21 +99,182 @@ body
 .profile
 {
 	display: grid;
-	grid-gap: 15px;
+	grid-gap: 18px;
 	justify-content: center;
 	justify-items: center;
 	align-content: center;
+	position: relative;
+	max-width: min(720px, calc(100vw - 28px));
+	padding: 0 14px;
+	font-family: "Manrope", Arial, Helvetica, sans-serif;
+	text-align: center;
+	color: #ffffff;
+	animation: profileReveal .72s ease both;
+}
+.profile:before
+{
+	content: "";
+	position: absolute;
+	top: 64px;
+	left: 50%;
+	z-index: 0;
+	width: min(520px, 82vw);
+	height: min(520px, 82vw);
+	pointer-events: none;
+	border-radius: 50%;
+	background: radial-gradient(circle, rgba(255, 255, 255, .2), rgba(255, 255, 255, .08) 34%, transparent 68%);
+	filter: blur(10px);
+	transform: translate(-50%, -50%);
+}
+.profile:after
+{
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -120px;
+	z-index: 0;
+	width: 360px;
+	height: 180px;
+	pointer-events: none;
+	background: rgba(34, 34, 34, .16);
+	filter: blur(54px);
+	transform: translateX(-50%);
+}
+.profile > *
+{
+	position: relative;
+	z-index: 1;
 }
 .profile__image
 {
+	position: relative;
 	width: 256px;
 	height: 256px;
 	overflow: hidden;
-	border-radius: 128px;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, .64);
+	background: #222222;
+	box-shadow:
+		0 22px 58px rgba(0, 0, 0, .24),
+		0 0 0 10px rgba(255, 255, 255, .1),
+		0 0 0 18px rgba(34, 34, 34, .08);
+	animation: profilePhotoFloat 7s ease-in-out infinite;
+}
+.profile__image:before
+{
+	content: "";
+	position: absolute;
+	inset: 8px;
+	z-index: 2;
+	border-radius: inherit;
+	border: 2px solid rgba(255, 255, 255, .34);
+	animation: profilePhotoRing 4.8s ease-in-out infinite;
+}
+.profile__image:after
+{
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+	background: linear-gradient(135deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, 0) 34%, rgba(0, 0, 0, .18));
+	mix-blend-mode: screen;
 }
 .profile__image img
 {
+	display: block;
 	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transform: scale(1.03);
+	transition: transform .55s ease, filter .55s ease;
+}
+.profile:hover .profile__image img
+{
+	filter: saturate(1.08) contrast(1.03);
+	transform: scale(1.08);
+}
+.profile__name
+{
+	margin-top: 10px;
+	font-size: clamp(32px, 5vw, 56px);
+	font-weight: 800;
+	line-height: .98;
+	letter-spacing: 0;
+	text-wrap: balance;
+	text-shadow: 0 14px 34px rgba(0, 0, 0, .18);
+}
+.profile__jobname
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 18px;
+	font-size: clamp(15px, 2vw, 18px);
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0;
+	color: rgba(255, 255, 255, .88);
+	border: 1px solid rgba(255, 255, 255, .2);
+	border-radius: 999px;
+	background: rgba(34, 34, 34, .22);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+.profile__networks-line
+{
+	width: min(260px, 68vw);
+	height: 2px;
+	margin-top: 8px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .82), transparent);
+	box-shadow: 0 0 28px rgba(255, 255, 255, .28);
+}
+
+@media (max-width: 760px)
+{
+	.profile
+	{
+		max-width: calc(100vw - 28px);
+		padding: 0 12px;
+	}
+
+	.profile__image
+	{
+		width: 210px;
+		height: 210px;
+	}
+
+	.profile__jobname
+	{
+		max-width: 100%;
+		padding: 10px 16px;
+	}
+}
+
+@media (max-width: 420px)
+{
+	.profile
+	{
+		padding: 0 10px;
+	}
+
+	.profile__image
+	{
+		width: 176px;
+		height: 176px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.profile,
+	.profile__image,
+	.profile__image:before
+	{
+		animation-duration: .01ms !important;
+		animation-iteration-count: 1 !important;
+	}
 }
 /* ======================================================= */
 /* ======================= </PROFILE> ==================== */
@@ -168,6 +329,40 @@ body
 
 	100% {
 		transform: rotate(360deg);
+	}
+}
+
+@keyframes profileReveal {
+	0% {
+		opacity: 0;
+		transform: translateY(18px) scale(.98);
+	}
+
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes profilePhotoFloat {
+	0%, 100% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(-8px);
+	}
+}
+
+@keyframes profilePhotoRing {
+	0%, 100% {
+		opacity: .52;
+		transform: scale(.98);
+	}
+
+	50% {
+		opacity: .9;
+		transform: scale(1.04);
 	}
 }
 /* ======================================================= */

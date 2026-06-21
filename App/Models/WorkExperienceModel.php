@@ -13,6 +13,8 @@ class WorkExperienceModel extends BaseModel
 	{
 		$qb = (new QueryBuilder($this->table))
 			->select()
+			->orderBy('is_current', 'DESC')
+			->orderBy('end_date', 'DESC')
 			->orderBy('start_date', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
@@ -23,6 +25,8 @@ class WorkExperienceModel extends BaseModel
 		$qb = (new QueryBuilder($this->table))
 			->select()
 			->where('active', '=', 1)
+			->orderBy('is_current', 'DESC')
+			->orderBy('end_date', 'DESC')
 			->orderBy('start_date', 'DESC');
 
 		return $this->execQuery($qb) ?? [];

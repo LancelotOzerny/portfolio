@@ -4,7 +4,10 @@ node_modules/
 dist/
 test/
 App/Configs/Hidden/
-*.log
 
 public_html/upload/
 upload/
+
+*.log
+*.txt
+desktop.ini

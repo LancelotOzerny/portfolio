@@ -1,0 +1,7 @@
+.resume-experience__description > :last-child {
+	margin-bottom: 0;
+}
+
+.resume-experience__description li + li {
+	margin-top: 0.75rem;
+}

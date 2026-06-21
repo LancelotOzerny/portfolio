@@ -14,3 +14,7 @@ $router->post('/admin/settings/repository/update/', \Controllers\Admin\SettingsC
 $router->post('/admin/projects/create/', \Controllers\Admin\ProjectsController::class, 'create');
 $router->get('/admin/projects/{id}/', \Controllers\Admin\ProjectsController::class, 'detail');
 $router->post('/admin/projects/{id}/', \Controllers\Admin\ProjectsController::class, 'updateMainInfo');
+$router->get('/admin/resume/experience/', \Controllers\Admin\ResumeController::class, 'experience');
+$router->post('/admin/resume/experience/create/', \Controllers\Admin\ResumeController::class, 'createExperience');
+$router->get('/admin/resume/experience/{id}/', \Controllers\Admin\ResumeController::class, 'editExperience');
+$router->post('/admin/resume/experience/{id}/', \Controllers\Admin\ResumeController::class, 'updateExperience');

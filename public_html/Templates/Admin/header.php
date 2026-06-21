@@ -11,6 +11,7 @@ $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-activ
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $configsActive = str_starts_with($currentPath, '/admin/configs/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
+$resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -95,6 +96,19 @@ $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-activ
 			white-space: nowrap;
 		}
 
+		.admin-sideout__sublink {
+			display: block;
+			padding: 0.45rem 1rem 0.45rem 4.75rem;
+			color: #6c757d;
+			text-decoration: none;
+		}
+
+		.admin-sideout__sublink:hover,
+		.admin-sideout__sublink.is-active {
+			color: #0d6efd;
+			background: #f4f7ff;
+		}
+
 		.admin-main {
 			margin-left: 336px;
 			min-height: 100vh;
@@ -141,6 +155,11 @@ $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-activ
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>
 				</a>
+				<a class="admin-sideout__link<?= $resumeActive ?>" href="/admin/resume/experience/">
+					<span class="admin-sideout__icon">Рз</span>
+					<span class="admin-sideout__label">Резюме</span>
+				</a>
+				<a class="admin-sideout__sublink<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
 				<a class="admin-sideout__link<?= $configsActive ?>" href="/admin/configs/">
 					<span class="admin-sideout__icon">Кф</span>
 					<span class="admin-sideout__label">Конфиги</span>

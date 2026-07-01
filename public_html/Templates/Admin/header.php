@@ -152,7 +152,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 
 		.admin-sideout__sublink {
 			display: block;
-			padding: 0.45rem 1rem 0.45rem 4.75rem;
+			padding: 0.42rem 0.95rem;
 			color: #6c757d;
 			text-decoration: none;
 		}
@@ -214,10 +214,6 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<span class="admin-sideout__label">Резюме</span>
 				</a>
 				<a class="admin-sideout__sublink<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
-				<a class="admin-sideout__link<?= $configsActive ?>" href="/admin/configs/">
-					<span class="admin-sideout__icon">Кф</span>
-					<span class="admin-sideout__label">Конфиги</span>
-				</a>
 				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
 					<span class="admin-sideout__icon">На</span>
 					<span class="admin-sideout__label">Настройки</span>

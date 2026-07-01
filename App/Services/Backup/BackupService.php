@@ -212,7 +212,7 @@ class BackupService
 		foreach ($tables as $table) {
 			$table = (string) $table;
 			$create = $db->query('SHOW CREATE TABLE `' . str_replace('`', '``', $table) . '`')->fetch(PDO::FETCH_ASSOC);
-			$createSql = (string) ($create['Create Table'] ?? '');
+			$createSql = $this->normalizeDatabaseDumpSql((string) ($create['Create Table'] ?? ''));
 
 			$dump .= "DROP TABLE IF EXISTS `{$table}`;\n";
 			$dump .= $createSql . ";\n\n";
@@ -288,11 +288,106 @@ class BackupService
 			return;
 		}
 
+		$sql = $this->normalizeDatabaseDumpSql($sql);
 		$db = DBConnection::getConnection();
-		$statements = array_filter(array_map('trim', explode(";\n", $sql)));
-		foreach ($statements as $statement) {
-			$db->exec($statement);
+		$db->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+		$db->exec("SET FOREIGN_KEY_CHECKS=0");
+
+		try {
+			foreach ($this->splitSqlStatements($sql) as $statement) {
+				try {
+					$db->exec($statement);
+				} catch (\Throwable $e) {
+					throw new RuntimeException(
+						'Ошибка восстановления БД: ' . $e->getMessage() . '. SQL: ' . substr($statement, 0, 220),
+						0,
+						$e
+					);
+				}
+			}
+		} finally {
+			$db->exec("SET FOREIGN_KEY_CHECKS=1");
 		}
+	}
+
+	private function normalizeDatabaseDumpSql(string $sql): string
+	{
+		return str_replace(
+			[
+				'utf8mb4_0900_ai_ci',
+				'utf8mb4_0900_as_ci',
+				'utf8mb4_0900_bin',
+			],
+			[
+				'utf8mb4_unicode_ci',
+				'utf8mb4_unicode_ci',
+				'utf8mb4_bin',
+			],
+			$sql
+		);
+	}
+
+	private function splitSqlStatements(string $sql): array
+	{
+		$statements = [];
+		$current = '';
+		$length = strlen($sql);
+		$quote = null;
+		$escaped = false;
+
+		for ($i = 0; $i < $length; $i++) {
+			$char = $sql[$i];
+			$current .= $char;
+
+			if ($escaped) {
+				$escaped = false;
+				continue;
+			}
+
+			if ($char === '\\') {
+				$escaped = true;
+				continue;
+			}
+
+			if ($quote !== null) {
+				if ($char === $quote) {
+					$quote = null;
+				}
+
+				continue;
+			}
+
+			if ($char === "'" || $char === '"' || $char === '`') {
+				$quote = $char;
+				continue;
+			}
+
+			if ($char !== ';') {
+				continue;
+			}
+
+			$statement = trim(substr($current, 0, -1));
+			if ($this->shouldRestoreSqlStatement($statement)) {
+				$statements[] = $statement;
+			}
+			$current = '';
+		}
+
+		$tail = trim($current);
+		if ($this->shouldRestoreSqlStatement($tail)) {
+			$statements[] = $tail;
+		}
+
+		return $statements;
+	}
+
+	private function shouldRestoreSqlStatement(string $statement): bool
+	{
+		if ($statement === '') {
+			return false;
+		}
+
+		return !str_starts_with(ltrim($statement), '--');
 	}
 
 	private function clearProjectBeforeRestore(): void

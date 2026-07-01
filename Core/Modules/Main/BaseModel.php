@@ -30,6 +30,19 @@ abstract class BaseModel {
 		return $this->execQuery($builder) ?? [];
 	}
 
+	public function countAll(): int
+	{
+		$builder = new QueryBuilder($this->table);
+		$builder->count();
+
+		$result = $this->execQuery($builder, true);
+		if (!is_object($result)) {
+			return 0;
+		}
+
+		return (int) ($result->total ?? 0);
+	}
+
 	protected function findBy(string $column, $value, $operator = '='): ?object
 	{
 		$qb = (new QueryBuilder($this->table))->select()->where($column, $operator, $value);

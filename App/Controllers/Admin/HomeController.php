@@ -2,6 +2,8 @@
 
 namespace Controllers\Admin;
 
+use Models\ProjectsModel;
+use Models\UsersModel;
 use Modules\Main\BaseController;
 use Modules\Main\Auth;
 use Modules\Main\Template;
@@ -18,8 +20,13 @@ class HomeController extends BaseController
 
         Template::getInstance()->setParam('title', 'Панель администратора');
 
+		$data = [
+			'projectsCount' => (new ProjectsModel())->countAll(),
+			'usersCount' => (new UsersModel())->countAll(),
+		];
+
         Template::getInstance()->showHeader();
-        $this->render('index');
+        $this->render('index', $data);
         Template::getInstance()->showFooter();
     }
 }

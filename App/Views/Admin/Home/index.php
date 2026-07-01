@@ -1,3 +1,10 @@
+<?php
+/* @var array $data */
+
+$projectsCount = (int) ($data['projectsCount'] ?? 0);
+$usersCount = (int) ($data['usersCount'] ?? 0);
+?>
+
 <section class="admin-dashboard">
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
@@ -11,7 +18,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <p class="small text-uppercase text-secondary mb-1">Проекты</p>
-                    <p class="h3 mb-0">24</p>
+                    <p class="h3 mb-0"><?= $projectsCount ?></p>
                 </div>
             </div>
         </div>
@@ -19,7 +26,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <p class="small text-uppercase text-secondary mb-1">Пользователи</p>
-                    <p class="h3 mb-0">128</p>
+                    <p class="h3 mb-0"><?= $usersCount ?></p>
                 </div>
             </div>
         </div>
@@ -27,7 +34,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <p class="small text-uppercase text-secondary mb-1">Сообщения</p>
-                    <p class="h3 mb-0">15</p>
+                    <p class="h5 mb-0">Скоро...</p>
                 </div>
             </div>
         </div>
@@ -35,7 +42,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <p class="small text-uppercase text-secondary mb-1">Ошибки</p>
-                    <p class="h3 mb-0">2</p>
+                    <p class="h5 mb-0">Скоро...</p>
                 </div>
             </div>
         </div>

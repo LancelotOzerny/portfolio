@@ -252,6 +252,11 @@
 	padding: 0 18px;
 }
 
+.navbar-brand
+{
+	color: #fff;
+}
+
 @media (max-width: 760px) {
 	.main-navigation,
 	.main-navigation.is-scrolled {

@@ -16,6 +16,7 @@ $router->get('/admin/settings/backup/', \Controllers\Admin\BackupController::cla
 $router->get('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'create');
 $router->post('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'store');
 $router->get('/admin/settings/backup/list/', \Controllers\Admin\BackupController::class, 'list');
+$router->post('/admin/settings/backup/upload/', \Controllers\Admin\BackupController::class, 'upload');
 $router->post('/admin/settings/backup/delete/{file}/', \Controllers\Admin\BackupController::class, 'delete');
 $router->post('/admin/settings/backup/restore/{file}/', \Controllers\Admin\BackupController::class, 'restore');
 $router->get('/admin/settings/backup/download/{file}/', \Controllers\Admin\BackupController::class, 'download');

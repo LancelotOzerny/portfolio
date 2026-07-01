@@ -14,7 +14,6 @@ class ConfigsController extends BaseController
 {
 	private const FLASH_KEY = 'admin_configs_flash';
 	private const EXCLUDED_SECTIONS = ['hidden'];
-	private const EMPTY_ARRAY_MARKER = '__EMPTY_ARRAY__';
 
 	public function index(): void
 	{
@@ -67,16 +66,15 @@ class ConfigsController extends BaseController
 			return;
 		}
 
-		$values = $_POST['values'] ?? [];
-		$types = $_POST['types'] ?? [];
-		if (!is_array($values) || !is_array($types)) {
-			$this->setFlash(false, 'Некорректные данные формы.');
+		$configContent = (string) ($_POST['config_content'] ?? '');
+		if (trim($configContent) === '') {
+			$this->setFlash(false, 'Конфигурация не может быть пустой.');
 			header('Location: ' . $this->buildEditorUrl($section, $file));
 			return;
 		}
 
 		try {
-			$normalizedValues = $this->normalizePostedValues($values, $types);
+			$normalizedValues = $this->parseConfigContent($configContent);
 			$filePath = $this->buildConfigFilePath($section, $file);
 			$content = "<?php\nreturn " . $this->exportPhpValue($normalizedValues) . ";\n";
 
@@ -189,31 +187,6 @@ class ConfigsController extends BaseController
 		return App::getInstance()->root . '/App/Configs/' . $section . '/' . $file . '.php';
 	}
 
-	private function normalizePostedValues(mixed $values, mixed $types): mixed
-	{
-		if (is_array($values)) {
-			$result = [];
-			foreach ($values as $key => $value) {
-				$typeForKey = is_array($types) && array_key_exists($key, $types) ? $types[$key] : null;
-				$result[$key] = $this->normalizePostedValues($value, $typeForKey);
-			}
-
-			return $result;
-		}
-
-		$type = is_string($types) ? $types : 'string';
-		$stringValue = (string) $values;
-
-		return match ($type) {
-			'array' => $stringValue === self::EMPTY_ARRAY_MARKER ? [] : [],
-			'int', 'integer' => (int) $stringValue,
-			'float', 'double' => (float) $stringValue,
-			'bool', 'boolean' => in_array(strtolower(trim($stringValue)), ['1', 'true', 'on', 'yes'], true),
-			'null' => null,
-			default => $stringValue,
-		};
-	}
-
 	private function exportPhpValue(mixed $value, int $level = 0): string
 	{
 		if (is_array($value)) {
@@ -251,6 +224,39 @@ class ConfigsController extends BaseController
 		}
 
 		return var_export($value, true);
+	}
+
+	private function parseConfigContent(string $content): array
+	{
+		$content = trim($content);
+		$content = preg_replace('~^\s*<\?php\s*~', '', $content) ?? $content;
+		$content = preg_replace('~^\s*return\s+~', '', $content) ?? $content;
+		$content = rtrim($content);
+		if (str_ends_with($content, ';')) {
+			$content = substr($content, 0, -1);
+		}
+
+		$tempFile = tempnam(sys_get_temp_dir(), 'config_edit_');
+		if ($tempFile === false) {
+			throw new RuntimeException('Не удалось создать временный файл для проверки конфигурации.');
+		}
+
+		try {
+			$written = @file_put_contents($tempFile, "<?php\nreturn " . $content . ";\n");
+			if ($written === false) {
+				throw new RuntimeException('Не удалось записать временный файл для проверки конфигурации.');
+			}
+
+			$result = require $tempFile;
+		} finally {
+			@unlink($tempFile);
+		}
+
+		if (!is_array($result)) {
+			throw new RuntimeException('Конфигурация должна возвращать массив.');
+		}
+
+		return $result;
 	}
 
 	private function buildEditorUrl(string $section, string $file): string

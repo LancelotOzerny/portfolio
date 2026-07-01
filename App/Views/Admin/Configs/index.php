@@ -7,7 +7,6 @@ $selectedFile = (string) ($data['selectedFile'] ?? '');
 $configValues = $data['configValues'] ?? null;
 $loadError = (string) ($data['loadError'] ?? '');
 $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
-$emptyArrayMarker = '__EMPTY_ARRAY__';
 
 $buildEditorUrl = static function (string $section, string $file): string {
 	$query = http_build_query([
@@ -18,82 +17,44 @@ $buildEditorUrl = static function (string $section, string $file): string {
 	return '/admin/configs/' . ($query !== '' ? ('?' . $query) : '');
 };
 
-$detectType = static function (mixed $value): string {
-	return match (true) {
-		is_bool($value) => 'bool',
-		is_int($value) => 'int',
-		is_float($value) => 'float',
-		$value === null => 'string',
-		default => 'string',
-	};
-};
-
-$buildInputName = static function (string $root, array $segments): string {
-	$name = $root;
-	foreach ($segments as $segment) {
-		$name .= '[' . (string) $segment . ']';
-	}
-
-	return $name;
-};
-
-$renderFields = null;
-$renderFields = static function (mixed $value, array $segments = [], string $pathLabel = 'root') use (&$renderFields, $detectType, $buildInputName, $emptyArrayMarker): void {
+$exportPhpValue = null;
+$exportPhpValue = static function (mixed $value, int $level = 0) use (&$exportPhpValue): string {
 	if (is_array($value)) {
 		if ($value === []) {
-			$valueName = $buildInputName('values', $segments);
-			$typeName = $buildInputName('types', $segments);
-			?>
-			<input type="hidden" name="<?= htmlspecialchars($valueName) ?>" value="<?= htmlspecialchars($emptyArrayMarker) ?>">
-			<input type="hidden" name="<?= htmlspecialchars($typeName) ?>" value="array">
-			<div class="alert alert-light border py-2 px-3 mb-2 small">
-				Пустой массив: <strong><?= htmlspecialchars($pathLabel) ?></strong>
-			</div>
-			<?php
+			return '[]';
 		}
+
+		$indent = str_repeat("\t", $level);
+		$childIndent = str_repeat("\t", $level + 1);
+		$lines = ['['];
 
 		foreach ($value as $key => $item) {
-			$nextSegments = [...$segments, $key];
-			$nextPath = $pathLabel === 'root'
-				? (string) $key
-				: $pathLabel . ' > ' . (string) $key;
-			$renderFields($item, $nextSegments, $nextPath);
+			$keyLiteral = is_int($key) ? (string) $key : var_export((string) $key, true);
+			$lines[] = $childIndent . $keyLiteral . ' => ' . $exportPhpValue($item, $level + 1) . ',';
 		}
 
-		return;
+		$lines[] = $indent . ']';
+
+		return implode(PHP_EOL, $lines);
 	}
 
-	$type = $detectType($value);
-	$valueName = $buildInputName('values', $segments);
-	$typeName = $buildInputName('types', $segments);
-	$stringValue = $value === null ? '' : (string) $value;
-	$isTextarea = $type === 'string' && (str_contains($stringValue, "\n") || strlen($stringValue) > 90);
-	?>
+	if (is_string($value)) {
+		return var_export($value, true);
+	}
 
-	<div class="mb-3 pb-3 border-bottom">
-		<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-			<label class="form-label fw-semibold mb-0"><?= htmlspecialchars($pathLabel) ?></label>
-			<span class="badge text-bg-light border"><?= htmlspecialchars($type) ?></span>
-		</div>
+	if (is_bool($value)) {
+		return $value ? 'true' : 'false';
+	}
 
-		<input type="hidden" name="<?= htmlspecialchars($typeName) ?>" value="<?= htmlspecialchars($type) ?>">
+	if ($value === null) {
+		return 'null';
+	}
 
-		<?php if ($type === 'bool'): ?>
-			<select class="form-select form-select-sm" name="<?= htmlspecialchars($valueName) ?>">
-				<option value="1" <?= $value ? 'selected' : '' ?>>true</option>
-				<option value="0" <?= !$value ? 'selected' : '' ?>>false</option>
-			</select>
-		<?php elseif ($type === 'int'): ?>
-			<input type="number" class="form-control form-control-sm" name="<?= htmlspecialchars($valueName) ?>" value="<?= htmlspecialchars($stringValue) ?>" step="1">
-		<?php elseif ($type === 'float'): ?>
-			<input type="number" class="form-control form-control-sm" name="<?= htmlspecialchars($valueName) ?>" value="<?= htmlspecialchars($stringValue) ?>" step="any">
-		<?php elseif ($isTextarea): ?>
-			<textarea class="form-control form-control-sm" name="<?= htmlspecialchars($valueName) ?>" rows="4"><?= htmlspecialchars($stringValue) ?></textarea>
-		<?php else: ?>
-			<input type="text" class="form-control form-control-sm" name="<?= htmlspecialchars($valueName) ?>" value="<?= htmlspecialchars($stringValue) ?>">
-		<?php endif; ?>
-	</div>
-	<?php
+	if (is_float($value) || is_int($value)) {
+		return (string) $value;
+	}
+
+	return var_export($value, true);
 };
 ?>
 
@@ -161,11 +122,11 @@ $renderFields = static function (mixed $value, array $segments = [], string $pat
 							<input type="hidden" name="section" value="<?= htmlspecialchars($selectedSection) ?>">
 							<input type="hidden" name="file" value="<?= htmlspecialchars($selectedFile) ?>">
 
-							<?php if ($configValues === []): ?>
-								<div class="alert alert-light border">Файл содержит пустой массив.</div>
-							<?php else: ?>
-								<?php $renderFields($configValues); ?>
-							<?php endif; ?>
+							<div class="alert alert-light border small">
+								Редактируйте PHP-массив целиком. Можно добавлять, удалять и переставлять элементы; перед сохранением структура будет проверена.
+							</div>
+
+							<textarea class="form-control font-monospace" name="config_content" rows="22" spellcheck="false"><?= htmlspecialchars($exportPhpValue($configValues)) ?></textarea>
 
 							<div class="mt-3">
 								<button type="submit" class="btn btn-primary">Сохранить изменения</button>

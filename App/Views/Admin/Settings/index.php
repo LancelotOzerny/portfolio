@@ -1,10 +1,3 @@
-<?php
-$updateResult = $data['updateResult'] ?? null;
-$isSuccess = is_array($updateResult) && !empty($updateResult['success']);
-$message = is_array($updateResult) ? (string) ($updateResult['message'] ?? '') : '';
-$output = is_array($updateResult) ? trim((string) ($updateResult['output'] ?? '')) : '';
-?>
-
 <section class="admin-settings">
 	<div class="card border-0 shadow-sm">
 		<div class="card-body p-4">
@@ -13,23 +6,26 @@ $output = is_array($updateResult) ? trim((string) ($updateResult['output'] ?? ''
 				<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
 			</div>
 
-			<?php if ($message !== ''): ?>
-				<div class="alert <?= $isSuccess ? 'alert-success' : 'alert-danger' ?>" role="alert">
-					<?= htmlspecialchars($message) ?>
+			<div class="row g-3">
+				<div class="col-12 col-md-6">
+					<a href="/admin/settings/configs/" class="card h-100 text-decoration-none border shadow-none">
+						<div class="card-body">
+							<p class="small text-uppercase text-secondary mb-1">Подпункт настроек</p>
+							<h2 class="h5 text-dark mb-2">Конфиги</h2>
+							<p class="text-secondary mb-0">Редактирование конфигурационных файлов проекта.</p>
+						</div>
+					</a>
 				</div>
-			<?php endif; ?>
-
-			<form action="/admin/settings/repository/update/" method="post" class="mb-0">
-				<button type="submit" class="btn btn-primary">
-					Обновить репозиторий
-				</button>
-			</form>
-
-			<?php if ($output !== ''): ?>
-				<hr>
-				<p class="small text-secondary mb-2">Результат команды:</p>
-				<pre class="bg-dark text-light p-3 rounded-2 mb-0" style="white-space: pre-wrap;"><?= htmlspecialchars($output) ?></pre>
-			<?php endif; ?>
+				<div class="col-12 col-md-6">
+					<a href="/admin/settings/repository/" class="card h-100 text-decoration-none border shadow-none">
+						<div class="card-body">
+							<p class="small text-uppercase text-secondary mb-1">Подпункт настроек</p>
+							<h2 class="h5 text-dark mb-2">Репозиторий</h2>
+							<p class="text-secondary mb-0">Обновление рабочей копии проекта из ветки main.</p>
+						</div>
+					</a>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>

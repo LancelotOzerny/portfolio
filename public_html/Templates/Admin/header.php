@@ -9,9 +9,10 @@ $showAdminSidebar = Auth::getInstance()->isAdmin();
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
-$configsActive = str_starts_with($currentPath, '/admin/configs/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
+$configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
+$repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/') ? ' is-active' : '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -74,6 +75,31 @@ $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' :
 		.admin-sideout__link.is-active {
 			background: #e8f0ff;
 			color: #0d6efd;
+			font-weight: 600;
+		}
+
+		.admin-sideout__sublink {
+			display: flex;
+			align-items: center;
+			gap: 0.65rem;
+			margin-left: 3.05rem;
+			padding: 0.48rem 0.95rem;
+			color: #6c757d;
+			text-decoration: none;
+			border-left: 2px solid #e9ecef;
+			transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+		}
+
+		.admin-sideout__sublink:hover {
+			background: #f4f7ff;
+			color: #0d6efd;
+			border-color: #b6d4fe;
+		}
+
+		.admin-sideout__sublink.is-active {
+			background: #f8fbff;
+			color: #0d6efd;
+			border-color: #0d6efd;
 			font-weight: 600;
 		}
 
@@ -167,6 +193,12 @@ $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' :
 				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
 					<span class="admin-sideout__icon">На</span>
 					<span class="admin-sideout__label">Настройки</span>
+				</a>
+				<a class="admin-sideout__sublink<?= $configsActive ?>" href="/admin/settings/configs/">
+					<span class="admin-sideout__label">Конфиги</span>
+				</a>
+				<a class="admin-sideout__sublink<?= $repositoryActive ?>" href="/admin/settings/repository/">
+					<span class="admin-sideout__label">Репозиторий</span>
 				</a>
 			</nav>
 		</aside>

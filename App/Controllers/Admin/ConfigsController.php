@@ -62,7 +62,7 @@ class ConfigsController extends BaseController
 
 		if (!$this->isValidSelection($catalog, $section, $file)) {
 			$this->setFlash(false, 'Неверно выбран конфигурационный файл.');
-			header('Location: /admin/configs/');
+			header('Location: /admin/settings/configs/');
 			return;
 		}
 
@@ -266,7 +266,7 @@ class ConfigsController extends BaseController
 			'file' => $file,
 		]);
 
-		return '/admin/configs/' . ($query !== '' ? ('?' . $query) : '');
+		return '/admin/settings/configs/' . ($query !== '' ? ('?' . $query) : '');
 	}
 
 	private function setFlash(bool $success, string $message): void

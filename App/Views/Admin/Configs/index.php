@@ -14,7 +14,7 @@ $buildEditorUrl = static function (string $section, string $file): string {
 		'file' => $file,
 	]);
 
-	return '/admin/configs/' . ($query !== '' ? ('?' . $query) : '');
+	return '/admin/settings/configs/' . ($query !== '' ? ('?' . $query) : '');
 };
 
 $exportPhpValue = null;
@@ -61,7 +61,7 @@ $exportPhpValue = static function (mixed $value, int $level = 0) use (&$exportPh
 <section class="admin-configs">
 	<div class="d-flex justify-content-between align-items-center mb-3">
 		<h1 class="h4 mb-0">Конфиги</h1>
-		<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
+		<a href="/admin/settings/" class="btn btn-outline-secondary btn-sm">Назад в настройки</a>
 	</div>
 
 	<?php if ($flash !== null): ?>
@@ -118,7 +118,7 @@ $exportPhpValue = static function (mixed $value, int $level = 0) use (&$exportPh
 							<h2 class="h6 mb-0">Редактирование: <?= htmlspecialchars($selectedSection . '/' . $selectedFile . '.php') ?></h2>
 						</div>
 
-						<form action="/admin/configs/save/" method="post">
+						<form action="/admin/settings/configs/save/" method="post">
 							<input type="hidden" name="section" value="<?= htmlspecialchars($selectedSection) ?>">
 							<input type="hidden" name="file" value="<?= htmlspecialchars($selectedFile) ?>">
 

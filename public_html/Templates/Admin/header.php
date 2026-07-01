@@ -13,6 +13,9 @@ $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-activ
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 $configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
 $repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/') ? ' is-active' : '';
+$backupActive = str_starts_with($currentPath, '/admin/settings/backup/') ? ' is-active' : '';
+$backupCreateActive = str_starts_with($currentPath, '/admin/settings/backup/create/') ? ' is-active' : '';
+$backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/') ? ' is-active' : '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -98,6 +101,31 @@ $repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/')
 
 		.admin-sideout__sublink.is-active {
 			background: #f8fbff;
+			color: #0d6efd;
+			border-color: #0d6efd;
+			font-weight: 600;
+		}
+
+		.admin-sideout__nestedlink {
+			display: flex;
+			align-items: center;
+			gap: 0.65rem;
+			margin-left: 4.55rem;
+			padding: 0.42rem 0.95rem;
+			color: #6c757d;
+			text-decoration: none;
+			border-left: 2px solid #eef1f4;
+			font-size: 0.94rem;
+			transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+		}
+
+		.admin-sideout__nestedlink:hover {
+			background: #f8fbff;
+			color: #0d6efd;
+			border-color: #b6d4fe;
+		}
+
+		.admin-sideout__nestedlink.is-active {
 			color: #0d6efd;
 			border-color: #0d6efd;
 			font-weight: 600;
@@ -199,6 +227,15 @@ $repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/')
 				</a>
 				<a class="admin-sideout__sublink<?= $repositoryActive ?>" href="/admin/settings/repository/">
 					<span class="admin-sideout__label">Репозиторий</span>
+				</a>
+				<a class="admin-sideout__sublink<?= $backupActive ?>" href="/admin/settings/backup/">
+					<span class="admin-sideout__label">Резервное копирование</span>
+				</a>
+				<a class="admin-sideout__nestedlink<?= $backupCreateActive ?>" href="/admin/settings/backup/create/">
+					<span class="admin-sideout__label">Создание копии</span>
+				</a>
+				<a class="admin-sideout__nestedlink<?= $backupListActive ?>" href="/admin/settings/backup/list/">
+					<span class="admin-sideout__label">Список копий</span>
 				</a>
 			</nav>
 		</aside>

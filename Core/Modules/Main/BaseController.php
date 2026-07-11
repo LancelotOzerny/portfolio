@@ -2,8 +2,16 @@
 
 namespace Modules\Main;
 
+use App\Services\Seo\SeoContext;
+use App\Services\Seo\SeoService;
+
 class BaseController
 {
+	protected function setSeo(SeoContext $context): void
+	{
+		Template::getInstance()->setParam('seo', (new SeoService())->resolve($context));
+	}
+
 	protected function render(string $view, array $data = [])
 	{
 		$className = static::class;

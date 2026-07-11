@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= $this->getParam('title') ?></title>
+    <?php include \Modules\Main\App::getInstance()->root . '/public_html/Templates/Shared/seo.php'; ?>
     <link href="/Templates/Default/css/bootstrap.min.css" rel="stylesheet">
     <link href="/Templates/Default/css/styles.css" rel="stylesheet">
 </head>

@@ -13,6 +13,7 @@ $tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-activ
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
+$seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
 $configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
 $repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/') ? ' is-active' : '';
 $backupActive = str_starts_with($currentPath, '/admin/settings/backup/') ? ' is-active' : '';
@@ -209,6 +210,10 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 				</a>
 				<a class="admin-sideout__sublink<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
 				<a class="admin-sideout__sublink<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
+				<a class="admin-sideout__link<?= $seoActive ?>" href="/admin/seo/">
+					<span class="admin-sideout__icon">SE</span>
+					<span class="admin-sideout__label">SEO</span>
+				</a>
 				<a class="admin-sideout__link<?= $usersActive ?>" href="/admin/users/">
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>

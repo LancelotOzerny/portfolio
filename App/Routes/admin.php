@@ -11,6 +11,10 @@ $router->post('/admin/content/tags/create/', \Controllers\Admin\TagsController::
 $router->get('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'edit');
 $router->post('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'update');
 $router->post('/admin/content/tags/{id}/delete/', \Controllers\Admin\TagsController::class, 'delete');
+$router->get('/admin/seo/', \Controllers\Admin\SeoController::class, 'index');
+$router->get('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'edit');
+$router->post('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'update');
+$router->post('/admin/seo/{pageKey}/reset/', \Controllers\Admin\SeoController::class, 'reset');
 $router->get('/admin/users/', \Controllers\Admin\UsersController::class, 'index');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
 $router->get('/admin/settings/configs/', \Controllers\Admin\ConfigsController::class, 'index');

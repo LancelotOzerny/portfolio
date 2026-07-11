@@ -1,3 +1,37 @@
+.resume-experience__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: rgba(34, 34, 34, 0.06);
+	color: inherit;
+	line-height: 0;
+	cursor: pointer;
+	transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.resume-experience__toggle:hover,
+.resume-experience__toggle:focus,
+.resume-experience__toggle:focus-visible {
+	background: rgba(34, 34, 34, 0.1);
+	color: inherit;
+	outline: none;
+	box-shadow: none;
+}
+
+.resume-experience__chevron {
+	display: block;
+	transition: transform 0.2s ease;
+}
+
+.resume-experience__toggle[aria-expanded="true"] .resume-experience__chevron {
+	transform: rotate(180deg);
+}
+
 .resume-experience__description > :last-child {
 	margin-bottom: 0;
 }

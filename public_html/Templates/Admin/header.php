@@ -7,7 +7,9 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $showAdminSidebar = Auth::getInstance()->isAdmin();
 
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
+$contentActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/') ? ' is-active' : '';
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
+$tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
@@ -201,10 +203,12 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<span class="admin-sideout__icon">Гл</span>
 					<span class="admin-sideout__label">Главная</span>
 				</a>
-				<a class="admin-sideout__link<?= $projectsActive ?>" href="/admin/projects/">
-					<span class="admin-sideout__icon">Пр</span>
-					<span class="admin-sideout__label">Проекты</span>
+				<a class="admin-sideout__link<?= $contentActive ?>" href="/admin/projects/">
+					<span class="admin-sideout__icon">Кн</span>
+					<span class="admin-sideout__label">Контент</span>
 				</a>
+				<a class="admin-sideout__sublink<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
+				<a class="admin-sideout__sublink<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
 				<a class="admin-sideout__link<?= $usersActive ?>" href="/admin/users/">
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>

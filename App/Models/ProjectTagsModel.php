@@ -51,4 +51,27 @@ class ProjectTagsModel extends BaseModel
 
 		return true;
 	}
+
+	public function deleteByTagId(int $tagId): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->delete()
+			->where('tag_id', '=', $tagId);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	public function countByTagId(int $tagId): int
+	{
+		$qb = (new QueryBuilder($this->table))
+			->count()
+			->where('tag_id', '=', $tagId);
+
+		$result = $this->execQuery($qb, true);
+		if (!is_object($result)) {
+			return 0;
+		}
+
+		return (int) ($result->total ?? 0);
+	}
 }

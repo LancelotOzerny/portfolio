@@ -2,6 +2,7 @@
 
 namespace Components\ProjectsGrid;
 
+use App\Services\TextTruncator;
 use Models\ProjectsModel;
 use Modules\Main\BaseComponent;
 
@@ -31,6 +32,11 @@ class ProjectsGrid extends BaseComponent
 		if ($limit > 0 && ($useRandom || $excludeId > 0))
 		{
 			$items = array_slice($items, 0, $limit);
+		}
+
+		$truncator = new TextTruncator();
+		foreach ($items as $item) {
+			$item->preview_text = $truncator->truncate((string) ($item->preview_text ?? ''));
 		}
 
 		$this->setParam('items', $items);

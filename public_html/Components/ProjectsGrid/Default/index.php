@@ -26,7 +26,7 @@ $isFirstFilterElement = true;
 
                 <div class="project-card__body card-body d-flex flex-column p-4">
                     <h5 class="project-card__title card-title fw-bold mb-3 fs-5"><?= $project->name ?></h5>
-                    <p class="project-card__text card-text text-muted flex-grow-1 mb-3"><?= $project->preview_text ?></p>
+                    <p class="project-card__text card-text text-muted flex-grow-1 mb-3"><?= htmlspecialchars((string) ($project->preview_text ?? '')) ?></p>
 
                     <?php if($project->tags): ?>
                         <div class="project-card__tags d-flex gap-2 mb-4 flex-wrap">

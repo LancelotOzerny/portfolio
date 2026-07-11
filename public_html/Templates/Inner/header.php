@@ -15,6 +15,7 @@
 </head>
 <body class="inner-page">
 <?php
+(new \Components\AdminBar\AdminBar())->render();
 (new \Components\Navigation\Navigation([
 	'type' => 'Main',
 	'template' => 'Main'

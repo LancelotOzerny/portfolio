@@ -12,7 +12,8 @@
     <link href="/Templates/Default/css/styles.css" rel="stylesheet">
 </head>
 <body>
-
+<?php
+(new \Components\AdminBar\AdminBar())->render();
 <!-- NAVIGATION -->
 <?php
 (new \Components\Navigation\Navigation(['type' => 'main']))->render();

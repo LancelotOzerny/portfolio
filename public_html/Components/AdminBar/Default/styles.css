@@ -1,0 +1,77 @@
+body:has(.admin-bar)
+{
+	padding-top: 80px;
+}
+
+body:has(.admin-bar) .main-navigation
+{
+	top: calc(80px + 24px);
+}
+
+body:has(.admin-bar) .main-navigation.is-collapsed
+{
+	top: calc(80px + 22px);
+}
+
+.admin-bar
+{
+	position: fixed;
+	top: 0;
+	right: 0;
+	left: 0;
+	z-index: 10050;
+	height: 80px;
+	background: #111111;
+	border-bottom: 1px solid rgba(255, 255, 255, .08);
+	box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+}
+
+.admin-bar__inner
+{
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 100%;
+	padding: 0 24px;
+}
+
+.admin-bar__button
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+	color: #ffffff;
+	text-decoration: none;
+	transition: background-color .2s ease;
+}
+
+.admin-bar__button:hover,
+.admin-bar__button:focus-visible
+{
+	background: rgba(255, 255, 255, .1);
+	outline: none;
+}
+
+.admin-bar__icon
+{
+	display: block;
+	transition: transform .2s ease;
+}
+
+.admin-bar__button:hover .admin-bar__icon,
+.admin-bar__button:focus-visible .admin-bar__icon
+{
+	transform: scale(1.12);
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.admin-bar__button,
+	.admin-bar__icon
+	{
+		transition-duration: .01ms !important;
+	}
+}

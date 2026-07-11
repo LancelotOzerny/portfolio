@@ -63,6 +63,12 @@ class Auth
 		return true;
 	}
 
+	public function logout(): void
+	{
+		unset($_SESSION[self::SESSION_USER_ID_KEY]);
+		session_regenerate_id(true);
+	}
+
 	public function isAdmin(): bool
 	{
 		$user = $this->getCurrentUserData();

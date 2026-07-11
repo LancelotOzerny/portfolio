@@ -88,6 +88,18 @@ class AuthController
 		]);
 	}
 
+	public function logout(): void
+	{
+		Auth::getInstance()->logout();
+
+		$redirect = (string) ($_GET['back'] ?? '/');
+		if ($redirect === '' || !str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+			$redirect = '/';
+		}
+
+		header('Location: ' . $redirect);
+	}
+
 	private function getPayload(): array
 	{
 		$raw = file_get_contents('php://input');

@@ -44,6 +44,7 @@ class ProjectsGrid extends BaseComponent
 		$this->setParam('limit', $limit);
 		$this->setParam('exclude_id', $excludeId);
 		$this->setParam('random', $useRandom);
+		$this->setParam('show_tags', ($params['show_tags'] ?? true) !== false && ($params['show_tags'] ?? true) !== 'off');
 
 		if ($params['use_filters'] ?? null)
 		{

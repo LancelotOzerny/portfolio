@@ -116,6 +116,20 @@
 			</div>
 		</div>
 	</section>
+
+	<section class="projects-light" aria-labelledby="projectsTitle">
+		<div class="site-container projects-light__container">
+			<h2 class="page-title" id="projectsTitle">Проекты</h2>
+			<?php
+			(new \Components\ProjectsGrid\ProjectsGrid([
+				'use_filters' => false,
+				'show_tags' => false,
+				'limit' => 6,
+				'template' => 'MainLight',
+			]))->render();
+			?>
+		</div>
+	</section>
 </main>
 
 <div class="mainlight-hidden-content" hidden>

@@ -1,7 +1,22 @@
 <?php if ($this->getParam('show')): ?>
-	<?php $backUrl = rawurlencode((string) ($this->getParam('back_url') ?? '/')); ?>
+	<?php
+	$backUrl = rawurlencode((string) ($this->getParam('back_url') ?? '/'));
+	$isEditMode = (bool) $this->getParam('is_edit_mode');
+	$editToggleUrl = (string) $this->getParam('edit_toggle_url');
+	?>
 	<div class="admin-bar" role="toolbar" aria-label="Панель администратора">
 		<div class="admin-bar__inner">
+			<a class="admin-bar__toggle<?= $isEditMode ? ' is-active' : '' ?>"
+			   href="<?= htmlspecialchars($editToggleUrl) ?>"
+			   title="<?= $isEditMode ? 'Выключить режим редактирования' : 'Включить режим редактирования' ?>"
+			   aria-label="<?= $isEditMode ? 'Выключить режим редактирования' : 'Включить режим редактирования' ?>"
+			   aria-pressed="<?= $isEditMode ? 'true' : 'false' ?>">
+				<span class="admin-bar__toggle-track">
+					<span class="admin-bar__toggle-thumb"></span>
+				</span>
+				<span class="admin-bar__toggle-label">Редактирование</span>
+			</a>
+
 			<a class="admin-bar__button" href="/admin/" title="Панель управления" aria-label="Панель управления">
 				<svg class="admin-bar__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 					<path d="M12 15.2C13.7673 15.2 15.2 13.7673 15.2 12C15.2 10.2327 13.7673 8.8 12 8.8C10.2327 8.8 8.8 10.2327 8.8 12C8.8 13.7673 10.2327 15.2 12 15.2Z" stroke="currentColor" stroke-width="1.6"/>

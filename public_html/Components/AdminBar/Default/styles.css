@@ -35,6 +35,61 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 	padding: 0 24px;
 }
 
+.admin-bar__toggle
+{
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 48px;
+	padding: 0 14px;
+	border-radius: 12px;
+	color: #ffffff;
+	text-decoration: none;
+	font-size: 14px;
+	font-weight: 600;
+	transition: background-color .2s ease;
+}
+
+.admin-bar__toggle:hover,
+.admin-bar__toggle:focus-visible
+{
+	background: rgba(255, 255, 255, .1);
+	outline: none;
+}
+
+.admin-bar__toggle-track
+{
+	position: relative;
+	width: 44px;
+	height: 24px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, .22);
+	transition: background-color .2s ease;
+}
+
+.admin-bar__toggle-thumb
+{
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
+	transition: transform .2s ease;
+}
+
+.admin-bar__toggle.is-active .admin-bar__toggle-track
+{
+	background: #5747e6;
+}
+
+.admin-bar__toggle.is-active .admin-bar__toggle-thumb
+{
+	transform: translateX(20px);
+}
+
 .admin-bar__button
 {
 	display: inline-flex;
@@ -70,8 +125,24 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 @media (prefers-reduced-motion: reduce)
 {
 	.admin-bar__button,
-	.admin-bar__icon
+	.admin-bar__icon,
+	.admin-bar__toggle,
+	.admin-bar__toggle-track,
+	.admin-bar__toggle-thumb
 	{
 		transition-duration: .01ms !important;
+	}
+}
+
+@media (max-width: 520px)
+{
+	.admin-bar__inner
+	{
+		padding: 0 12px;
+	}
+
+	.admin-bar__toggle-label
+	{
+		display: none;
 	}
 }

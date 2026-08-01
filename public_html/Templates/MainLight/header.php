@@ -21,13 +21,20 @@
 	<section class="hero-section">
 		<div class="site-container hero-section__container">
 			<div class="hero-section__content">
-				<h1 class="page-title  page-title--left">Привет!<br>Я Максим Беляков.</h1>
-				<p class="hero-section__text">
-					Я PHP-разработчик, который делает сайты, админки и понятные веб-интерфейсы.
-				</p>
-				<p class="hero-section__text">
-					Помогаю запускать аккуратные решения с простой архитектурой, чистой версткой и кодом, который удобно поддерживать после релиза.
-				</p>
+				<h1 class="page-title  page-title--left" style="margin-bottom: 25px;">
+					<?php
+					(new \Components\IncludeArea\IncludeArea([
+						'path' => 'MainLight/hero-title.html',
+					]))->render();
+					?>
+				</h1>
+				<div class="about-light__text">
+					<?php
+					(new \Components\IncludeArea\IncludeArea([
+						'path' => 'MainLight/hero-description.html',
+					]))->render();
+					?>
+				</div>
 				<div class="hero-section__actions" aria-label="Основные ссылки">
 					<a class="button button_primary" href="/portfolio/">Проекты</a>
 					<a class="button button_secondary" href="https://github.com/" target="_blank" rel="noopener">GitHub</a>

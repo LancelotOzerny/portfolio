@@ -26,6 +26,15 @@
 					</a>
 				</div>
 				<div class="col-12 col-md-6">
+					<a href="/admin/settings/templates/" class="card h-100 text-decoration-none border shadow-none">
+						<div class="card-body">
+							<p class="small text-uppercase text-secondary mb-1">Подпункт настроек</p>
+							<h2 class="h5 text-dark mb-2">Шаблоны</h2>
+							<p class="text-secondary mb-0">Просмотр, создание и удаление шаблонов сайта из папки public_html/Templates.</p>
+						</div>
+					</a>
+				</div>
+				<div class="col-12 col-md-6">
 					<div class="card h-100 border shadow-none">
 						<div class="card-body">
 							<p class="small text-uppercase text-secondary mb-1">Подпункт настроек</p>
@@ -44,4 +53,3 @@
 		</div>
 	</div>
 </section>
-

@@ -15,6 +15,7 @@ $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-activ
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 $seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
 $configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
+$templatesActive = str_starts_with($currentPath, '/admin/settings/templates/') ? ' is-active' : '';
 $repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/') ? ' is-active' : '';
 $backupActive = str_starts_with($currentPath, '/admin/settings/backup/') ? ' is-active' : '';
 $backupCreateActive = str_starts_with($currentPath, '/admin/settings/backup/create/') ? ' is-active' : '';
@@ -230,6 +231,9 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 				<a class="admin-sideout__sublink<?= $configsActive ?>" href="/admin/settings/configs/">
 					<span class="admin-sideout__label">Конфиги</span>
 				</a>
+				<a class="admin-sideout__sublink<?= $templatesActive ?>" href="/admin/settings/templates/">
+					<span class="admin-sideout__label">Шаблоны</span>
+				</a>
 				<a class="admin-sideout__sublink<?= $repositoryActive ?>" href="/admin/settings/repository/">
 					<span class="admin-sideout__label">Репозиторий</span>
 				</a>
@@ -250,4 +254,3 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 <?php else: ?>
 	<main class="container py-5">
 <?php endif; ?>
-

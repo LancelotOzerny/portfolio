@@ -17,6 +17,10 @@ $router->post('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 
 $router->post('/admin/seo/{pageKey}/reset/', \Controllers\Admin\SeoController::class, 'reset');
 $router->get('/admin/users/', \Controllers\Admin\UsersController::class, 'index');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
+$router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
+$router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');
+$router->post('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'store');
+$router->post('/admin/settings/templates/delete/{code}/', \Controllers\Admin\TemplatesController::class, 'delete');
 $router->get('/admin/settings/configs/', \Controllers\Admin\ConfigsController::class, 'index');
 $router->post('/admin/settings/configs/save/', \Controllers\Admin\ConfigsController::class, 'save');
 $router->get('/admin/settings/repository/', \Controllers\Admin\RepositoryController::class, 'index');

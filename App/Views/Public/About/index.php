@@ -29,5 +29,6 @@
 <?php
 (new \Components\Resume\Resume([
 	'show_experience' => true,
+	'template' => 'Light',
 ]))->render();
 ?>

@@ -1,0 +1,169 @@
+.resume-light {
+	padding: 20px 0 86px;
+	background: #fff;
+}
+
+.resume-light__tabs {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 18px;
+	align-items: flex-start;
+}
+
+.resume-light-tab {
+	display: grid;
+	width: 100%;
+	min-height: 150px;
+	gap: 8px;
+	align-content: start;
+	padding: 22px;
+	border: 1px solid var(--ml-line);
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: 0 14px 34px rgba(23, 23, 23, 0.07);
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.resume-light-tab:disabled {
+	cursor: default;
+}
+
+.resume-light-tab:hover,
+.resume-light-tab:focus-visible,
+.resume-light-tab.is-active {
+	border-color: rgba(23, 23, 23, 0.24);
+	box-shadow: 0 18px 42px rgba(23, 23, 23, 0.1);
+	outline: none;
+	transform: translateY(-2px);
+}
+
+.resume-light-tab.is-active {
+	background: var(--ml-soft);
+}
+
+.resume-light-tab__position {
+	color: var(--ml-ink);
+	font-size: 1.05rem;
+	font-weight: 600;
+	line-height: 1.28;
+}
+
+.resume-light-tab__company {
+	color: #555;
+	font-size: 0.95rem;
+	font-weight: 500;
+	line-height: 1.35;
+}
+
+.resume-light-tab__period {
+	margin-top: auto;
+	color: var(--ml-muted);
+	font-size: 0.86rem;
+	line-height: 1.4;
+}
+
+.resume-light__panels {
+	margin-top: 28px;
+}
+
+.resume-light-panel {
+	padding: 28px;
+	border: 1px solid rgba(23, 23, 23, 0.18);
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: var(--ml-shadow);
+	animation: resume-light-panel-open 0.5s ease forwards;
+}
+
+.resume-light-panel.is-closing {
+	animation: resume-light-panel-close 0.25s ease forwards;
+}
+
+.resume-light-panel__header {
+	display: grid;
+	gap: 8px;
+}
+
+.resume-light-panel__position {
+	margin: 0;
+	color: var(--ml-ink);
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.resume-light-panel__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	color: var(--ml-muted);
+	font-size: 0.92rem;
+}
+
+.resume-light-panel__description {
+	margin-top: 22px;
+	padding-top: 22px;
+	border-top: 1px solid var(--ml-line);
+	color: var(--ml-muted);
+	font-size: 0.96rem;
+	line-height: 1.75;
+}
+
+.resume-light-panel__description > :first-child {
+	margin-top: 0;
+}
+
+.resume-light-panel__description > :last-child {
+	margin-bottom: 0;
+}
+
+.resume-light-panel__description li + li {
+	margin-top: 0.7rem;
+}
+
+@keyframes resume-light-panel-open {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes resume-light-panel-close {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+}
+
+@media (max-width: 680px) {
+	.resume-light__tabs {
+		grid-template-columns: 1fr;
+	}
+
+	.resume-light-panel {
+		padding: 24px 20px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.resume-light-tab,
+	.resume-light-panel,
+	.resume-light-panel.is-closing {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}

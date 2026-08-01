@@ -3,12 +3,6 @@
 	background: #fff;
 }
 
-.projects-light__container {
-	width: calc(100% - 50px);
-	max-width: none;
-	margin: 0 auto;
-}
-
 .projects-light-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));

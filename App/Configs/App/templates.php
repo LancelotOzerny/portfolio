@@ -13,7 +13,7 @@ return [
 	2 => [
 		'path' => '/',
 		'method' => 'equal',
-		'template' => 'MainLight',
+		'template' => 'Light',
 	],
 	3 => [
 		'path' => '/',

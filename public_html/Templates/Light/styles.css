@@ -14,7 +14,7 @@
 	box-sizing: border-box;
 }
 
-body.mainlight-page {
+body.light-page {
 	margin: 0;
 	background: var(--ml-bg);
 	color: var(--ml-ink);
@@ -266,28 +266,28 @@ body.mainlight-page {
 	flex: 0 0 auto;
 }
 
-.mainlight-footer {
+.light-footer {
 	padding: 38px 0 24px;
 	border-top: 1px solid var(--ml-line);
 	background: var(--ml-ink);
 	color: #fff;
 }
 
-.mainlight-footer__container {
+.light-footer__container {
 	display: grid;
 	gap: 24px;
 }
 
-.mainlight-footer__brand,
-.mainlight-footer__sitemap a,
-.mainlight-footer__bottom a,
-.mainlight-footer__button {
+.light-footer__brand,
+.light-footer__sitemap a,
+.light-footer__bottom a,
+.light-footer__button {
 	color: #fff;
 	text-decoration: none;
 }
 
-.mainlight-footer__top,
-.mainlight-footer__bottom {
+.light-footer__top,
+.light-footer__bottom {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -295,23 +295,23 @@ body.mainlight-page {
 	gap: 16px;
 }
 
-.mainlight-footer__brand {
+.light-footer__brand {
 	font-weight: 700;
 	letter-spacing: 0;
 }
 
-.mainlight-footer__sitemap a,
-.mainlight-footer__bottom a {
+.light-footer__sitemap a,
+.light-footer__bottom a {
 	color: rgba(255, 255, 255, 0.76);
 	transition: color 0.16s ease;
 }
 
-.mainlight-footer__sitemap a:hover,
-.mainlight-footer__bottom a:hover {
+.light-footer__sitemap a:hover,
+.light-footer__bottom a:hover {
 	color: #fff;
 }
 
-.mainlight-footer__button {
+.light-footer__button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -325,14 +325,14 @@ body.mainlight-page {
 	transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
-.mainlight-footer__button:hover {
+.light-footer__button:hover {
 	border-color: #fff;
 	background: #fff;
 	color: var(--ml-ink);
 	transform: translateY(-1px);
 }
 
-.mainlight-footer__sitemap {
+.light-footer__sitemap {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px 22px;
@@ -342,7 +342,7 @@ body.mainlight-page {
 	font-size: 0.95rem;
 }
 
-.mainlight-footer__bottom {
+.light-footer__bottom {
 	color: rgba(255, 255, 255, 0.58);
 	font-size: 0.85rem;
 }

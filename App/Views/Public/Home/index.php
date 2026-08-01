@@ -1,217 +1,112 @@
-<!-- Раздел "О себе" -->
-<section class="about-section scroll-show-area">
-    <div class="container about-section__container">
-        <div class="about-section__content">
-            <h2 class="about-section__title">Проектирую интерфейсы и backend, которые удобно развивать</h2>
+<section class="hero-section">
+	<div class="site-container hero-section__container">
+		<div class="hero-section__content">
+			<h1 class="page-title page-title--left" style="margin-bottom: 25px;">
+				<?php
+				(new \Components\IncludeArea\IncludeArea([
+					'path' => 'Light/hero-title.html',
+				]))->render();
+				?>
+			</h1>
+			<div class="about-light__text">
+				<?php
+				(new \Components\IncludeArea\IncludeArea([
+					'path' => 'Light/hero-description.html',
+				]))->render();
+				?>
+			</div>
+			<div class="hero-section__actions" aria-label="Основные ссылки">
+				<a class="button button_primary" href="/portfolio/">Проекты</a>
+				<a class="button button_secondary" href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+			</div>
+		</div>
 
-            <div class="about-cards" aria-label="Ключевые направления">
-                <article class="about-card about-card_frontend">
-                    <h3 class="about-card__title">Frontend</h3>
-                    <p class="about-card__text">Верстаю адаптивные интерфейсы с вниманием к композиции, визуальному ритму и аккуратным состояниям элементов.</p>
-                    <div class="about-card__skills">
-                        <span>HTML</span>
-                        <span>CSS</span>
-                        <span>JavaScript</span>
-                    </div>
-                </article>
-
-                <article class="about-card about-card_backend">
-                    <h3 class="about-card__title">Backend</h3>
-                    <p class="about-card__text">Собираю серверную логику, админские сценарии и интеграции с понятной структурой и запасом на рост.</p>
-                    <div class="about-card__skills">
-                        <span>PHP</span>
-                        <span>1C-Bitrix</span>
-                        <span>MySQL</span>
-                    </div>
-                </article>
-
-                <article class="about-card about-card_other">
-                    <h3 class="about-card__title">Другое</h3>
-                    <p class="about-card__text">Довожу проекты до цельного ощущения: сборка, Git, Composer, деплой, дизайн-правки и спокойная коммуникация.</p>
-                    <div class="about-card__skills">
-                        <span>Git</span>
-                        <span>Gulp</span>
-                        <span>Composer</span>
-                    </div>
-                </article>
-            </div>
-
-            <div class="about-section__text">
-                <p class="about-section__description">
-                    Я Full-Stack разработчик с фокусом на корпоративные сайты, порталы и сервисы на PHP.
-                    Люблю аккуратную архитектуру, понятный интерфейс и решения, которые не разваливаются после первого роста проекта.
-                </p>
-                <p class="about-section__description">
-                    В работе соединяю дизайн-мышление, frontend-верстку и backend-логику: от структуры данных и интеграций до адаптивных экранов, анимаций и финальной полировки.
-                </p>
-            </div>
-        </div>
-    </div>
+		<div class="hero-photo" aria-label="Фотография Максима Белякова">
+			<img src="/upload/images/main/profile.png" alt="Максим Беляков">
+		</div>
+	</div>
 </section>
 
-<!-- Раздел навыков -->
-<section class="scroll-show-area py-5 bg-light">
-    <div class="title-area py-5">
-        <div class="d-flex align-items-center mb-3">
-            <h2 class="mx-3 fs-1">Технологический стек</h2>
-        </div>
-        <p class="text-center text-muted">Навыки, которыми я овладел или изучаю в текущий момент</p>
-    </div>
+<section class="social-section" aria-labelledby="socialTitle">
+	<div class="site-container">
+		<h2 class="section-kicker" id="socialTitle">Соц сети</h2>
+		<div class="social-grid">
+			<a class="social-card" href="https://vk.com/" target="_blank" rel="noopener" aria-label="ВКонтакте">
+				<span class="social-card__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M13.16 17.15c-5.07 0-7.96-3.48-8.08-9.27h2.54c.08 4.25 1.96 6.05 3.45 6.42V7.88h2.39v3.66c1.46-.16 3-1.83 3.52-3.66h2.39a7.05 7.05 0 0 1-3.25 4.62 7.31 7.31 0 0 1 3.81 4.65h-2.63c-.57-1.75-1.98-3.11-3.84-3.3v3.3h-.3Z"/>
+					</svg>
+				</span>
+				<span class="social-card__name">ВКонтакте</span>
+			</a>
 
-    <div class="content">
-        <div class="container row g-4 justify-content-center">
-            <!-- Frontend -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow">
-                    <div class="card-header bg-light border-0 py-3">
-                        <h5 class="mb-0 fw-semibold text-dark">
-                            <i class="fas fa-code me-2 text-primary"></i>Frontend
-                        </h5>
-                    </div>
-                    <div class="card-body pt-4">
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">HTML / CSS (Bootstrap, LESS)</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 95%" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">95%</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">JavaScript</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar"
-                                     aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">40%</div>
-                        </div>
-                        <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">Query</label>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 35%"
-                                     role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-n2">35%</div>
-                        </div>
-                        <div class="ms-3">
-                            <label class="form-label fw-normal text-muted small">TypeScript</label>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-n2">40%</div>
-                        </div>
-                        <div class="mb-3 mt-2">
-                            <label class="form-label fw-medium text-dark small">Gulp</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 100%"
-                                     role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">100%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+			<a class="social-card" href="https://www.linkedin.com/" target="_blank" rel="noopener" aria-label="LinkedIn">
+				<span class="social-card__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M6.94 8.86H4.1V19h2.84V8.86ZM5.52 4a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28Zm13.9 9.45c0-3.04-1.62-4.46-3.79-4.46a3.25 3.25 0 0 0-2.93 1.61V8.86H9.98V19h2.83v-5.02c0-1.32.25-2.59 1.88-2.59 1.6 0 1.62 1.5 1.62 2.67V19h2.83l.28-5.55Z"/>
+					</svg>
+				</span>
+				<span class="social-card__name">LinkedIn</span>
+			</a>
 
-            <!-- Backend -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow">
-                    <div class="card-header bg-light border-0 py-3">
-                        <h5 class="mb-0 fw-semibold text-dark">
-                            <i class="fas fa-server me-2 text-primary"></i>Backend
-                        </h5>
-                    </div>
-                    <div class="card-body pt-4">
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">PHP</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 75%"
-                                     role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">75%</div>
-                        </div>
-                        <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">1C-Bitrix</label>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 60%"
-                                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-n2">60%</div>
-                        </div>
-                        <div class="ms-3 mb-3">
-                            <label class="form-label fw-normal text-muted small">Composer</label>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-gradient" style="width: 90%"
-                                     role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-n2">90%</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">MySQL</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 60%"
-                                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">60%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+			<a class="social-card" href="https://github.com/" target="_blank" rel="noopener" aria-label="GitHub">
+				<span class="social-card__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.47.09.64-.2.64-.45v-1.7c-2.61.57-3.16-1.11-3.16-1.11-.43-1.09-1.04-1.38-1.04-1.38-.86-.58.06-.57.06-.57.94.07 1.44.97 1.44.97.84 1.43 2.2 1.02 2.73.78.09-.61.33-1.02.6-1.25-2.08-.24-4.27-1.04-4.27-4.63 0-1.02.36-1.86.96-2.51-.1-.24-.42-1.2.09-2.48 0 0 .79-.25 2.58.96A8.9 8.9 0 0 1 12 6.82c.8 0 1.6.11 2.36.32 1.79-1.21 2.57-.96 2.57-.96.52 1.28.2 2.24.1 2.48.6.65.96 1.49.96 2.51 0 3.6-2.19 4.39-4.28 4.62.34.29.64.86.64 1.74v2.58c0 .25.17.55.65.45A9.5 9.5 0 0 0 12 2.5Z"/>
+					</svg>
+				</span>
+				<span class="social-card__name">GitHub</span>
+			</a>
 
-            <!-- Другое -->
-            <div class="col-lg-4 col-md-12">
-                <div class="card h-100 border-0 shadow">
-                    <div class="card-header bg-light border-0 py-3">
-                        <h5 class="mb-0 fw-semibold text-dark">
-                            <i class="fas fa-tools me-2 text-primary"></i>Другое
-                        </h5>
-                    </div>
-                    <div class="card-body pt-4">
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">Git</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 70%" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">70%</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">Паттерны проектирования</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 50%" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">50%</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-medium text-dark small">Linux</label>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-gradient" style="width: 40%" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-end small text-muted mt-1">40%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+			<a class="social-card" href="https://max.ru/" target="_blank" rel="noopener" aria-label="Max">
+				<span class="social-card__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M4.2 18.9V5.1h3.1l4.7 7.34 4.72-7.34h3.08v13.8h-3.18V10.42l-3.78 5.74h-1.68l-3.78-5.74v8.48H4.2Z"/>
+					</svg>
+				</span>
+				<span class="social-card__name">Max</span>
+			</a>
+
+			<a class="social-card" href="https://t.me/" target="_blank" rel="noopener" aria-label="Telegram">
+				<span class="social-card__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" focusable="false">
+						<path d="M20.86 4.46 17.98 18c-.22.96-.8 1.2-1.62.75l-4.38-3.23-2.11 2.03c-.24.24-.43.43-.88.43l.31-4.46 8.12-7.34c.35-.31-.08-.48-.54-.17L6.83 12.34 2.5 10.99c-.94-.3-.96-.94.2-1.39l16.93-6.52c.78-.29 1.47.19 1.23 1.38Z"/>
+					</svg>
+				</span>
+				<span class="social-card__name">Telegram</span>
+			</a>
+		</div>
+	</div>
 </section>
 
-<!-- Раздел проектов -->
-<section class="scroll-show-area py-5 bg-white">
-    <div class="title-area py-5">
-        <div class="d-flex align-items-center mb-3">
-            <h2 class="mx-3 fs-1">Проекты</h2>
-        </div>
-        <p class="text-center text-muted">Прогресс моего обучения, в виде реализованных проектов</p>
-    </div>
+<section class="projects-light" aria-labelledby="projectsTitle">
+	<div class="site-container projects-light__container">
+		<h2 class="page-title" id="projectsTitle">Проекты</h2>
+		<?php
+		(new \Components\ProjectsGrid\ProjectsGrid([
+			'use_filters' => false,
+			'show_tags' => false,
+			'limit' => 6,
+			'template' => 'Light',
+		]))->render();
+		?>
+	</div>
+</section>
 
-    <div class="content">
-        <div class="container">
-            <?php
-            $projectsGrid = new \Components\ProjectsGrid\ProjectsGrid([
-                    'use_filters' => false,
-                    'limit' => 10
-            ]);
-
-            $projectsGrid->render();
-            ?>
-        </div>
-    </div>
+<section class="about-light" aria-labelledby="aboutTitle">
+	<div class="site-container about-light__container">
+		<h2 class="page-title" id="aboutTitle">Немного о себе</h2>
+		<div class="about-light__grid">
+			<div class="about-light__photo">
+				<img src="/upload/images/main/profile.png" alt="Максим Беляков">
+			</div>
+			<div class="about-light__text">
+				<?php
+				(new \Components\IncludeArea\IncludeArea([
+					'path' => 'Light/about.html',
+				]))->render();
+				?>
+			</div>
+		</div>
+	</div>
 </section>

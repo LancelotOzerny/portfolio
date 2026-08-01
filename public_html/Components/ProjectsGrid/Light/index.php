@@ -9,7 +9,7 @@
 			: '/Components/ProjectsGrid/Default/img/no-image.webp';
 		?>
 		<a class="projects-light-card"
-		   href="/portfolio/projects/<?= $projectId ?>/"
+		   href="/portfolio/<?= $projectId ?>/"
 		   aria-label="<?= htmlspecialchars($projectName) ?>">
 			<div class="projects-light-card__media">
 				<img class="projects-light-card__image"

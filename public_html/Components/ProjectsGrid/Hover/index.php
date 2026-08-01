@@ -19,7 +19,7 @@ $isFirstFilterElement = true;
 	<?php foreach ($this->getParam('items') ?? [] as $project): ?>
 		<div class="project-item col-lg-4 col-md-6">
 			<a class="project-card project-card--hover"
-			   href="/portfolio/projects/<?= (int) ($project->id ?? 0) ?>/"
+			   href="/portfolio/<?= (int) ($project->id ?? 0) ?>/"
 			   aria-label="<?= htmlspecialchars((string) ($project->name ?? '')) ?>">
 				<div class="project-card__media">
 					<img src="<?= !empty($project->preview_image_url) ? $project->preview_image_url : '/Components/ProjectsGrid/Default/img/no-image.webp' ?>"

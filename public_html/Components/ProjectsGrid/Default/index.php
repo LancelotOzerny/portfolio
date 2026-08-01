@@ -19,7 +19,7 @@ $isFirstFilterElement = true;
     <?php foreach($this->getParam('items') ?? [] as $project): ?>
         <div class="project-item col-lg-4 col-md-6">
             <article class="project-card card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
-                <a class="project-card__media" href="/portfolio/projects/<?= $project->id ?>/" aria-label="<?= $project->name ?? '' ?>">
+                <a class="project-card__media" href="/portfolio/<?= $project->id ?>/" aria-label="<?= $project->name ?? '' ?>">
                     <img src="<?= !empty($project->preview_image_url) ? $project->preview_image_url : '/Components/ProjectsGrid/Default/img/no-image.webp' ?>"
                          class="project-card__image card-img-top" alt="<?= $project->name ?? '' ?>">
                 </a>
@@ -37,7 +37,7 @@ $isFirstFilterElement = true;
                     <?php endif; ?>
 
                     <a class="project-card__button btn btn-outline-primary flex-fill py-2 fs-6 fw-medium"
-                       href="/portfolio/projects/<?= $project->id ?>/">Подробнее</a>
+                       href="/portfolio/<?= $project->id ?>/">Подробнее</a>
                 </div>
             </article>
         </div>

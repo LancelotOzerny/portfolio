@@ -42,10 +42,10 @@ class PortfolioController extends BaseController
 					'description' => trim(strip_tags((string) ($project->preview_text ?? ''))),
 					'og_image' => (string) ($project->preview_image_url ?? ''),
 				],
-				'/portfolio/projects/' . $id . '/'
+				'/portfolio/' . $id . '/'
 			));
 		} else {
-			$this->setSeo(SeoContext::custom('/portfolio/projects/' . $id . '/', [
+			$this->setSeo(SeoContext::custom('/portfolio/' . $id . '/', [
 				'title' => 'Проект не найден',
 				'robots_index' => false,
 			]));

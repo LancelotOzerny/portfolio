@@ -87,7 +87,7 @@ body.mainlight-page {
 	min-height: 44px;
 	padding: 0 18px;
 	border-radius: 6px;
-	font-weight: 700;
+	font-weight: 400;
 	text-decoration: none;
 	transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
 }
@@ -97,9 +97,9 @@ body.mainlight-page {
 }
 
 .button_primary {
-	background: var(--ml-accent);
+	background: var(--ml-ink);
 	color: #fff;
-	box-shadow: 0 10px 22px rgba(87, 71, 230, 0.2);
+	box-shadow: 0 10px 22px rgba(23, 23, 23, 0.14);
 }
 
 .button_secondary {
@@ -223,6 +223,49 @@ body.mainlight-page {
 	margin: 0 0 20px;
 }
 
+.contact-light {
+	padding: 80px 0 96px;
+	background: #fff;
+}
+
+.contact-light__container {
+	max-width: 1120px;
+}
+
+.contact-cta {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	gap: 25px;
+	justify-content: center;
+	padding-top: 36px;
+	padding-bottom: 36px;
+	border-top: 1px solid var(--ml-line);
+	border-bottom: 1px solid var(--ml-line);
+	text-align: center;
+}
+
+.contact-cta__title {
+	margin: 0 0 25px;
+	color: #555;
+	font-size: clamp(2rem, 3vw, 2.5rem);
+	font-weight: 600;
+	line-height: 1.12;
+	letter-spacing: 0;
+	text-align: center;
+}
+
+.contact-cta__text {
+	margin: 0;
+	color: var(--ml-muted);
+	font-size: 1.04rem;
+	line-height: 1.65;
+}
+
+.contact-cta__button {
+	flex: 0 0 auto;
+}
+
 .mainlight-footer {
 	padding: 28px 0;
 	border-top: 1px solid var(--ml-line);
@@ -295,5 +338,9 @@ body.mainlight-page {
 	.button,
 	.button_dark {
 		width: 100%;
+	}
+
+	.contact-cta {
+		align-items: stretch;
 	}
 }

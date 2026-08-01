@@ -2,6 +2,8 @@
 
 namespace Controllers\Api;
 
+use Components\ContactForm\ContactForm;
+
 class FeedbackController
 {
 	public function send() : void
@@ -13,10 +15,16 @@ class FeedbackController
 
 		$json = file_get_contents('php://input');
 		$data = json_decode($json, true);
+		if (!is_array($data)) {
+			$data = [];
+		}
 
-		$name = $data['name'];
-		$email = $data['email'];
-		$message = $data['message'];
+		$name = trim((string) ($data['name'] ?? ''));
+		$email = trim((string) ($data['email'] ?? ''));
+		$message = trim((string) ($data['message'] ?? ''));
+		$recipient = trim((string) ($data['recipient'] ?? ''));
+		$theme = trim((string) ($data['theme'] ?? ''));
+		$formHash = (string) ($data['form_hash'] ?? '');
 
 		if (empty($name) || empty($email) || empty($message))
 		{
@@ -34,6 +42,15 @@ class FeedbackController
 
 		$to = 'lancelot.ozernuy@gmail.com';
 		$subject = 'Новое сообщение с сайта';
+		if (
+			$recipient !== ''
+			&& filter_var($recipient, FILTER_VALIDATE_EMAIL)
+			&& $theme !== ''
+			&& hash_equals(ContactForm::getFormHash($recipient, $theme), $formHash)
+		) {
+			$to = $recipient;
+			$subject = $theme;
+		}
 
 		$body = "Получено новое сообщение:\n\n";
 		$body .= "От кого: $name\n";

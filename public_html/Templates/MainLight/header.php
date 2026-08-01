@@ -99,6 +99,20 @@
 		</div>
 	</section>
 
+	<section class="projects-light" aria-labelledby="projectsTitle">
+		<div class="site-container projects-light__container">
+			<h2 class="page-title" id="projectsTitle">Проекты</h2>
+			<?php
+			(new \Components\ProjectsGrid\ProjectsGrid([
+				'use_filters' => false,
+				'show_tags' => false,
+				'limit' => 6,
+				'template' => 'MainLight',
+			]))->render();
+			?>
+		</div>
+	</section>
+
 	<section class="about-light" aria-labelledby="aboutTitle">
 		<div class="site-container about-light__container">
 			<h2 class="page-title" id="aboutTitle">Немного о себе</h2>
@@ -117,17 +131,15 @@
 		</div>
 	</section>
 
-	<section class="projects-light" aria-labelledby="projectsTitle">
-		<div class="site-container projects-light__container">
-			<h2 class="page-title" id="projectsTitle">Проекты</h2>
-			<?php
-			(new \Components\ProjectsGrid\ProjectsGrid([
-				'use_filters' => false,
-				'show_tags' => false,
-				'limit' => 6,
-				'template' => 'MainLight',
-			]))->render();
-			?>
+	<section class="contact-light" aria-labelledby="contactTitle">
+		<div class="site-container contact-light__container contact-cta">
+			<div class="contact-cta__content">
+				<h2 class="contact-cta__title" id="contactTitle">Связаться со мной</h2>
+				<p class="contact-cta__text">
+					Расскажите о задаче, проекте или идее. Отвечу и подскажу, с чего лучше начать.
+				</p>
+			</div>
+			<a class="button button_secondary contact-cta__button" href="/contacts/">Написать</a>
 		</div>
 	</section>
 </main>

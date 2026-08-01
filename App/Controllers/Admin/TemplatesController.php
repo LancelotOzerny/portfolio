@@ -61,6 +61,50 @@ class TemplatesController extends BaseController
 		}
 	}
 
+	public function edit(string $code): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			$template = (new TemplateCatalogService())->get($code);
+		} catch (Throwable $e) {
+			$this->setFlash(false, $e->getMessage() !== '' ? $e->getMessage() : 'Шаблон не найден.');
+			header('Location: /admin/settings/templates/');
+			return;
+		}
+
+		Template::getInstance()->setParam('title', 'Редактирование шаблона');
+		Template::getInstance()->showHeader();
+		$this->render('edit', [
+			'template' => $template,
+			'flash' => $this->pullFlash(),
+		]);
+		Template::getInstance()->showFooter();
+	}
+
+	public function update(string $code): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			(new TemplateCatalogService())->update(
+				$code,
+				(string) ($_POST['name'] ?? ''),
+				(string) ($_POST['description'] ?? ''),
+				$_FILES['logo'] ?? []
+			);
+			$this->setFlash(true, 'Шаблон успешно сохранен.');
+		} catch (Throwable $e) {
+			$this->setFlash(false, $e->getMessage() !== '' ? $e->getMessage() : 'Не удалось сохранить шаблон.');
+		}
+
+		header('Location: /admin/settings/templates/' . rawurlencode($code) . '/');
+	}
+
 	public function delete(string $code): void
 	{
 		if (!$this->ensureAdmin()) {

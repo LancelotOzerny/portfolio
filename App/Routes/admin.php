@@ -20,6 +20,8 @@ $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, '
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');
 $router->post('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'store');
+$router->get('/admin/settings/templates/{code}/', \Controllers\Admin\TemplatesController::class, 'edit');
+$router->post('/admin/settings/templates/{code}/', \Controllers\Admin\TemplatesController::class, 'update');
 $router->post('/admin/settings/templates/delete/{code}/', \Controllers\Admin\TemplatesController::class, 'delete');
 $router->get('/admin/settings/configs/', \Controllers\Admin\ConfigsController::class, 'index');
 $router->post('/admin/settings/configs/save/', \Controllers\Admin\ConfigsController::class, 'save');

@@ -46,11 +46,28 @@ class TemplateCatalogService
 				'logo' => $this->findLogoUrl($code, $directory),
 				'is_active' => $isActive,
 				'is_system' => $isSystem,
+				'can_edit' => !$isSystem,
 				'can_delete' => !$isActive && !$isSystem,
 			];
 		}
 
 		return $templates;
+	}
+
+	public function get(string $code): array
+	{
+		$code = $this->normalizeCode(rawurldecode($code));
+		if ($code === '') {
+			throw new RuntimeException('Не выбран шаблон.');
+		}
+
+		foreach ($this->list() as $template) {
+			if (($template['code'] ?? '') === $code) {
+				return $template;
+			}
+		}
+
+		throw new RuntimeException('Шаблон не найден.');
 	}
 
 	public function create(string $code, string $name, string $description): void
@@ -76,14 +93,31 @@ class TemplateCatalogService
 			throw new RuntimeException('Не удалось создать папку шаблона.');
 		}
 
-		$content = "<?php\nreturn " . $this->exportPhpValue([
-			'name' => $name,
-			'description' => $description,
-		]) . ";\n";
+		$this->saveTemplateInfo($directory, $name, $description);
+	}
 
-		if (file_put_contents($directory . '/' . self::INFO_FILE, $content, LOCK_EX) === false) {
-			throw new RuntimeException('Не удалось сохранить информацию о шаблоне.');
+	public function update(string $code, string $name, string $description, array $logoFile): void
+	{
+		$code = $this->normalizeCode(rawurldecode($code));
+		$name = trim($name);
+		$description = trim($description);
+
+		if ($code === '') {
+			throw new RuntimeException('Не выбран шаблон для редактирования.');
 		}
+
+		if (in_array($code, self::SYSTEM_DIRECTORIES, true)) {
+			throw new RuntimeException('Системный шаблон нельзя редактировать.');
+		}
+
+		if ($name === '') {
+			throw new RuntimeException('Укажите название шаблона.');
+		}
+
+		$directory = $this->templatesRoot . '/' . $code;
+		$this->assertTemplateDirectory($directory);
+		$this->saveTemplateInfo($directory, $name, $description);
+		$this->uploadLogo($directory, $logoFile);
 	}
 
 	public function delete(string $code): void
@@ -133,12 +167,64 @@ class TemplateCatalogService
 	private function findLogoUrl(string $code, string $directory): string
 	{
 		foreach (self::LOGO_FILES as $fileName) {
-			if (is_file($directory . '/' . $fileName)) {
-				return '/Templates/' . rawurlencode($code) . '/' . $fileName;
+			$path = $directory . '/' . $fileName;
+			if (is_file($path)) {
+				return '/Templates/' . rawurlencode($code) . '/' . $fileName . '?v=' . filemtime($path);
 			}
 		}
 
 		return '';
+	}
+
+	private function saveTemplateInfo(string $directory, string $name, string $description): void
+	{
+		$content = "<?php\nreturn " . $this->exportPhpValue([
+			'name' => $name,
+			'description' => $description,
+		]) . ";\n";
+
+		if (file_put_contents($directory . '/' . self::INFO_FILE, $content, LOCK_EX) === false) {
+			throw new RuntimeException('Не удалось сохранить информацию о шаблоне.');
+		}
+	}
+
+	private function uploadLogo(string $directory, array $file): void
+	{
+		if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+			return;
+		}
+
+		if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+			throw new RuntimeException('Не удалось загрузить логотип шаблона.');
+		}
+
+		$tempPath = (string) ($file['tmp_name'] ?? '');
+		$imageInfo = $tempPath !== '' ? @getimagesize($tempPath) : false;
+		if ($imageInfo === false) {
+			throw new RuntimeException('Логотип должен быть изображением PNG или JPG.');
+		}
+
+		$extension = match ((int) ($imageInfo[2] ?? 0)) {
+			IMAGETYPE_PNG => 'png',
+			IMAGETYPE_JPEG => 'jpg',
+			default => '',
+		};
+
+		if ($extension === '') {
+			throw new RuntimeException('Логотип должен быть изображением PNG или JPG.');
+		}
+
+		foreach (self::LOGO_FILES as $fileName) {
+			$logoPath = $directory . '/' . $fileName;
+			if (is_file($logoPath) && !unlink($logoPath)) {
+				throw new RuntimeException('Не удалось удалить старый логотип шаблона.');
+			}
+		}
+
+		$targetPath = $directory . '/template_logo.' . $extension;
+		if (!move_uploaded_file($tempPath, $targetPath)) {
+			throw new RuntimeException('Не удалось сохранить логотип шаблона.');
+		}
 	}
 
 	private function getActiveTemplateCodes(): array

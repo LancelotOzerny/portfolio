@@ -39,6 +39,7 @@ $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 								<?php
 								$code = (string) ($template['code'] ?? '');
 								$logo = (string) ($template['logo'] ?? '');
+								$canEdit = !empty($template['can_edit']);
 								$canDelete = !empty($template['can_delete']);
 								?>
 								<tr>
@@ -62,6 +63,13 @@ $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 										<?php endif; ?>
 									</td>
 									<td>
+										<div class="d-flex flex-wrap gap-2">
+										<?php if ($canEdit): ?>
+											<a href="/admin/settings/templates/<?= rawurlencode($code) ?>/" class="btn btn-outline-primary btn-sm">Редактировать</a>
+										<?php else: ?>
+											<button type="button" class="btn btn-outline-secondary btn-sm" disabled>Редактировать</button>
+										<?php endif; ?>
+
 										<?php if ($canDelete): ?>
 											<form action="/admin/settings/templates/delete/<?= rawurlencode($code) ?>/" method="post" onsubmit="return confirm('Удалить шаблон?');">
 												<button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
@@ -69,6 +77,7 @@ $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 										<?php else: ?>
 											<button type="button" class="btn btn-outline-secondary btn-sm" disabled>Удалить</button>
 										<?php endif; ?>
+										</div>
 									</td>
 								</tr>
 							<?php endforeach; ?>

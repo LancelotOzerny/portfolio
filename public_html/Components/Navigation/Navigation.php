@@ -13,16 +13,29 @@ class Navigation extends \Modules\Main\BaseComponent
 		$config = Config::getInstance()->get('Nav', $params['type']);
 		$links = $config->toArray();
 
-		foreach($links as &$link)
+		foreach ($links as &$link)
 		{
-			if (App::getInstance()->page === $link['link'])
-			{
-				$link['active'] = true;
-				continue;
-			}
-			$link['active'] = false;
+			$link['active'] = $this->isActiveLink($link);
 		}
 
 		$this->setParam('items', $links);
+	}
+
+	private function isActiveLink(array $link): bool
+	{
+		if (App::getInstance()->page === ($link['link'] ?? ''))
+		{
+			return true;
+		}
+
+		foreach ($link['children'] ?? [] as $child)
+		{
+			if (App::getInstance()->page === ($child['link'] ?? ''))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

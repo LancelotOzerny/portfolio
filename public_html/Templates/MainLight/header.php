@@ -15,6 +15,10 @@
 <body class="mainlight-page">
 <?php
 (new \Components\AdminBar\AdminBar())->render();
+(new \Components\Navigation\Navigation([
+	'type' => 'Main',
+	'template' => 'College',
+]))->render();
 ?>
 
 <main class="mainlight">

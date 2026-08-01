@@ -1,30 +1,19 @@
 <?php
 return [
-	[
+	0 => [
 		'name' => 'Главная',
-		'depth' => 0,
-		'link' => '/'
+		'link' => '/',
 	],
-	[
+	1 => [
 		'name' => 'О себе',
-		'depth' => 0,
-		'link' => '/about/'
+		'link' => '/about/',
 	],
-	[
+	2 => [
 		'name' => 'Портфолио',
-		'depth' => 0,
-		'link' => '/portfolio/'
+		'link' => '/portfolio/',
 	],
-	/*
-	[
-		'name' => 'Сертификаты',
-		'depth' => 0,
-		'link' => '/certificates/'
-	],
-	*/
-	[
+	3 => [
 		'name' => 'Контакты',
-		'depth' => 0,
-		'link' => '/contacts/'
+		'link' => '/contacts/',
 	],
 ];

@@ -5,10 +5,21 @@
 
 <footer class="mainlight-footer">
 	<div class="site-container mainlight-footer__container">
-		<a class="mainlight-footer__brand" href="/">LANCY</a>
-		<div class="mainlight-footer__contacts">
-			<a href="mailto:lancelot.ozernuy@gmail.com">lancelot.ozernuy@gmail.com</a>
-			<a href="tel:+79205201831">8 (920) 520 18 31</a>
+		<div class="mainlight-footer__top">
+			<a class="mainlight-footer__brand" href="/">LANCY</a>
+			<a class="mainlight-footer__button" href="/contacts/">Связаться</a>
+		</div>
+
+		<nav class="mainlight-footer__sitemap" aria-label="Карта сайта">
+			<a href="/">Главная</a>
+			<a href="/about/">О себе</a>
+			<a href="/portfolio/">Портфолио</a>
+			<a href="/certificates/">Сертификаты</a>
+			<a href="/contacts/">Контакты</a>
+		</nav>
+
+		<div class="mainlight-footer__bottom">
+			<span>&copy; 2026 Максим Беляков. Все права защищены.</span>
 		</div>
 	</div>
 </footer>

@@ -1,23 +1,23 @@
 <?php
 return [
-	[
-		'path'     => '/admin/',
-		'method'   => 'prefix',
+	0 => [
+		'path' => '/admin/',
+		'method' => 'prefix',
 		'template' => 'Admin',
 	],
-	[
-		'path'     => '/portfolio/projects/',
-		'method'   => 'prefix',
+	1 => [
+		'path' => '/portfolio/projects/',
+		'method' => 'prefix',
 		'template' => 'Detail',
 	],
-	[
-		'path'     => '/',
-		'method'   => 'equal',
-		'template' => 'Main',
+	2 => [
+		'path' => '/',
+		'method' => 'equal',
+		'template' => 'MainLight',
 	],
-	[
-		'path'     => '/',
-		'method'   => 'prefix',
+	3 => [
+		'path' => '/',
+		'method' => 'prefix',
 		'template' => 'Inner',
 	],
 ];

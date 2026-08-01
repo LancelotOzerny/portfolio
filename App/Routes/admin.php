@@ -27,6 +27,7 @@ $router->get('/admin/settings/configs/', \Controllers\Admin\ConfigsController::c
 $router->post('/admin/settings/configs/save/', \Controllers\Admin\ConfigsController::class, 'save');
 $router->get('/admin/settings/repository/', \Controllers\Admin\RepositoryController::class, 'index');
 $router->post('/admin/settings/repository/update/', \Controllers\Admin\RepositoryController::class, 'update');
+$router->post('/admin/settings/repository/save/', \Controllers\Admin\RepositoryController::class, 'save');
 $router->get('/admin/settings/backup/', \Controllers\Admin\BackupController::class, 'index');
 $router->get('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'create');
 $router->post('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'store');

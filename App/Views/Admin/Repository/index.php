@@ -13,7 +13,7 @@ $output = is_array($updateResult) ? trim((string) ($updateResult['output'] ?? ''
 				<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
 			</div>
 
-			<p class="text-secondary mb-4">Обновление рабочей копии проекта из ветки main.</p>
+			<p class="text-secondary mb-4">Обновление рабочей копии проекта из ветки main и сохранение текущих правок в основную ветку.</p>
 
 			<?php if ($message !== ''): ?>
 				<div class="alert <?= $isSuccess ? 'alert-success' : 'alert-danger' ?>" role="alert">
@@ -21,11 +21,19 @@ $output = is_array($updateResult) ? trim((string) ($updateResult['output'] ?? ''
 				</div>
 			<?php endif; ?>
 
-			<form action="/admin/settings/repository/update/" method="post" class="mb-0">
-				<button type="submit" class="btn btn-primary">
-					Обновить репозиторий
-				</button>
-			</form>
+			<div class="d-flex flex-wrap gap-2">
+				<form action="/admin/settings/repository/update/" method="post" class="mb-0">
+					<button type="submit" class="btn btn-primary">
+						Обновить репозиторий
+					</button>
+				</form>
+
+				<form action="/admin/settings/repository/save/" method="post" class="mb-0">
+					<button type="submit" class="btn btn-outline-primary">
+						Сохранить изменения
+					</button>
+				</form>
+			</div>
 
 			<?php if ($output !== ''): ?>
 				<hr>

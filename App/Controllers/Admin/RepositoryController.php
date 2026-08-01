@@ -81,6 +81,89 @@ class RepositoryController extends BaseController
 		$this->storeFlashAndRedirect($result);
 	}
 
+	public function save(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$repoRoot = App::getInstance()->root;
+		$result = [
+			'success' => false,
+			'message' => '',
+			'output' => '',
+		];
+
+		if (!function_exists('exec')) {
+			$result['message'] = 'Команда exec недоступна в PHP.';
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		if (!is_dir($repoRoot . DIRECTORY_SEPARATOR . '.git')) {
+			$result['message'] = 'Папка .git не найдена. Невозможно сохранить изменения.';
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$branchResult = $this->runGitCommand($repoRoot, 'rev-parse --abbrev-ref HEAD');
+		if (!$branchResult['success']) {
+			$result['message'] = 'Не удалось определить текущую ветку.';
+			$result['output'] = $branchResult['output'];
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$currentBranch = trim($branchResult['output']);
+		if ($currentBranch !== self::TARGET_BRANCH) {
+			$result['message'] = "Текущая ветка: {$currentBranch}. Для сохранения ожидается ветка " . self::TARGET_BRANCH . '.';
+			$result['output'] = $branchResult['output'];
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$statusResult = $this->runGitCommand($repoRoot, 'status --porcelain');
+		if (!$statusResult['success']) {
+			$result['message'] = 'Не удалось проверить изменения в репозитории.';
+			$result['output'] = $statusResult['output'];
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		if (trim($statusResult['output']) === '') {
+			$result['success'] = true;
+			$result['message'] = 'Нет изменений для сохранения.';
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$addResult = $this->runGitCommand($repoRoot, 'add -A');
+		if (!$addResult['success']) {
+			$result['message'] = 'Не удалось подготовить изменения к сохранению.';
+			$result['output'] = $addResult['output'];
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$commitMessage = 'Правки сайта от ' . date('d.m.Y');
+		$commitResult = $this->runGitCommand($repoRoot, 'commit -m ' . escapeshellarg($commitMessage));
+		if (!$commitResult['success']) {
+			$result['message'] = 'Не удалось создать коммит с изменениями.';
+			$result['output'] = trim($addResult['output'] . PHP_EOL . $commitResult['output']);
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
+		$pushResult = $this->runGitCommand($repoRoot, 'push origin ' . self::TARGET_BRANCH);
+		$result['success'] = $pushResult['success'];
+		$result['message'] = $pushResult['success']
+			? 'Изменения сохранены и отправлены в main.'
+			: 'Коммит создан, но отправить изменения в main не удалось.';
+		$result['output'] = trim($addResult['output'] . PHP_EOL . $commitResult['output'] . PHP_EOL . $pushResult['output']);
+
+		$this->storeFlashAndRedirect($result);
+	}
+
 	private function ensureAdmin(): bool
 	{
 		$auth = Auth::getInstance();

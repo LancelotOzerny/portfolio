@@ -14,7 +14,7 @@ class PortfolioController extends BaseController
 		$this->setSeo(SeoContext::page('portfolio'));
 		$data = [];
 
-		Template::getInstance()->setParam('title', 'Мои работы');
+		Template::getInstance()->setParam('title', 'Проекты');
 		Template::getInstance()->setParam('subtitle', 'Примеры реализованных задач с описанием технологий и результатов');
 
 		$projectsModel = new ProjectsModel();

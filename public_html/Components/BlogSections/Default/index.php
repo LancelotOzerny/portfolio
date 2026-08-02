@@ -28,7 +28,7 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 		$articlesCount = (int) ($topic->articles_count ?? 0);
 		$isEnabled = (int) ($topic->enabled ?? 1) === 1;
 
-		if (!$isEnabled || $articlesCount <= 0) {
+		if (!$isEditMode && (!$isEnabled || $articlesCount <= 0)) {
 			continue;
 		}
 		?>

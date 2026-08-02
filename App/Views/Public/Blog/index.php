@@ -14,7 +14,7 @@
 			'template' => 'Default',
 			'is_admin' => (bool) ($data['is_admin'] ?? false),
 			'edit_mode' => (bool) ($data['edit_mode'] ?? false),
-			'only_enabled' => true,
+			'only_enabled' => !(bool) ($data['edit_mode'] ?? false),
 		]))->render();
 		?>
 	</div>

@@ -1,7 +1,9 @@
 <?php
 namespace Controllers\Public;
 
+use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Seo\SeoContext;
+use App\Services\Security\CsrfService;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Modules\Main\Auth;
@@ -69,8 +71,119 @@ class BlogController extends BaseController
 			'topic' => $topicData,
 			'article' => $articleData,
 			'is_admin' => Auth::getInstance()->isAdmin(),
+			'edit_mode' => $this->isEditMode(),
+			'csrf_token' => (new CsrfService())->getToken(),
+			'save_success' => isset($_GET['saved']) && $_GET['saved'] === '1',
+			'save_error' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
 		Template::getInstance()->showFooter();
+	}
+
+	public function updateDetail(string $topic, string $article): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			$this->redirectToArticle($topic, $article, 'Invalid CSRF token.');
+			return;
+		}
+
+		if (!ctype_digit($article)) {
+			$this->redirectToArticle($topic, $article, 'Only database articles can be edited here.');
+			return;
+		}
+
+		$model = new BlogArticlesModel();
+		$articleId = (int) $article;
+
+		try {
+			$articleData = $model->findById($articleId);
+		} catch (Throwable) {
+			$articleData = null;
+		}
+
+		if ($articleData === null) {
+			$this->redirectToArticle($topic, $article, 'Article not found.');
+			return;
+		}
+
+		$detailText = (new ArticleContentSanitizer())->sanitize((string) ($_POST['detail_text'] ?? ''));
+
+		try {
+			$topicIds = $model->findTopicIdsByArticleId($articleId);
+		} catch (Throwable) {
+			$topicIds = [];
+		}
+
+		$topicId = (int) ($topicIds[0] ?? (int) ($articleData->topic_id ?? 0));
+		if ($topicId <= 0) {
+			$this->redirectToArticle($topic, $article, 'Article topic was not found.');
+			return;
+		}
+
+		try {
+			if (!$model->updateEditorData(
+				$articleId,
+				$topicId,
+				(string) ($articleData->title ?? ''),
+				(int) ($articleData->enabled ?? 0),
+				(string) ($articleData->preview_text ?? ''),
+				(string) ($articleData->preview_image_path ?? ''),
+				$detailText,
+				(string) ($articleData->detail_image_path ?? ''),
+				(string) ($articleData->author ?? '')
+			)) {
+				throw new \RuntimeException('Unable to save article.');
+			}
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->redirectToArticle($topic, $article, $message !== '' ? $message : 'Unable to save article.');
+			return;
+		}
+
+		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($article) . '/?edit=true&saved=1');
+	}
+
+	public function uploadDetailImage(string $topic, string $article): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		if (!$this->isAdmin()) {
+			http_response_code(403);
+			echo json_encode(['success' => 0, 'error' => 'Access denied.']);
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			http_response_code(400);
+			echo json_encode(['success' => 0, 'error' => 'Invalid CSRF token.']);
+			return;
+		}
+
+		if (!ctype_digit($article)) {
+			http_response_code(400);
+			echo json_encode(['success' => 0, 'error' => 'Invalid article id.']);
+			return;
+		}
+
+		try {
+			$url = $this->saveInlineArticleImage((int) $article, 'image');
+			echo json_encode([
+				'success' => 1,
+				'file' => [
+					'url' => $url,
+				],
+			]);
+		} catch (Throwable $e) {
+			http_response_code(400);
+			$message = trim($e->getMessage());
+			echo json_encode([
+				'success' => 0,
+				'error' => $message !== '' ? $message : 'Unable to upload image.',
+			]);
+		}
 	}
 
 	private function findTopic(string $slug): ?array
@@ -126,6 +239,8 @@ class BlogController extends BaseController
 			}
 
 			$result[] = [
+				'id' => $articleId,
+				'topic_id' => (int) ($article->topic_id ?? 0),
 				'title' => (string) ($article->title ?? 'Без названия'),
 				'slug' => (string) $articleId,
 				'image' => trim((string) ($article->preview_image_path ?? '')) !== ''
@@ -135,6 +250,7 @@ class BlogController extends BaseController
 				'rating' => 0,
 				'preview' => (string) ($article->preview_text ?? ''),
 				'content' => [(string) ($article->detail_text ?? '')],
+				'detail_text' => (string) ($article->detail_text ?? ''),
 				'comments' => [],
 			];
 		}
@@ -151,6 +267,115 @@ class BlogController extends BaseController
 		}
 
 		return null;
+	}
+
+	private function redirectToArticle(string $topic, string $article, string $error): void
+	{
+		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($article) . '/?edit=true&error=' . rawurlencode($error));
+	}
+
+	private function saveInlineArticleImage(int $articleId, string $fileKey): string
+	{
+		$file = $_FILES[$fileKey] ?? null;
+		if (!is_array($file)) {
+			throw new \RuntimeException('Image file was not sent.');
+		}
+
+		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+		if ($errorCode !== UPLOAD_ERR_OK) {
+			throw new \RuntimeException('Image upload error.');
+		}
+
+		$tmpPath = (string) ($file['tmp_name'] ?? '');
+		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+			throw new \RuntimeException('Invalid uploaded image.');
+		}
+
+		$mime = $this->detectImageMimeType($tmpPath);
+		$allowedMimeToExt = [
+			'image/jpeg' => 'jpg',
+			'image/png' => 'png',
+			'image/gif' => 'gif',
+			'image/webp' => 'webp',
+		];
+
+		if (!isset($allowedMimeToExt[$mime])) {
+			throw new \RuntimeException('Only JPG/PNG/GIF/WEBP images are allowed.');
+		}
+
+		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
+		if ($documentRoot === '') {
+			throw new \RuntimeException('Document root is not configured.');
+		}
+
+		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'articles';
+		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+			throw new \RuntimeException('Unable to create upload directory.');
+		}
+
+		$fileName = sprintf(
+			'article_%d_%s_%s.%s',
+			$articleId,
+			date('Ymd_His'),
+			bin2hex(random_bytes(4)),
+			$allowedMimeToExt[$mime]
+		);
+		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+
+		if (!move_uploaded_file($tmpPath, $targetPath)) {
+			throw new \RuntimeException('Unable to save uploaded image.');
+		}
+
+		return '/upload/articles/' . $fileName;
+	}
+
+	private function detectImageMimeType(string $filePath): string
+	{
+		$mime = '';
+
+		if (function_exists('finfo_open')) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			if ($finfo !== false) {
+				$detected = finfo_file($finfo, $filePath);
+				finfo_close($finfo);
+
+				if (is_string($detected)) {
+					$mime = $detected;
+				}
+			}
+		}
+
+		if ($mime === '' && function_exists('mime_content_type')) {
+			$detected = mime_content_type($filePath);
+			if (is_string($detected)) {
+				$mime = $detected;
+			}
+		}
+
+		if ($mime === '' && function_exists('getimagesize')) {
+			$imageInfo = @getimagesize($filePath);
+			if (is_array($imageInfo) && isset($imageInfo['mime']) && is_string($imageInfo['mime'])) {
+				$mime = $imageInfo['mime'];
+			}
+		}
+
+		return strtolower(trim($mime));
+	}
+
+	private function ensureAdmin(): bool
+	{
+		if ($this->isAdmin()) {
+			return true;
+		}
+
+		header('Location: /admin/login/');
+		return false;
+	}
+
+	private function isAdmin(): bool
+	{
+		$auth = Auth::getInstance();
+		return $auth->getCurrentUser() !== null && $auth->isAdmin();
 	}
 
 	private function getTopics(): array

@@ -14,6 +14,8 @@ class BlogTopicsModel extends BaseModel
 		$qb = (new QueryBuilder($this->table))->insert([
 			'title' => $title,
 			'preview_text' => '',
+			'detail_text' => '',
+			'detail_image_path' => '',
 			'image_path' => '',
 			'enabled' => 0,
 		]);
@@ -21,13 +23,23 @@ class BlogTopicsModel extends BaseModel
 		return $this->execInsertQuery($qb);
 	}
 
-	public function updateEditorData(int $id, string $title, string $description, string $imagePath, int $enabled): bool
+	public function updateEditorData(
+		int $id,
+		string $title,
+		string $description,
+		string $imagePath,
+		string $detailText,
+		string $detailImagePath,
+		int $enabled
+	): bool
 	{
 		$qb = (new QueryBuilder($this->table))
 			->update([
 				'title' => $title,
 				'preview_text' => $description,
 				'image_path' => $imagePath,
+				'detail_text' => $detailText,
+				'detail_image_path' => $detailImagePath,
 				'enabled' => $enabled,
 			])
 			->where('id', '=', $id);
@@ -47,8 +59,8 @@ class BlogTopicsModel extends BaseModel
 	public function findAllWithArticleCounts(bool $onlyEnabled = true): array
 	{
 		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_topics.*, COUNT(blog_articles.id) AS articles_count')
-			->join('blog_articles', 'blog_topics.id', 'blog_articles.topic_id', 'LEFT');
+			->selectRaw('blog_topics.*, COUNT(DISTINCT blog_article_topic_relations.article_id) AS articles_count')
+			->join('blog_article_topic_relations', 'blog_topics.id', 'blog_article_topic_relations.topic_id', 'LEFT');
 
 		if ($onlyEnabled) {
 			$qb->where('blog_topics.enabled', '=', 1);

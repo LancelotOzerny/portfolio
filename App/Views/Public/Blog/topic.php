@@ -21,7 +21,15 @@ if ($topic === null) {
 	<?php
 	return;
 }
+
+$detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 ?>
+
+<?php if ($detailImagePath !== ''): ?>
+	<section class="blog-topic-detail-image">
+		<img src="<?= htmlspecialchars($detailImagePath) ?>" alt="<?= htmlspecialchars((string) $topic['name']) ?>">
+	</section>
+<?php endif; ?>
 
 <section class="light-page-hero">
 	<div class="site-container light-page-hero__container">

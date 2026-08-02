@@ -14,6 +14,11 @@ $router->get('/admin/content/blog/rubrics/{id}/', \Controllers\Admin\BlogControl
 $router->post('/admin/content/blog/rubrics/{id}/', \Controllers\Admin\BlogController::class, 'update');
 $router->post('/admin/content/blog/rubrics/{id}/delete/', \Controllers\Admin\BlogController::class, 'delete');
 $router->get('/admin/content/blog/articles/', \Controllers\Admin\BlogController::class, 'articles');
+$router->get('/admin/content/blog/articles/create/', \Controllers\Admin\BlogController::class, 'articleCreate');
+$router->post('/admin/content/blog/articles/create/', \Controllers\Admin\BlogController::class, 'articleStore');
+$router->get('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleEdit');
+$router->post('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleUpdate');
+$router->post('/admin/content/blog/articles/{id}/delete/', \Controllers\Admin\BlogController::class, 'articleDelete');
 $router->get('/admin/content/tags/', \Controllers\Admin\TagsController::class, 'index');
 $router->post('/admin/content/tags/create/', \Controllers\Admin\TagsController::class, 'create');
 $router->get('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'edit');

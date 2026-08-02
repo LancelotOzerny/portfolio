@@ -83,7 +83,10 @@ class BlogController extends BaseController
 				return [
 					'name' => (string) ($topic->title ?? 'Без названия'),
 					'slug' => (string) ($topic->id ?? $slug),
-					'description' => (string) ($topic->preview_text ?? ''),
+					'description' => trim((string) ($topic->detail_text ?? '')) !== ''
+						? (string) ($topic->detail_text ?? '')
+						: (string) ($topic->preview_text ?? ''),
+					'detail_image_path' => (string) ($topic->detail_image_path ?? ''),
 					'articles' => [],
 				];
 			}

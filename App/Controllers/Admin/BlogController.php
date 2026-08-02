@@ -2,6 +2,7 @@
 
 namespace Controllers\Admin;
 
+use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
@@ -40,10 +41,216 @@ class BlogController extends BaseController
 			return;
 		}
 
+		$flash = $_SESSION[self::FLASH_KEY] ?? null;
+		unset($_SESSION[self::FLASH_KEY]);
+
+		$articles = [];
+		try {
+			$articles = (new BlogArticlesModel())->findAllWithTopic();
+		} catch (Throwable) {
+			$articles = [];
+		}
+
 		Template::getInstance()->setParam('title', 'Статьи блога');
 		Template::getInstance()->showHeader();
-		$this->render('articles');
+		$this->render('articles', [
+			'articles' => $articles,
+			'flash' => is_array($flash) ? $flash : null,
+		]);
 		Template::getInstance()->showFooter();
+	}
+
+	public function articleCreate(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		Template::getInstance()->setParam('title', 'Создание статьи блога');
+		Template::getInstance()->showHeader();
+		$this->render('article-edit', [
+			'article' => null,
+			'topics' => $this->loadTopics(),
+			'selectedTopicIds' => [],
+			'saveSuccess' => false,
+			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+		]);
+		Template::getInstance()->showFooter();
+	}
+
+	public function articleStore(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$normalized = $this->normalizeArticleInput();
+		if ($normalized['error'] !== '') {
+			header('Location: /admin/content/blog/articles/create/?error=' . rawurlencode($normalized['error']));
+			return;
+		}
+
+		$model = new BlogArticlesModel();
+		$articleId = 0;
+
+		try {
+			$articleId = $model->createForAdmin($normalized['topic_id'], $normalized['title']);
+		} catch (Throwable) {
+		}
+
+		if ($articleId <= 0) {
+			header('Location: /admin/content/blog/articles/create/?error=' . rawurlencode('Не удалось создать статью.'));
+			return;
+		}
+
+		try {
+			$previewImagePath = $this->saveArticleImageUpload($articleId, 'preview_image_file', '', 'preview');
+			$detailImagePath = $this->saveArticleImageUpload($articleId, 'detail_image_file', '', 'detail');
+
+			$model->updateEditorData(
+				$articleId,
+				$normalized['topic_id'],
+				$normalized['title'],
+				$normalized['enabled'],
+				$normalized['preview_text'],
+				$previewImagePath,
+				$normalized['detail_text'],
+				$detailImagePath,
+				$normalized['author']
+			);
+
+			if (!$model->replaceTopicIds($articleId, $normalized['topic_ids'])) {
+				throw new \RuntimeException('Не удалось сохранить рубрики статьи.');
+			}
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			if ($message === '') {
+				$message = 'Статья создана, но часть данных не удалось сохранить.';
+			}
+
+			header('Location: /admin/content/blog/articles/' . $articleId . '/?error=' . rawurlencode($message));
+			return;
+		}
+
+		header('Location: /admin/content/blog/articles/' . $articleId . '/');
+	}
+
+	public function articleEdit(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			$article = (new BlogArticlesModel())->findById($id);
+		} catch (Throwable) {
+			$article = null;
+		}
+
+		if ($article === null) {
+			header('Location: /admin/content/blog/articles/');
+			return;
+		}
+
+		Template::getInstance()->setParam('title', 'Редактирование статьи блога ' . $id);
+		try {
+			$selectedTopicIds = (new BlogArticlesModel())->findTopicIdsByArticleId($id);
+		} catch (Throwable) {
+			$selectedTopicIds = [];
+		}
+
+		Template::getInstance()->showHeader();
+		$this->render('article-edit', [
+			'article' => $article,
+			'topics' => $this->loadTopics(),
+			'selectedTopicIds' => $selectedTopicIds,
+			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
+			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+		]);
+		Template::getInstance()->showFooter();
+	}
+
+	public function articleUpdate(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$model = new BlogArticlesModel();
+
+		try {
+			$article = $model->findById($id);
+		} catch (Throwable) {
+			$article = null;
+		}
+
+		if ($article === null) {
+			header('Location: /admin/content/blog/articles/');
+			return;
+		}
+
+		$normalized = $this->normalizeArticleInput();
+		if ($normalized['error'] !== '') {
+			header('Location: /admin/content/blog/articles/' . $id . '/?error=' . rawurlencode($normalized['error']));
+			return;
+		}
+
+		$previewImagePath = trim((string) ($_POST['preview_image_path_existing'] ?? (string) ($article->preview_image_path ?? '')));
+		$detailImagePath = trim((string) ($_POST['detail_image_path_existing'] ?? (string) ($article->detail_image_path ?? '')));
+
+		try {
+			$previewImagePath = $this->saveArticleImageUpload($id, 'preview_image_file', $previewImagePath, 'preview');
+			$detailImagePath = $this->saveArticleImageUpload($id, 'detail_image_file', $detailImagePath, 'detail');
+
+			if (!$model->updateEditorData(
+				$id,
+				$normalized['topic_id'],
+				$normalized['title'],
+				$normalized['enabled'],
+				$normalized['preview_text'],
+				$previewImagePath,
+				$normalized['detail_text'],
+				$detailImagePath,
+				$normalized['author']
+			)) {
+				throw new \RuntimeException('Не удалось сохранить изменения.');
+			}
+
+			if (!$model->replaceTopicIds($id, $normalized['topic_ids'])) {
+				throw new \RuntimeException('Не удалось сохранить рубрики статьи.');
+			}
+
+			header('Location: /admin/content/blog/articles/' . $id . '/?saved=1');
+			return;
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			if ($message === '') {
+				$message = 'Не удалось сохранить изменения.';
+			}
+
+			header('Location: /admin/content/blog/articles/' . $id . '/?error=' . rawurlencode($message));
+			return;
+		}
+	}
+
+	public function articleDelete(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			if (!(new BlogArticlesModel())->deleteById($id)) {
+				throw new \RuntimeException('Не удалось удалить статью.');
+			}
+
+			$this->setFlash(true, 'Статья удалена.');
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->setFlash(false, $message !== '' ? $message : 'Не удалось удалить статью.');
+		}
+
+		header('Location: /admin/content/blog/articles/');
 	}
 
 	public function create(): void
@@ -70,6 +277,7 @@ class BlogController extends BaseController
 
 		$title = trim((string) ($_POST['title'] ?? ''));
 		$description = trim((string) ($_POST['description'] ?? ''));
+		$detailText = (string) ($_POST['detail_text'] ?? '');
 		if ($title === '') {
 			header('Location: /admin/content/blog/rubrics/create/?error=' . rawurlencode('Введите название рубрики.'));
 			return;
@@ -95,7 +303,16 @@ class BlogController extends BaseController
 
 		try {
 			$imagePath = $this->saveTopicImageUpload($topicId, 'image_file', '');
-				$model->updateEditorData($topicId, $title, $description, $imagePath, isset($_POST['enabled']) ? 1 : 0);
+			$detailImagePath = $this->saveTopicImageUpload($topicId, 'detail_image_file', '', 'detail');
+			$model->updateEditorData(
+				$topicId,
+				$title,
+				$description,
+				$imagePath,
+				$detailText,
+				$detailImagePath,
+				isset($_POST['enabled']) ? 1 : 0
+			);
 		} catch (Throwable $e) {
 			$message = trim($e->getMessage());
 			if ($message === '') {
@@ -158,6 +375,8 @@ class BlogController extends BaseController
 		$title = trim((string) ($_POST['title'] ?? ''));
 		$description = trim((string) ($_POST['description'] ?? ''));
 		$imagePath = trim((string) ($_POST['image_path_existing'] ?? (string) ($topic->image_path ?? '')));
+		$detailText = (string) ($_POST['detail_text'] ?? '');
+		$detailImagePath = trim((string) ($_POST['detail_image_path_existing'] ?? (string) ($topic->detail_image_path ?? '')));
 		$enabled = isset($_POST['enabled']) ? 1 : 0;
 
 		if ($title === '') {
@@ -172,8 +391,9 @@ class BlogController extends BaseController
 
 		try {
 			$imagePath = $this->saveTopicImageUpload($id, 'image_file', $imagePath);
+			$detailImagePath = $this->saveTopicImageUpload($id, 'detail_image_file', $detailImagePath, 'detail');
 
-			if (!$model->updateEditorData($id, $title, $description, $imagePath, $enabled)) {
+			if (!$model->updateEditorData($id, $title, $description, $imagePath, $detailText, $detailImagePath, $enabled)) {
 				throw new \RuntimeException('Не удалось сохранить изменения.');
 			}
 
@@ -210,7 +430,7 @@ class BlogController extends BaseController
 		header('Location: /admin/content/blog/rubrics/');
 	}
 
-	private function saveTopicImageUpload(int $topicId, string $fileKey, string $existingUrl): string
+	private function saveTopicImageUpload(int $topicId, string $fileKey, string $existingUrl, string $imageType = 'preview'): string
 	{
 		$file = $_FILES[$fileKey] ?? null;
 		if (!is_array($file)) {
@@ -253,9 +473,11 @@ class BlogController extends BaseController
 			throw new \RuntimeException('Не удалось создать папку загрузки.');
 		}
 
+		$safeImageType = $imageType === 'detail' ? 'detail' : 'preview';
 		$fileName = sprintf(
-			'blog_topic_%d_%s_%s.%s',
+			'blog_topic_%d_%s_%s_%s.%s',
 			$topicId,
+			$safeImageType,
 			date('Ymd_His'),
 			bin2hex(random_bytes(4)),
 			$allowedMimeToExt[$mime]
@@ -267,6 +489,126 @@ class BlogController extends BaseController
 		}
 
 		return '/upload/images/blog/topics/' . $fileName;
+	}
+
+	private function saveArticleImageUpload(int $articleId, string $fileKey, string $existingUrl, string $imageType): string
+	{
+		$file = $_FILES[$fileKey] ?? null;
+		if (!is_array($file)) {
+			return $existingUrl;
+		}
+
+		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+		if ($errorCode === UPLOAD_ERR_NO_FILE) {
+			return $existingUrl;
+		}
+
+		if ($errorCode !== UPLOAD_ERR_OK) {
+			throw new \RuntimeException('Ошибка загрузки изображения.');
+		}
+
+		$tmpPath = (string) ($file['tmp_name'] ?? '');
+		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+			throw new \RuntimeException('Некорректный загруженный файл.');
+		}
+
+		$mime = $this->detectImageMimeType($tmpPath);
+		$allowedMimeToExt = [
+			'image/jpeg' => 'jpg',
+			'image/png' => 'png',
+			'image/gif' => 'gif',
+			'image/webp' => 'webp',
+		];
+
+		if (!isset($allowedMimeToExt[$mime])) {
+			throw new \RuntimeException('Разрешены только JPG/PNG/GIF/WEBP изображения.');
+		}
+
+		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
+		if ($documentRoot === '') {
+			throw new \RuntimeException('Document root is not configured.');
+		}
+
+		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'blog' . DIRECTORY_SEPARATOR . 'articles';
+		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+			throw new \RuntimeException('Не удалось создать папку загрузки.');
+		}
+
+		$safeImageType = $imageType === 'detail' ? 'detail' : 'preview';
+		$fileName = sprintf(
+			'blog_article_%d_%s_%s_%s.%s',
+			$articleId,
+			$safeImageType,
+			date('Ymd_His'),
+			bin2hex(random_bytes(4)),
+			$allowedMimeToExt[$mime]
+		);
+		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+
+		if (!move_uploaded_file($tmpPath, $targetPath)) {
+			throw new \RuntimeException('Не удалось сохранить изображение.');
+		}
+
+		return '/upload/images/blog/articles/' . $fileName;
+	}
+
+	private function normalizeArticleInput(): array
+	{
+		$topicIds = $this->normalizeTopicIds($_POST['topic_ids'] ?? []);
+		$topicId = $topicIds[0] ?? 0;
+		$title = trim((string) ($_POST['title'] ?? ''));
+		$previewText = trim((string) ($_POST['preview_text'] ?? ''));
+		$detailText = (string) ($_POST['detail_text'] ?? '');
+		$author = trim((string) ($_POST['author'] ?? ''));
+
+		if ($topicId <= 0) {
+			return ['error' => 'Выберите рубрику статьи.'];
+		}
+
+		if ($title === '') {
+			return ['error' => 'Введите название статьи.'];
+		}
+
+		if (mb_strlen($previewText) > 500) {
+			return ['error' => 'Preview текст должен быть не длиннее 500 символов.'];
+		}
+
+		return [
+			'error' => '',
+			'topic_id' => $topicId,
+			'topic_ids' => $topicIds,
+			'title' => $title,
+			'enabled' => isset($_POST['enabled']) ? 1 : 0,
+			'preview_text' => $previewText,
+			'detail_text' => $detailText,
+			'author' => $author,
+		];
+	}
+
+	private function normalizeTopicIds(mixed $rawTopicIds): array
+	{
+		if (!is_array($rawTopicIds)) {
+			return [];
+		}
+
+		$result = [];
+		foreach ($rawTopicIds as $topicId) {
+			$topicId = (int) $topicId;
+			if ($topicId > 0) {
+				$result[] = $topicId;
+			}
+		}
+
+		return array_values(array_unique($result));
+	}
+
+	private function loadTopics(): array
+	{
+		try {
+			return (new BlogTopicsModel())->findAllWithArticleCounts(false);
+		} catch (Throwable) {
+			return [];
+		}
 	}
 
 	private function detectImageMimeType(string $filePath): string

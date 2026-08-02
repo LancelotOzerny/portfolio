@@ -8,6 +8,8 @@ $title = (string) ($topic->title ?? '');
 $description = (string) ($topic->preview_text ?? '');
 $isEnabled = (int) ($topic->enabled ?? 0) === 1;
 $imagePath = trim((string) ($topic->image_path ?? ''));
+$detailText = (string) ($topic->detail_text ?? '');
+$detailImagePath = trim((string) ($topic->detail_image_path ?? ''));
 $saveSuccess = (bool) ($data['saveSuccess'] ?? false);
 $saveError = trim((string) ($data['saveError'] ?? ''));
 $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/content/blog/rubrics/' . $topicId . '/';
@@ -38,6 +40,9 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 				</li>
 				<li class="nav-item" role="presentation">
 					<button class="nav-link" id="tab-preview-link" data-bs-toggle="tab" data-bs-target="#tab-preview" type="button" role="tab">Preview</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="tab-detail-link" data-bs-toggle="tab" data-bs-target="#tab-detail" type="button" role="tab">Detail</button>
 				</li>
 			</ul>
 		</div>
@@ -100,6 +105,36 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 							<img id="topic-image-preview" src="" alt="Preview изображение" class="img-fluid rounded shadow-sm mt-3 d-none" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto;">
 						</div>
 					<?php endif; ?>
+				</div>
+
+				<div class="tab-pane fade" id="tab-detail" role="tabpanel" aria-labelledby="tab-detail-link">
+					<div class="row g-3">
+						<div class="col-12">
+							<label class="form-label">Detail изображение</label>
+
+							<?php if ($detailImagePath !== ''): ?>
+								<div class="border rounded p-3">
+									<button type="button" class="btn p-0 border-0 bg-transparent blog-topic-image-trigger d-flex justify-content-center w-100" data-target-input="detail_image_file" title="Нажмите, чтобы заменить изображение">
+										<img id="topic-detail-image-preview" src="<?= htmlspecialchars($detailImagePath) ?>" alt="Detail изображение" class="img-fluid rounded shadow-sm" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; cursor: pointer; display: block; margin: 0 auto;">
+									</button>
+									<div class="form-text mt-2">Изображение загружено. Нажмите на него, чтобы выбрать новое.</div>
+								</div>
+								<input type="file" id="detail_image_file" name="detail_image_file" accept="image/*" class="form-control mt-2 d-none blog-topic-image-input" data-preview-image="topic-detail-image-preview">
+								<input type="hidden" name="detail_image_path_existing" value="<?= htmlspecialchars($detailImagePath) ?>">
+							<?php else: ?>
+								<div class="border rounded p-3 bg-light-subtle">
+									<div class="text-secondary mb-2">Изображение не загружено</div>
+									<input type="file" id="detail_image_file" name="detail_image_file" accept="image/*" class="form-control blog-topic-image-input" data-preview-image="topic-detail-image-preview">
+									<img id="topic-detail-image-preview" src="" alt="Detail изображение" class="img-fluid rounded shadow-sm mt-3 d-none" style="max-width: min(100%, 640px); max-height: 450px; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto;">
+								</div>
+							<?php endif; ?>
+						</div>
+
+						<div class="col-12">
+							<label class="form-label">Detail текст</label>
+							<textarea name="detail_text" rows="10" class="form-control font-monospace" spellcheck="false"><?= htmlspecialchars($detailText) ?></textarea>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

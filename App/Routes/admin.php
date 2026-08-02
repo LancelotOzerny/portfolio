@@ -16,6 +16,10 @@ $router->get('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, '
 $router->post('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'update');
 $router->post('/admin/seo/{pageKey}/reset/', \Controllers\Admin\SeoController::class, 'reset');
 $router->get('/admin/users/', \Controllers\Admin\UsersController::class, 'index');
+$router->get('/admin/development/sql/', \Controllers\Admin\DevelopmentController::class, 'sql');
+$router->post('/admin/development/sql/execute/', \Controllers\Admin\DevelopmentController::class, 'executeSql');
+$router->post('/admin/development/sql/execute-file/', \Controllers\Admin\DevelopmentController::class, 'executeSqlFile');
+$router->post('/admin/development/sql/delete-file/', \Controllers\Admin\DevelopmentController::class, 'deleteSqlFile');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');

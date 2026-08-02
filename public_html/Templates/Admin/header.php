@@ -11,6 +11,8 @@ $contentActive = str_starts_with($currentPath, '/admin/projects/') || str_starts
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
 $tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
+$developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
+$developmentSqlActive = str_starts_with($currentPath, '/admin/development/sql/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 $seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
@@ -224,6 +226,13 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<span class="admin-sideout__label">Резюме</span>
 				</a>
 				<a class="admin-sideout__sublink<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
+				<a class="admin-sideout__link<?= $developmentActive ?>" href="/admin/development/sql/">
+					<span class="admin-sideout__icon">Рд</span>
+					<span class="admin-sideout__label">Разработка</span>
+				</a>
+				<a class="admin-sideout__sublink<?= $developmentSqlActive ?>" href="/admin/development/sql/">
+					<span class="admin-sideout__label">SQL запросы</span>
+				</a>
 				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
 					<span class="admin-sideout__icon">На</span>
 					<span class="admin-sideout__label">Настройки</span>

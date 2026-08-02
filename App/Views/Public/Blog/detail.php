@@ -114,6 +114,7 @@ if ($topic === null || $article === null) {
 		const initialHtml = <?= json_encode((string) ($article['detail_text'] ?? ''), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 		const csrfToken = <?= json_encode($csrfToken, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 		const uploadUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/image/';
+		const uploadFileUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/file/';
 
 		if (!window.EditorJS || !editorRoot || !editorInput || !blocksInput || !form) {
 			return;
@@ -212,6 +213,150 @@ if ($topic === null || $article === null) {
 				wrapper.appendChild(range.extractContents());
 				range.insertNode(wrapper);
 				this.api.selection.expandToTag(wrapper);
+			}
+		}
+
+		class FileBlockTool {
+			static get toolbox() {
+				return {
+					title: 'Файл',
+					icon: '<svg width="17" height="17" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+				};
+			}
+
+			constructor({ data, config }) {
+				this.data = data || {};
+				this.config = config || {};
+				this.wrapper = null;
+			}
+
+			render() {
+				this.wrapper = document.createElement('div');
+				this.wrapper.className = 'blog-editor-file-block';
+				this.renderContent();
+				return this.wrapper;
+			}
+
+			save() {
+				return {
+					url: this.data.url || '',
+					name: this.data.name || '',
+					title: this.data.title || '',
+					extension: this.data.extension || ''
+				};
+			}
+
+			renderContent() {
+				if (!this.wrapper) {
+					return;
+				}
+
+				this.wrapper.innerHTML = '';
+
+				if (this.data.url) {
+					const icon = document.createElement('span');
+					icon.className = 'blog-editor-file-block__icon blog-editor-file-block__icon_' + this.getExtension();
+					icon.innerHTML = this.getIconSvg(this.getExtension());
+					this.wrapper.appendChild(icon);
+
+					const content = document.createElement('div');
+					content.className = 'blog-editor-file-block__content';
+
+					const titleInput = document.createElement('input');
+					titleInput.type = 'text';
+					titleInput.value = this.data.title || this.data.name || '';
+					titleInput.placeholder = 'Заголовок файла';
+					titleInput.addEventListener('input', () => {
+						this.data.title = titleInput.value;
+						link.textContent = this.getDisplayTitle();
+					});
+					content.appendChild(titleInput);
+
+					const link = document.createElement('a');
+					link.href = this.data.url;
+					link.target = '_blank';
+					link.rel = 'noopener noreferrer';
+					link.textContent = this.getDisplayTitle();
+					content.appendChild(link);
+					this.wrapper.appendChild(content);
+
+					const replaceButton = document.createElement('button');
+					replaceButton.type = 'button';
+					replaceButton.textContent = 'Заменить файл';
+					replaceButton.addEventListener('click', () => this.selectFile());
+					this.wrapper.appendChild(replaceButton);
+					return;
+				}
+
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.textContent = 'Выбрать DOCX, TXT или PDF';
+				button.addEventListener('click', () => this.selectFile());
+				this.wrapper.appendChild(button);
+			}
+
+			getDisplayTitle() {
+				return this.data.title || this.data.name || this.data.url || 'Файл';
+			}
+
+			getExtension() {
+				const extension = String(this.data.extension || '').toLowerCase();
+				if (['docx', 'pdf', 'txt'].includes(extension)) {
+					return extension;
+				}
+
+				const urlExtension = String(this.data.url || '').split('.').pop().toLowerCase();
+				return ['docx', 'pdf', 'txt'].includes(urlExtension) ? urlExtension : 'txt';
+			}
+
+			getIconSvg(extension) {
+				const label = extension.toUpperCase();
+				const color = extension === 'pdf' ? '#fa5374' : (extension === 'docx' ? '#51bce8' : '#74c390');
+				return `<svg width="34" height="42" viewBox="0 0 34 42" aria-hidden="true" focusable="false">
+					<path d="M4 1h17l9 9v27a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4z" fill="#fff" stroke="${color}" stroke-width="2"/>
+					<path d="M21 1v9h9" fill="none" stroke="${color}" stroke-width="2"/>
+					<rect x="4" y="24" width="26" height="12" rx="3" fill="${color}"/>
+					<text x="17" y="32.5" text-anchor="middle" fill="#fff" font-size="7" font-family="Arial, sans-serif" font-weight="700">${label}</text>
+				</svg>`;
+			}
+
+			selectFile() {
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.accept = '.docx,.txt,.pdf,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+				input.addEventListener('change', () => {
+					const file = input.files && input.files[0] ? input.files[0] : null;
+					if (file) {
+						this.uploadFile(file);
+					}
+				});
+				input.click();
+			}
+
+			async uploadFile(file) {
+				const formData = new FormData();
+				formData.append('_csrf', this.config.csrfToken || '');
+				formData.append('file', file);
+
+				const response = await fetch(this.config.uploadUrl || '', {
+					method: 'POST',
+					body: formData,
+					credentials: 'same-origin'
+				});
+				const result = await response.json();
+
+				if (!result.success || !result.file || !result.file.url) {
+					alert(result.error || 'Не удалось загрузить файл.');
+					return;
+				}
+
+				this.data = {
+					url: result.file.url,
+					name: result.file.name || file.name,
+					title: this.data.title || result.file.name || file.name,
+					extension: result.file.extension || ''
+				};
+				this.renderContent();
 			}
 		}
 
@@ -335,6 +480,24 @@ if ($topic === null || $article === null) {
 					return;
 				}
 
+				if (tagName === 'p') {
+					const children = Array.from(element.children);
+					const link = children.length === 1 && children[0].tagName.toLowerCase() === 'a' ? children[0] : null;
+					const href = link ? link.getAttribute('href') || '' : '';
+					if (href.startsWith('/upload/articles/') && /\.(docx|pdf|txt)$/i.test(href)) {
+						blocks.push({
+							type: 'file',
+							data: {
+								url: href,
+								name: href.split('/').pop() || href,
+								title: link.textContent || href.split('/').pop() || href,
+								extension: href.split('.').pop() || ''
+							}
+						});
+						return;
+					}
+				}
+
 				blocks.push({
 					type: 'paragraph',
 					data: {
@@ -368,6 +531,15 @@ if ($topic === null || $article === null) {
 
 			if (block.type === 'code') {
 				return `<pre><code>${escapeHtml(data.code || '')}</code></pre>`;
+			}
+
+			if (block.type === 'file') {
+				const url = data.url ? String(data.url) : '';
+				if (!url) {
+					return '';
+				}
+				const title = data.title || data.name || url.split('/').pop() || url;
+				return `<p><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a></p>`;
 			}
 
 			return `<p>${sanitizeInlineHtml(data.text)}</p>`;
@@ -413,6 +585,13 @@ if ($topic === null || $article === null) {
 					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor']
 				},
 				code: CodeTool,
+				file: {
+					class: FileBlockTool,
+					config: {
+						uploadUrl: uploadFileUrl,
+						csrfToken: csrfToken
+					}
+				},
 				underline: UnderlineTool,
 				strike: StrikeTool,
 				textColor: {

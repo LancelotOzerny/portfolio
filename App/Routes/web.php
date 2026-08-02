@@ -12,6 +12,7 @@ $router->get('/blog/{topic}/', \Controllers\Public\BlogController::class,  'topi
 $router->get('/blog/{topic}/{article}/', \Controllers\Public\BlogController::class,  'detail');
 $router->post('/blog/{topic}/{article}/save/', \Controllers\Public\BlogController::class,  'updateDetail');
 $router->post('/blog/{topic}/{article}/image/', \Controllers\Public\BlogController::class,  'uploadDetailImage');
+$router->post('/blog/{topic}/{article}/file/', \Controllers\Public\BlogController::class,  'uploadDetailFile');
 $router->get('/certificates/', \Controllers\Public\CertificatesController::class,  'index');
 $router->get('/contacts/', \Controllers\Public\ContactsController::class,  'index');
 $router->get('/auth/logout/', \Controllers\AuthController::class, 'logout');

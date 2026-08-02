@@ -150,21 +150,7 @@ class BlogController extends BaseController
 	{
 		header('Content-Type: application/json; charset=utf-8');
 
-		if (!$this->isAdmin()) {
-			http_response_code(403);
-			echo json_encode(['success' => 0, 'error' => 'Access denied.']);
-			return;
-		}
-
-		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
-			http_response_code(400);
-			echo json_encode(['success' => 0, 'error' => 'Invalid CSRF token.']);
-			return;
-		}
-
-		if (!ctype_digit($article)) {
-			http_response_code(400);
-			echo json_encode(['success' => 0, 'error' => 'Invalid article id.']);
+		if (!$this->ensureUploadRequestIsAllowed($article)) {
 			return;
 		}
 
@@ -182,6 +168,30 @@ class BlogController extends BaseController
 			echo json_encode([
 				'success' => 0,
 				'error' => $message !== '' ? $message : 'Unable to upload image.',
+			]);
+		}
+	}
+
+	public function uploadDetailFile(string $topic, string $article): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		if (!$this->ensureUploadRequestIsAllowed($article)) {
+			return;
+		}
+
+		try {
+			$file = $this->saveInlineArticleFile((int) $article, 'file');
+			echo json_encode([
+				'success' => 1,
+				'file' => $file,
+			]);
+		} catch (Throwable $e) {
+			http_response_code(400);
+			$message = trim($e->getMessage());
+			echo json_encode([
+				'success' => 0,
+				'error' => $message !== '' ? $message : 'Unable to upload file.',
 			]);
 		}
 	}
@@ -274,6 +284,29 @@ class BlogController extends BaseController
 		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($article) . '/?edit=true&error=' . rawurlencode($error));
 	}
 
+	private function ensureUploadRequestIsAllowed(string $article): bool
+	{
+		if (!$this->isAdmin()) {
+			http_response_code(403);
+			echo json_encode(['success' => 0, 'error' => 'Access denied.']);
+			return false;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			http_response_code(400);
+			echo json_encode(['success' => 0, 'error' => 'Invalid CSRF token.']);
+			return false;
+		}
+
+		if (!ctype_digit($article)) {
+			http_response_code(400);
+			echo json_encode(['success' => 0, 'error' => 'Invalid article id.']);
+			return false;
+		}
+
+		return true;
+	}
+
 	private function saveInlineArticleImage(int $articleId, string $fileKey): string
 	{
 		$file = $_FILES[$fileKey] ?? null;
@@ -327,6 +360,83 @@ class BlogController extends BaseController
 		}
 
 		return '/upload/articles/' . $fileName;
+	}
+
+	private function saveInlineArticleFile(int $articleId, string $fileKey): array
+	{
+		$file = $_FILES[$fileKey] ?? null;
+		if (!is_array($file)) {
+			throw new \RuntimeException('File was not sent.');
+		}
+
+		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+		if ($errorCode !== UPLOAD_ERR_OK) {
+			throw new \RuntimeException('File upload error.');
+		}
+
+		$tmpPath = (string) ($file['tmp_name'] ?? '');
+		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+			throw new \RuntimeException('Invalid uploaded file.');
+		}
+
+		$originalName = trim((string) ($file['name'] ?? ''));
+		$extension = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+		$allowedExtensions = ['docx', 'pdf', 'txt'];
+		if (!in_array($extension, $allowedExtensions, true)) {
+			throw new \RuntimeException('Only DOCX/TXT/PDF files are allowed.');
+		}
+
+		$mime = $this->detectImageMimeType($tmpPath);
+		$allowedMimeByExtension = [
+			'docx' => [
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				'application/zip',
+				'application/octet-stream',
+			],
+			'pdf' => [
+				'application/pdf',
+				'application/x-pdf',
+				'application/octet-stream',
+			],
+			'txt' => [
+				'text/plain',
+				'text/x-plain',
+				'application/octet-stream',
+			],
+		];
+
+		if ($mime !== '' && !in_array($mime, $allowedMimeByExtension[$extension], true)) {
+			throw new \RuntimeException('Uploaded file type does not match its extension.');
+		}
+
+		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
+		if ($documentRoot === '') {
+			throw new \RuntimeException('Document root is not configured.');
+		}
+
+		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'articles';
+		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+			throw new \RuntimeException('Unable to create upload directory.');
+		}
+
+		$fileName = sprintf(
+			'article_%d_file_%s_%s.%s',
+			$articleId,
+			date('Ymd_His'),
+			bin2hex(random_bytes(4)),
+			$extension
+		);
+		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+
+		if (!move_uploaded_file($tmpPath, $targetPath)) {
+			throw new \RuntimeException('Unable to save uploaded file.');
+		}
+
+		return [
+			'url' => '/upload/articles/' . $fileName,
+			'name' => $originalName !== '' ? $originalName : $fileName,
+			'extension' => $extension,
+		];
 	}
 
 	private function detectImageMimeType(string $filePath): string

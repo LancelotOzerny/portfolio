@@ -2,6 +2,7 @@
 /* @var array $data */
 
 $topics = $data['topics'] ?? [];
+$isAdmin = (bool) ($data['is_admin'] ?? false);
 ?>
 
 <section class="light-page-hero">
@@ -16,6 +17,13 @@ $topics = $data['topics'] ?? [];
 <section class="light-page-section blog-page">
 	<div class="site-container">
 		<div class="blog-topics">
+			<?php if ($isAdmin): ?>
+				<button class="blog-topic-card blog-topic-card_add" type="button" onclick="alert('Add Theme')">
+					<span class="blog-add-card__plus" aria-hidden="true">+</span>
+					<span class="blog-add-card__text">Добавить тему</span>
+				</button>
+			<?php endif; ?>
+
 			<?php foreach ($topics as $topic): ?>
 				<a class="blog-topic-card" href="/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/">
 					<img src="<?= htmlspecialchars((string) $topic['image']) ?>" alt="<?= htmlspecialchars((string) $topic['name']) ?>">

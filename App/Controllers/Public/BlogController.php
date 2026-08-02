@@ -2,6 +2,7 @@
 namespace Controllers\Public;
 
 use App\Services\Seo\SeoContext;
+use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
 
@@ -17,6 +18,7 @@ class BlogController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('index', [
 			'topics' => $this->getTopics(),
+			'is_admin' => Auth::getInstance()->isAdmin(),
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -38,6 +40,7 @@ class BlogController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('topic', [
 			'topic' => $topicData,
+			'is_admin' => Auth::getInstance()->isAdmin(),
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -61,6 +64,7 @@ class BlogController extends BaseController
 		$this->render('detail', [
 			'topic' => $topicData,
 			'article' => $articleData,
+			'is_admin' => Auth::getInstance()->isAdmin(),
 		]);
 		Template::getInstance()->showFooter();
 	}

@@ -2,6 +2,7 @@
 /* @var array $data */
 
 $topic = $data['topic'] ?? null;
+$isAdmin = (bool) ($data['is_admin'] ?? false);
 $renderRating = static function (int $rating): string {
 	$rating = max(0, min(10, $rating));
 
@@ -39,6 +40,13 @@ if ($topic === null) {
 <section class="light-page-section blog-page">
 	<div class="site-container">
 		<div class="blog-articles">
+			<?php if ($isAdmin): ?>
+				<button class="blog-article-card blog-article-card_add" type="button" onclick="alert('Статья добавлена')">
+					<span class="blog-add-card__plus" aria-hidden="true">+</span>
+					<span class="blog-add-card__text">Добавить статью</span>
+				</button>
+			<?php endif; ?>
+
 			<?php foreach ($topic['articles'] as $article): ?>
 				<a class="blog-article-card" href="/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/">
 					<span class="blog-article-card__image">

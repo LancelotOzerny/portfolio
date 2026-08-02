@@ -28,6 +28,7 @@
 			<a href="/">Главная</a>
 			<a href="/about/">О себе</a>
 			<a href="/projects/">Проекты</a>
+			<a href="/blog/">Блог</a>
 			<a href="/contacts/">Контакты</a>
 		</nav>
 

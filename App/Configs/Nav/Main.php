@@ -13,6 +13,10 @@ return [
 		'link' => '/portfolio/',
 	],
 	3 => [
+		'name' => 'Блог',
+		'link' => '/blog/',
+	],
+	4 => [
 		'name' => 'Контакты',
 		'link' => '/contacts/',
 	],

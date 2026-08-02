@@ -23,14 +23,22 @@ class Navigation extends \Modules\Main\BaseComponent
 
 	private function isActiveLink(array $link): bool
 	{
-		if (App::getInstance()->page === ($link['link'] ?? ''))
+		$currentPath = parse_url(App::getInstance()->page, PHP_URL_PATH) ?? '/';
+		$linkPath = (string) ($link['link'] ?? '');
+
+		if ($currentPath === $linkPath)
+		{
+			return true;
+		}
+
+		if ($linkPath !== '/' && $linkPath !== '' && str_starts_with($currentPath, $linkPath))
 		{
 			return true;
 		}
 
 		foreach ($link['children'] ?? [] as $child)
 		{
-			if (App::getInstance()->page === ($child['link'] ?? ''))
+			if ($currentPath === ($child['link'] ?? ''))
 			{
 				return true;
 			}

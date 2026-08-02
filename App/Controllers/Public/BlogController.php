@@ -2,9 +2,11 @@
 namespace Controllers\Public;
 
 use App\Services\Seo\SeoContext;
+use Models\BlogTopicsModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
+use Throwable;
 
 class BlogController extends BaseController
 {
@@ -17,7 +19,6 @@ class BlogController extends BaseController
 
 		Template::getInstance()->showHeader();
 		$this->render('index', [
-			'topics' => $this->getTopics(),
 			'is_admin' => Auth::getInstance()->isAdmin(),
 		]);
 		Template::getInstance()->showFooter();
@@ -71,6 +72,23 @@ class BlogController extends BaseController
 
 	private function findTopic(string $slug): ?array
 	{
+		if (ctype_digit($slug)) {
+			try {
+				$topic = (new BlogTopicsModel())->findById((int) $slug);
+			} catch (Throwable) {
+				$topic = null;
+			}
+
+			if ($topic !== null) {
+				return [
+					'name' => (string) ($topic->title ?? 'Без названия'),
+					'slug' => (string) ($topic->id ?? $slug),
+					'description' => (string) ($topic->preview_text ?? ''),
+					'articles' => [],
+				];
+			}
+		}
+
 		foreach ($this->getTopics() as $topic) {
 			if ($topic['slug'] === $slug) {
 				return $topic;

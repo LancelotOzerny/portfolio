@@ -9,6 +9,9 @@ $showAdminSidebar = Auth::getInstance()->isAdmin();
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
 $contentActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/') ? ' is-active' : '';
 $projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
+$blogActive = str_starts_with($currentPath, '/admin/content/blog/') ? ' is-active' : '';
+$blogRubricsActive = str_starts_with($currentPath, '/admin/content/blog/rubrics/') || $currentPath === '/admin/content/blog/' ? ' is-active' : '';
+$blogArticlesActive = str_starts_with($currentPath, '/admin/content/blog/articles/') ? ' is-active' : '';
 $tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
@@ -212,6 +215,9 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<span class="admin-sideout__label">Контент</span>
 				</a>
 				<a class="admin-sideout__sublink<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
+				<a class="admin-sideout__sublink<?= $blogActive ?>" href="/admin/content/blog/">Блог</a>
+				<a class="admin-sideout__nestedlink<?= $blogRubricsActive ?>" href="/admin/content/blog/rubrics/">Рубрики</a>
+				<a class="admin-sideout__nestedlink<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
 				<a class="admin-sideout__sublink<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
 				<a class="admin-sideout__link<?= $seoActive ?>" href="/admin/seo/">
 					<span class="admin-sideout__icon">SE</span>

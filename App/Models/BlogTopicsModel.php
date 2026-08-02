@@ -59,16 +59,21 @@ class BlogTopicsModel extends BaseModel
 	public function findAllWithArticleCounts(bool $onlyEnabled = true): array
 	{
 		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_topics.*, COUNT(DISTINCT blog_article_topic_relations.article_id) AS articles_count')
-			->join('blog_article_topic_relations', 'blog_topics.id', 'blog_article_topic_relations.topic_id', 'LEFT');
+			->selectRaw('blog_topics.*, COUNT(DISTINCT CASE WHEN blog_articles.enabled = 1 THEN blog_articles.id END) AS articles_count')
+			->join('blog_article_topic_relations', 'blog_topics.id', 'blog_article_topic_relations.topic_id', 'LEFT')
+			->join('blog_articles', 'blog_article_topic_relations.article_id', 'blog_articles.id', 'LEFT');
 
 		if ($onlyEnabled) {
 			$qb->where('blog_topics.enabled', '=', 1);
 		}
 
-		$qb
-			->groupBy('blog_topics.id')
-			->orderBy('blog_topics.id', 'DESC');
+		$qb->groupBy('blog_topics.id');
+
+		if ($onlyEnabled) {
+			$qb->havingRaw('articles_count > 0');
+		}
+
+		$qb->orderBy('blog_topics.id', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
 	}

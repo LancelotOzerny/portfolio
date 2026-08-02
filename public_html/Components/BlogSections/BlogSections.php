@@ -22,6 +22,7 @@ class BlogSections extends BaseComponent
 		$this->setParam('items', $items);
 		$this->setParam('error', $error);
 		$this->setParam('is_admin', (bool) ($params['is_admin'] ?? false));
+		$this->setParam('edit_mode', (bool) ($params['edit_mode'] ?? false));
 		$this->setParam('flash', $params['flash'] ?? null);
 	}
 }

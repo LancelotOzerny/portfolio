@@ -2,6 +2,7 @@
 namespace Controllers\Public;
 
 use App\Services\Seo\SeoContext;
+use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
@@ -20,6 +21,7 @@ class BlogController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('index', [
 			'is_admin' => Auth::getInstance()->isAdmin(),
+			'edit_mode' => $this->isEditMode(),
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -42,6 +44,7 @@ class BlogController extends BaseController
 		$this->render('topic', [
 			'topic' => $topicData,
 			'is_admin' => Auth::getInstance()->isAdmin(),
+			'edit_mode' => $this->isEditMode(),
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -80,6 +83,12 @@ class BlogController extends BaseController
 			}
 
 			if ($topic !== null) {
+				try {
+					$articles = (new BlogArticlesModel())->findActiveByTopicId((int) $slug);
+				} catch (Throwable) {
+					$articles = [];
+				}
+
 				return [
 					'name' => (string) ($topic->title ?? 'Без названия'),
 					'slug' => (string) ($topic->id ?? $slug),
@@ -87,7 +96,7 @@ class BlogController extends BaseController
 						? (string) ($topic->detail_text ?? '')
 						: (string) ($topic->preview_text ?? ''),
 					'detail_image_path' => (string) ($topic->detail_image_path ?? ''),
-					'articles' => [],
+					'articles' => $this->mapDbArticles($articles),
 				];
 			}
 		}
@@ -99,6 +108,38 @@ class BlogController extends BaseController
 		}
 
 		return null;
+	}
+
+	private function isEditMode(): bool
+	{
+		return Auth::getInstance()->isAdmin() && (string) ($_GET['edit'] ?? '') === 'true';
+	}
+
+	private function mapDbArticles(array $articles): array
+	{
+		$result = [];
+
+		foreach ($articles as $article) {
+			$articleId = (int) ($article->id ?? 0);
+			if ($articleId <= 0) {
+				continue;
+			}
+
+			$result[] = [
+				'title' => (string) ($article->title ?? 'Без названия'),
+				'slug' => (string) $articleId,
+				'image' => trim((string) ($article->preview_image_path ?? '')) !== ''
+					? (string) ($article->preview_image_path ?? '')
+					: '/Templates/Inner/img/no-image.webp',
+				'date' => (string) ($article->created_at ?? ''),
+				'rating' => 0,
+				'preview' => (string) ($article->preview_text ?? ''),
+				'content' => [(string) ($article->detail_text ?? '')],
+				'comments' => [],
+			];
+		}
+
+		return $result;
 	}
 
 	private function findArticle(array $topic, string $slug): ?array

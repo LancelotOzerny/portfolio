@@ -13,6 +13,7 @@
 		(new \Components\BlogSections\BlogSections([
 			'template' => 'Default',
 			'is_admin' => (bool) ($data['is_admin'] ?? false),
+			'edit_mode' => (bool) ($data['edit_mode'] ?? false),
 			'only_enabled' => true,
 		]))->render();
 		?>

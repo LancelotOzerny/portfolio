@@ -2,12 +2,7 @@
 /* @var array $data */
 
 $topic = $data['topic'] ?? null;
-$isAdmin = (bool) ($data['is_admin'] ?? false);
-$renderRating = static function (int $rating): string {
-	$rating = max(0, min(10, $rating));
-
-	return str_repeat('★', $rating) . str_repeat('☆', 10 - $rating);
-};
+$isEditMode = (bool) ($data['edit_mode'] ?? false);
 
 if ($topic === null) {
 	?>
@@ -47,12 +42,16 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 
 <section class="light-page-section blog-page">
 	<div class="site-container">
-		<div class="blog-articles">
-			<?php if ($isAdmin): ?>
-				<button class="blog-article-card blog-article-card_add" type="button" onclick="alert('Статья добавлена')">
+		<div class="blog-articles blog-articles_cards">
+			<?php if ($isEditMode): ?>
+				<a class="blog-article-card blog-article-card_add" href="/admin/content/blog/articles/create/">
 					<span class="blog-add-card__plus" aria-hidden="true">+</span>
 					<span class="blog-add-card__text">Добавить статью</span>
-				</button>
+				</a>
+			<?php endif; ?>
+
+			<?php if (empty($topic['articles'])): ?>
+				<div class="blog-empty-state">В этой рубрике пока нет активных статей.</div>
 			<?php endif; ?>
 
 			<?php foreach ($topic['articles'] as $article): ?>
@@ -64,10 +63,6 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 						<span class="blog-article-card__date"><?= htmlspecialchars((string) $article['date']) ?></span>
 						<span class="blog-article-card__title"><?= htmlspecialchars((string) $article['title']) ?></span>
 						<span class="blog-article-card__text"><?= htmlspecialchars((string) $article['preview']) ?></span>
-						<span class="blog-rating" aria-label="Оценка <?= (int) $article['rating'] ?> из 10">
-							<span class="blog-rating__stars" aria-hidden="true"><?= $renderRating((int) $article['rating']) ?></span>
-							<span class="blog-rating__value"><?= (int) $article['rating'] ?>/10</span>
-						</span>
 					</span>
 				</a>
 			<?php endforeach; ?>

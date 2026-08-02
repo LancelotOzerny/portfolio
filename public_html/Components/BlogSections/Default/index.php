@@ -1,6 +1,6 @@
 <?php
 $items = $this->getParam('items') ?? [];
-$isAdmin = (bool) ($this->getParam('is_admin') ?? false);
+$isEditMode = (bool) ($this->getParam('edit_mode') ?? false);
 $error = trim((string) ($this->getParam('error') ?? ''));
 $defaultImage = '/Templates/Inner/img/no-image.webp';
 ?>
@@ -12,7 +12,7 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 <?php endif; ?>
 
 <div class="blog-topics">
-	<?php if ($isAdmin): ?>
+	<?php if ($isEditMode): ?>
 		<a class="blog-topic-card blog-topic-card_add" href="/admin/content/blog/rubrics/create/">
 			<span class="blog-add-card__plus" aria-hidden="true">+</span>
 			<span class="blog-add-card__text">Добавить тему</span>
@@ -26,6 +26,11 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 		$previewText = (string) ($topic->preview_text ?? '');
 		$imagePath = trim((string) ($topic->image_path ?? ''));
 		$articlesCount = (int) ($topic->articles_count ?? 0);
+		$isEnabled = (int) ($topic->enabled ?? 1) === 1;
+
+		if (!$isEnabled || $articlesCount <= 0) {
+			continue;
+		}
 		?>
 		<a class="blog-topic-card" href="/blog/<?= $topicId ?>/">
 			<img src="<?= htmlspecialchars($imagePath !== '' ? $imagePath : $defaultImage) ?>" alt="<?= htmlspecialchars($title) ?>">

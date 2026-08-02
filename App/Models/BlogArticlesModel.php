@@ -75,6 +75,19 @@ class BlogArticlesModel extends BaseModel
 		return $this->execQuery($qb) ?? [];
 	}
 
+	public function findActiveByTopicId(int $topicId): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
+			->where('blog_article_topic_relations.topic_id', '=', $topicId)
+			->where('blog_articles.enabled', '=', 1)
+			->groupBy('blog_articles.id')
+			->orderBy('blog_articles.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
 	public function findTopicIdsByArticleId(int $articleId): array
 	{
 		$qb = (new QueryBuilder('blog_article_topic_relations'))

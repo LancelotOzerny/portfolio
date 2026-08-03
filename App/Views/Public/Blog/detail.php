@@ -46,7 +46,7 @@ if ($topic === null || $article === null) {
 ?>
 
 <section class="blog-detail-hero">
-	<img src="<?= htmlspecialchars((string) $article['image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>">
+	<img src="<?= htmlspecialchars((string) $article['detail_image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>">
 	<div class="blog-detail-hero__overlay" aria-hidden="true"></div>
 	<div class="site-container blog-detail-hero__container">
 		<nav class="blog-breadcrumbs" aria-label="Хлебные крошки">

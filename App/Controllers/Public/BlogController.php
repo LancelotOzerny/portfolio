@@ -253,6 +253,9 @@ class BlogController extends BaseController
 				'topic_id' => (int) ($article->topic_id ?? 0),
 				'title' => (string) ($article->title ?? 'Без названия'),
 				'slug' => (string) $articleId,
+				'detail_image' => trim((string) ($article->detail_image_path ?? '')) !== ''
+					? (string) ($article->detail_image_path ?? '')
+					: '/Templates/Inner/img/no-image.webp',
 				'image' => trim((string) ($article->preview_image_path ?? '')) !== ''
 					? (string) ($article->preview_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',

@@ -35,9 +35,6 @@
 
 <section class="social-section" aria-labelledby="socialTitle">
 	<div class="site-container">
-		<div class="section-header">
-			<h2 class="page-title" id="socialTitle">Соц сети</h2>
-		</div>
 		<?php (new \Components\SocialNetworks\SocialNetworks())->render(); ?>
 	</div>
 </section>
@@ -75,7 +72,13 @@
 		</div>
 		<div class="about-light__grid">
 			<div class="about-light__photo">
-				<img src="/upload/images/main/profile.png" alt="Максим Беляков">
+                <?php
+                (new \Components\ImagePreview\ImagePreview([
+                        'edit_key' => 'home.hero-photo',
+                        'path' => '/upload/images/main/profile.png',
+                        'alt' => 'Максим Беляков',
+                ]))->render();
+                ?>
 			</div>
 			<div class="about-light__text">
 				<?php

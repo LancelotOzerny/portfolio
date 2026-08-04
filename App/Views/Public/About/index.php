@@ -3,12 +3,23 @@
 		<div>
 			<h1 class="page-title page-title--left">О себе</h1>
 			<p class="light-page-hero__text about-page-hero__text">
-				Fullstack-разработчик, который любит понятные интерфейсы, аккуратную backend-логику и проекты, которые удобно развивать.
+
+                <?php
+                (new \Components\IncludeArea\IncludeArea([
+                        'path' => 'Light/about/about-subtitle.html',
+                ]))->render();
+                ?>
 			</p>
 		</div>
 
 		<div class="about-page-hero__photo">
-			<img src="/upload/images/main/profile.png" alt="Максим Беляков">
+            <?php
+            (new \Components\ImagePreview\ImagePreview([
+                    'edit_key' => 'home.hero-photo',
+                    'path' => '/upload/images/main/profile.png',
+                    'alt' => 'Максим Беляков',
+            ]))->render();
+            ?>
 		</div>
 	</div>
 </section>

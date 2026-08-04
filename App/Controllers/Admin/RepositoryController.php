@@ -130,7 +130,7 @@ class RepositoryController extends BaseController
 		}
 
 		$commitMessage = 'Правки сайта от ' . date('d.m.Y');
-		$commitResult = $this->runGitCommand($repoRoot, 'commit -m ' . escapeshellarg($commitMessage));
+		$commitResult = $this->runGitCommit($repoRoot, $commitMessage);
 		if (!$commitResult['success']) {
 			$result['message'] = 'Не удалось создать коммит с изменениями.';
 			$result['output'] = trim($addResult['output'] . PHP_EOL . $commitResult['output']);
@@ -163,6 +163,40 @@ class RepositoryController extends BaseController
 	{
 		$_SESSION[self::FLASH_KEY] = $result;
 		header('Location: /admin/settings/repository/');
+	}
+
+	private function runGitCommit(string $repoRoot, string $message): array
+	{
+		[$name, $email] = $this->resolveCommitIdentity();
+
+		$command = sprintf(
+			'-c user.name=%s -c user.email=%s commit -m %s',
+			escapeshellarg($name),
+			escapeshellarg($email),
+			escapeshellarg($message)
+		);
+
+		return $this->runGitCommand($repoRoot, $command);
+	}
+
+	/**
+	 * @return array{0: string, 1: string}
+	 */
+	private function resolveCommitIdentity(): array
+	{
+		$user = Auth::getInstance()->getCurrentUser();
+		$name = trim((string) ($user->login ?? ''));
+		$email = trim((string) ($user->email ?? ''));
+
+		if ($name === '') {
+			$name = 'LANCY Admin';
+		}
+
+		if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+			$email = 'admin@lancy.studio';
+		}
+
+		return [$name, $email];
 	}
 
 	private function runGitCommand(string $repoRoot, string $command): array

@@ -35,14 +35,27 @@
 
 <section class="social-section" aria-labelledby="socialTitle">
 	<div class="site-container">
-		<h2 class="section-kicker" id="socialTitle">Соц сети</h2>
+		<div class="section-header">
+			<h2 class="page-title" id="socialTitle">Соц сети</h2>
+		</div>
 		<?php (new \Components\SocialNetworks\SocialNetworks())->render(); ?>
 	</div>
 </section>
 
+<?php
+(new \Components\BlogArticlesCarousel\BlogArticlesCarousel([
+	'edit_key' => 'home.blog-carousel',
+	'limit' => 6,
+	'title' => 'Блог',
+]))->render();
+?>
+
 <section class="projects-light" aria-labelledby="projectsTitle">
 	<div class="site-container projects-light__container">
-		<h2 class="page-title" id="projectsTitle">Проекты</h2>
+		<div class="section-header">
+			<h2 class="page-title" id="projectsTitle">Проекты</h2>
+			<a class="button button_secondary section-header__action" href="/projects/">Все проекты</a>
+		</div>
 		<?php
 		(new \Components\ProjectsGrid\ProjectsGrid([
 			'edit_key' => 'home.projects-grid',
@@ -57,7 +70,9 @@
 
 <section class="about-light" aria-labelledby="aboutTitle">
 	<div class="site-container about-light__container">
-		<h2 class="page-title" id="aboutTitle">Немного о себе</h2>
+		<div class="section-header">
+			<h2 class="page-title" id="aboutTitle">Немного о себе</h2>
+		</div>
 		<div class="about-light__grid">
 			<div class="about-light__photo">
 				<img src="/upload/images/main/profile.png" alt="Максим Беляков">

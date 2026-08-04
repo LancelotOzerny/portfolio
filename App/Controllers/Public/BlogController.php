@@ -2,6 +2,7 @@
 namespace Controllers\Public;
 
 use App\Services\Blog\ArticleContentSanitizer;
+use App\Services\Blog\BlogDateFormatter;
 use App\Services\Seo\SeoContext;
 use App\Services\Security\CsrfService;
 use Models\BlogArticlesModel;
@@ -207,7 +208,7 @@ class BlogController extends BaseController
 
 			if ($topic !== null) {
 				try {
-					$articles = (new BlogArticlesModel())->findActiveByTopicId((int) $slug);
+					$articles = (new BlogArticlesModel())->findByTopicId((int) $slug, !$this->isEditMode());
 				} catch (Throwable) {
 					$articles = [];
 				}
@@ -241,6 +242,7 @@ class BlogController extends BaseController
 	private function mapDbArticles(array $articles): array
 	{
 		$result = [];
+		$dateFormatter = new BlogDateFormatter();
 
 		foreach ($articles as $article) {
 			$articleId = (int) ($article->id ?? 0);
@@ -253,13 +255,14 @@ class BlogController extends BaseController
 				'topic_id' => (int) ($article->topic_id ?? 0),
 				'title' => (string) ($article->title ?? 'Без названия'),
 				'slug' => (string) $articleId,
+				'enabled' => (int) ($article->enabled ?? 0) === 1,
 				'detail_image' => trim((string) ($article->detail_image_path ?? '')) !== ''
 					? (string) ($article->detail_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',
 				'image' => trim((string) ($article->preview_image_path ?? '')) !== ''
 					? (string) ($article->preview_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',
-				'date' => (string) ($article->created_at ?? ''),
+				'date' => $dateFormatter->format((string) ($article->created_at ?? '')),
 				'rating' => 0,
 				'preview' => (string) ($article->preview_text ?? ''),
 				'content' => [(string) ($article->detail_text ?? '')],

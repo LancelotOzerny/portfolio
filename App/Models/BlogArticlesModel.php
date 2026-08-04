@@ -4,6 +4,7 @@ namespace Models;
 
 use Modules\DBWork\QueryBuilder;
 use Modules\Main\BaseModel;
+use Throwable;
 
 class BlogArticlesModel extends BaseModel
 {
@@ -65,37 +66,78 @@ class BlogArticlesModel extends BaseModel
 
 	public function findAllWithTopic(): array
 	{
-		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_articles.*, GROUP_CONCAT(DISTINCT blog_topics.title ORDER BY blog_topics.title SEPARATOR ", ") AS topic_title')
-			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'LEFT')
-			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'LEFT')
-			->groupBy('blog_articles.id')
-			->orderBy('blog_articles.id', 'DESC');
-
-		return $this->execQuery($qb) ?? [];
+		try {
+			return $this->findAllWithTopicRelations();
+		} catch (Throwable) {
+			return $this->findAllWithTopicLegacy();
+		}
 	}
 
 	public function findActiveByTopicId(int $topicId): array
 	{
-		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_articles.*')
-			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
-			->where('blog_article_topic_relations.topic_id', '=', $topicId)
-			->where('blog_articles.enabled', '=', 1)
-			->groupBy('blog_articles.id')
-			->orderBy('blog_articles.id', 'DESC');
+		return $this->findByTopicId($topicId, true);
+	}
 
-		return $this->execQuery($qb) ?? [];
+	public function findByTopicId(int $topicId, bool $onlyActive = true): array
+	{
+		$articles = [];
+		$seenIds = [];
+
+		foreach ([
+			$this->safeFindByTopicIdViaRelations($topicId, $onlyActive),
+			$this->safeFindByTopicIdLegacy($topicId, $onlyActive),
+		] as $batch) {
+			foreach ($batch as $article) {
+				$articleId = (int) ($article->id ?? 0);
+				if ($articleId <= 0 || isset($seenIds[$articleId])) {
+					continue;
+				}
+
+				$seenIds[$articleId] = true;
+				$articles[] = $article;
+			}
+		}
+
+		usort($articles, static function (object $left, object $right): int {
+			return (int) ($right->id ?? 0) <=> (int) ($left->id ?? 0);
+		});
+
+		return $articles;
+	}
+
+	public function findLatestActive(int $limit): array
+	{
+		try {
+			$articles = $this->findLatestActiveViaRelations($limit);
+			if ($articles !== []) {
+				return $articles;
+			}
+		} catch (Throwable) {
+		}
+
+		try {
+			return $this->findLatestActiveLegacy($limit);
+		} catch (Throwable) {
+			return [];
+		}
 	}
 
 	public function findTopicIdsByArticleId(int $articleId): array
 	{
-		$qb = (new QueryBuilder('blog_article_topic_relations'))
-			->select(['topic_id'])
-			->where('article_id', '=', $articleId)
-			->orderBy('topic_id', 'ASC');
+		try {
+			$qb = (new QueryBuilder('blog_article_topic_relations'))
+				->select(['topic_id'])
+				->where('article_id', '=', $articleId)
+				->orderBy('topic_id', 'ASC');
 
-		$items = $this->execQuery($qb) ?? [];
+			$items = $this->execQuery($qb) ?? [];
+		} catch (Throwable) {
+			$article = $this->findById($articleId);
+			$topicId = (int) ($article->topic_id ?? 0);
+
+			return $topicId > 0 ? [$topicId] : [];
+		}
+
 		$result = [];
 
 		foreach ($items as $item) {
@@ -110,30 +152,151 @@ class BlogArticlesModel extends BaseModel
 
 	public function replaceTopicIds(int $articleId, array $topicIds): bool
 	{
-		$delete = (new QueryBuilder('blog_article_topic_relations'))
-			->delete()
-			->where('article_id', '=', $articleId);
+		try {
+			$delete = (new QueryBuilder('blog_article_topic_relations'))
+				->delete()
+				->where('article_id', '=', $articleId);
 
-		if (!$this->execWriteQuery($delete)) {
-			return false;
-		}
-
-		foreach (array_values(array_unique($topicIds)) as $topicId) {
-			$topicId = (int) $topicId;
-			if ($topicId <= 0) {
-				continue;
-			}
-
-			$insert = (new QueryBuilder('blog_article_topic_relations'))->insert([
-				'article_id' => $articleId,
-				'topic_id' => $topicId,
-			]);
-
-			if (!$this->execWriteQuery($insert)) {
+			if (!$this->execWriteQuery($delete)) {
 				return false;
 			}
+
+			foreach (array_values(array_unique($topicIds)) as $topicId) {
+				$topicId = (int) $topicId;
+				if ($topicId <= 0) {
+					continue;
+				}
+
+				$insert = (new QueryBuilder('blog_article_topic_relations'))->insert([
+					'article_id' => $articleId,
+					'topic_id' => $topicId,
+				]);
+
+				if (!$this->execWriteQuery($insert)) {
+					return false;
+				}
+			}
+
+			return true;
+		} catch (Throwable) {
+			$topicId = (int) ($topicIds[0] ?? 0);
+			if ($topicId <= 0) {
+				return true;
+			}
+
+			$qb = (new QueryBuilder($this->table))
+				->update(['topic_id' => $topicId])
+				->where('id', '=', $articleId);
+
+			return $this->execWriteQuery($qb);
+		}
+	}
+
+	private function findAllWithTopicRelations(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*, GROUP_CONCAT(DISTINCT blog_topics.title ORDER BY blog_topics.title SEPARATOR ", ") AS topic_title')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'LEFT')
+			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'LEFT')
+			->groupBy('blog_articles.id')
+			->orderBy('blog_articles.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	private function findAllWithTopicLegacy(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*, blog_topics.title AS topic_title')
+			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'LEFT')
+			->orderBy('blog_articles.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	private function findByTopicIdViaRelations(int $topicId, bool $onlyActive): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
+			->where('blog_article_topic_relations.topic_id', '=', $topicId);
+
+		if ($onlyActive) {
+			$qb->where('blog_articles.enabled', '=', 1);
 		}
 
-		return true;
+		$qb->groupBy('blog_articles.id')
+			->orderBy('blog_articles.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	private function findByTopicIdLegacy(int $topicId, bool $onlyActive): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*')
+			->where('topic_id', '=', $topicId);
+
+		if ($onlyActive) {
+			$qb->where('enabled', '=', 1);
+		}
+
+		$qb->orderBy('blog_articles.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	private function safeFindByTopicIdViaRelations(int $topicId, bool $onlyActive): array
+	{
+		try {
+			return $this->findByTopicIdViaRelations($topicId, $onlyActive);
+		} catch (Throwable) {
+			return [];
+		}
+	}
+
+	private function safeFindByTopicIdLegacy(int $topicId, bool $onlyActive): array
+	{
+		try {
+			return $this->findByTopicIdLegacy($topicId, $onlyActive);
+		} catch (Throwable) {
+			return [];
+		}
+	}
+
+	private function findLatestActiveViaRelations(int $limit): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*, MIN(blog_topics.id) AS topic_id_resolved, MIN(blog_topics.title) AS topic_title')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
+			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'INNER')
+			->where('blog_articles.enabled', '=', 1)
+			->where('blog_topics.enabled', '=', 1)
+			->groupBy('blog_articles.id')
+			->orderBy('blog_articles.created_at', 'DESC')
+			->orderBy('blog_articles.id', 'DESC');
+
+		if ($limit > 0) {
+			$qb->limit($limit);
+		}
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	private function findLatestActiveLegacy(int $limit): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw('blog_articles.*, blog_articles.topic_id AS topic_id_resolved, blog_topics.title AS topic_title')
+			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER')
+			->where('blog_articles.enabled', '=', 1)
+			->where('blog_topics.enabled', '=', 1)
+			->orderBy('blog_articles.created_at', 'DESC')
+			->orderBy('blog_articles.id', 'DESC');
+
+		if ($limit > 0) {
+			$qb->limit($limit);
+		}
+
+		return $this->execQuery($qb) ?? [];
 	}
 }

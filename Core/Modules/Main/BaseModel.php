@@ -77,13 +77,14 @@ abstract class BaseModel {
 		$stmt = $this->db->prepare($queryData['sql']);
 		$stmt->execute($queryData['params']);
 
-		if ($stmt->rowCount() <= 0)
-		{
-			return null;
+		if ($single) {
+			$data = $stmt->fetch(PDO::FETCH_ASSOC);
+			return is_array($data) ? $this->toObject($data) : null;
 		}
 
-		$data = $single ? $stmt->fetch(PDO::FETCH_ASSOC) : $stmt->fetchAll(PDO::FETCH_ASSOC);
-		return $single ? $this->toObject($data) : $this->toObjects($data);
+		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+		return $this->toObjects(is_array($data) ? $data : []);
 	}
 
 	protected function execWriteQuery(QueryBuilder $qb): bool

@@ -45,16 +45,19 @@ class BlogController extends BaseController
 		unset($_SESSION[self::FLASH_KEY]);
 
 		$articles = [];
+		$error = '';
+
 		try {
 			$articles = (new BlogArticlesModel())->findAllWithTopic();
-		} catch (Throwable) {
-			$articles = [];
+		} catch (Throwable $exception) {
+			$error = $exception->getMessage();
 		}
 
 		Template::getInstance()->setParam('title', 'Статьи блога');
 		Template::getInstance()->showHeader();
 		$this->render('articles', [
 			'articles' => $articles,
+			'error' => $error,
 			'flash' => is_array($flash) ? $flash : null,
 		]);
 		Template::getInstance()->showFooter();

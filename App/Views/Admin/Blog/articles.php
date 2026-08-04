@@ -1,9 +1,13 @@
 <?php
 /* @var array $data */
 
+use App\Services\Blog\BlogDateFormatter;
+
 $articles = $data['articles'] ?? [];
+$error = trim((string) ($data['error'] ?? ''));
 $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 $defaultImage = '/Templates/Inner/img/no-image.webp';
+$dateFormatter = new BlogDateFormatter();
 ?>
 
 <section class="admin-blog-articles">
@@ -33,6 +37,10 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 		<div class="alert <?= !empty($flash['success']) ? 'alert-success' : 'alert-danger' ?>">
 			<?= htmlspecialchars((string) ($flash['message'] ?? '')) ?>
 		</div>
+	<?php endif; ?>
+
+	<?php if ($error !== ''): ?>
+		<div class="alert alert-danger">Не удалось загрузить статьи: <?= htmlspecialchars($error) ?></div>
 	<?php endif; ?>
 
 	<?php if (empty($articles)): ?>
@@ -79,8 +87,8 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 									<div class="small text-secondary mb-3">
 										<div>Рубрика: <?= htmlspecialchars($topicTitle !== '' ? $topicTitle : 'не указана') ?></div>
 										<div>Автор: <?= htmlspecialchars((string) ($article->author ?? '-')) ?></div>
-										<div>Создана: <?= htmlspecialchars((string) ($article->created_at ?? '-')) ?></div>
-										<div>Изменена: <?= htmlspecialchars((string) ($article->updated_at ?? '-')) ?></div>
+										<div>Создана: <?= htmlspecialchars($dateFormatter->format((string) ($article->created_at ?? '')) ?: '-') ?></div>
+										<div>Изменена: <?= htmlspecialchars($dateFormatter->format((string) ($article->updated_at ?? '')) ?: '-') ?></div>
 									</div>
 
 									<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mt-auto mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">

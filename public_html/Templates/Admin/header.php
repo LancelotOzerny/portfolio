@@ -46,11 +46,11 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			top: 0;
 			left: 0;
 			height: 100vh;
-			width: 320px;
+			width: 260px;
 			background: #ffffff;
 			border-right: 1px solid #e9ecef;
 			box-shadow: 0 0.2rem 1rem rgba(0, 0, 0, 0.08);
-			overflow-y: auto;
+			overflow: visible;
 			z-index: 1030;
 		}
 
@@ -69,6 +69,10 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			padding: 0.6rem 0;
 		}
 
+		.admin-sideout__item {
+			position: relative;
+		}
+
 		.admin-sideout__link {
 			display: flex;
 			align-items: center;
@@ -84,60 +88,90 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			color: #0d6efd;
 		}
 
-		.admin-sideout__link.is-active {
+		.admin-sideout__link.is-active,
+		.admin-sideout__item.is-active > .admin-sideout__link {
 			background: #e8f0ff;
 			color: #0d6efd;
 			font-weight: 600;
 		}
 
-		.admin-sideout__sublink {
+		.admin-sideout__link--has-flyout::after {
+			content: "›";
+			margin-left: auto;
+			font-size: 1.1rem;
+			line-height: 1;
+			opacity: 0.45;
+		}
+
+		.admin-sideout__flyout {
+			position: absolute;
+			top: 0;
+			left: 100%;
+			min-width: 210px;
+			padding: 0.45rem 0;
+			background: #ffffff;
+			border: 1px solid #e9ecef;
+			border-radius: 10px;
+			box-shadow: 0 0.35rem 1.25rem rgba(0, 0, 0, 0.1);
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transition: opacity 0.15s ease, visibility 0.15s ease;
+			z-index: 1040;
+		}
+
+		.admin-sideout__flyout::before {
+			content: "";
+			position: absolute;
+			top: 0;
+			right: 100%;
+			width: 14px;
+			height: 100%;
+		}
+
+		.admin-sideout__flyout .admin-sideout__flyout {
+			z-index: 1050;
+		}
+
+		.admin-sideout__item:hover > .admin-sideout__flyout,
+		.admin-sideout__flyout-item:hover > .admin-sideout__flyout {
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+		}
+
+		.admin-sideout__flyout-item {
+			position: relative;
+			width: 100%;
+		}
+
+		.admin-sideout__flyout-link {
 			display: flex;
 			align-items: center;
-			gap: 0.65rem;
-			margin-left: 3.05rem;
-			padding: 0.48rem 0.95rem;
+			gap: 0.5rem;
+			padding: 0.52rem 20px;
 			color: #6c757d;
 			text-decoration: none;
-			border-left: 2px solid #e9ecef;
-			transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+			white-space: nowrap;
+			transition: color 0.15s ease, transform 0.15s ease;
 		}
 
-		.admin-sideout__sublink:hover {
-			background: #f4f7ff;
+		.admin-sideout__flyout-link:hover {
 			color: #0d6efd;
-			border-color: #b6d4fe;
+			transform: translateX(10px);
 		}
 
-		.admin-sideout__sublink.is-active {
-			background: #f8fbff;
+		.admin-sideout__flyout-link.is-active {
 			color: #0d6efd;
-			border-color: #0d6efd;
 			font-weight: 600;
 		}
 
-		.admin-sideout__nestedlink {
-			display: flex;
-			align-items: center;
-			gap: 0.65rem;
-			margin-left: 4.55rem;
-			padding: 0.42rem 0.95rem;
-			color: #6c757d;
-			text-decoration: none;
-			border-left: 2px solid #eef1f4;
-			font-size: 0.94rem;
-			transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-		}
-
-		.admin-sideout__nestedlink:hover {
-			background: #f8fbff;
-			color: #0d6efd;
-			border-color: #b6d4fe;
-		}
-
-		.admin-sideout__nestedlink.is-active {
-			color: #0d6efd;
-			border-color: #0d6efd;
-			font-weight: 600;
+		.admin-sideout__flyout-link--has-flyout::after {
+			content: "›";
+			margin-left: auto;
+			font-size: 1.05rem;
+			line-height: 1;
+			opacity: 0.45;
 		}
 
 		.admin-sideout__icon {
@@ -159,21 +193,8 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			white-space: nowrap;
 		}
 
-		.admin-sideout__sublink {
-			display: block;
-			padding: 0.42rem 0.95rem;
-			color: #6c757d;
-			text-decoration: none;
-		}
-
-		.admin-sideout__sublink:hover,
-		.admin-sideout__sublink.is-active {
-			color: #0d6efd;
-			background: #f4f7ff;
-		}
-
 		.admin-main {
-			margin-left: 336px;
+			margin-left: 276px;
 			min-height: 100vh;
 		}
 
@@ -190,6 +211,32 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			.admin-sideout__label {
 				opacity: 1;
 				transform: none;
+			}
+
+			.admin-sideout__flyout {
+				position: static;
+				min-width: 0;
+				margin: 0 0.75rem 0.35rem 2.75rem;
+				padding: 0.25rem 0;
+				border: none;
+				border-left: 2px solid #e9ecef;
+				border-radius: 0;
+				box-shadow: none;
+				opacity: 1;
+				visibility: visible;
+				pointer-events: auto;
+			}
+
+			.admin-sideout__flyout::before {
+				display: none;
+			}
+
+			.admin-sideout__flyout-link {
+				padding: 0.42rem 20px;
+			}
+
+			.admin-sideout__flyout .admin-sideout__flyout {
+				margin-left: 1.25rem;
 			}
 
 			.admin-main {
@@ -210,57 +257,73 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<span class="admin-sideout__icon">Гл</span>
 					<span class="admin-sideout__label">Главная</span>
 				</a>
-				<a class="admin-sideout__link<?= $contentActive ?>" href="/admin/projects/">
-					<span class="admin-sideout__icon">Кн</span>
-					<span class="admin-sideout__label">Контент</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
-				<a class="admin-sideout__sublink<?= $blogActive ?>" href="/admin/content/blog/">Блог</a>
-				<a class="admin-sideout__nestedlink<?= $blogRubricsActive ?>" href="/admin/content/blog/rubrics/">Рубрики</a>
-				<a class="admin-sideout__nestedlink<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
-				<a class="admin-sideout__sublink<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
+
+				<div class="admin-sideout__item<?= $contentActive ?>">
+					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $contentActive ?>" href="/admin/projects/">
+						<span class="admin-sideout__icon">Кн</span>
+						<span class="admin-sideout__label">Контент</span>
+					</a>
+					<div class="admin-sideout__flyout">
+						<a class="admin-sideout__flyout-link<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
+						<div class="admin-sideout__flyout-item<?= $blogActive ?>">
+							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $blogActive ?>" href="/admin/content/blog/">Блог</a>
+							<div class="admin-sideout__flyout">
+								<a class="admin-sideout__flyout-link<?= $blogRubricsActive ?>" href="/admin/content/blog/rubrics/">Рубрики</a>
+								<a class="admin-sideout__flyout-link<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
+							</div>
+						</div>
+						<a class="admin-sideout__flyout-link<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
+					</div>
+				</div>
+
 				<a class="admin-sideout__link<?= $seoActive ?>" href="/admin/seo/">
 					<span class="admin-sideout__icon">SE</span>
 					<span class="admin-sideout__label">SEO</span>
 				</a>
+
 				<a class="admin-sideout__link<?= $usersActive ?>" href="/admin/users/">
 					<span class="admin-sideout__icon">По</span>
 					<span class="admin-sideout__label">Пользователи</span>
 				</a>
-				<a class="admin-sideout__link<?= $resumeActive ?>" href="/admin/resume/experience/">
-					<span class="admin-sideout__icon">Рз</span>
-					<span class="admin-sideout__label">Резюме</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
-				<a class="admin-sideout__link<?= $developmentActive ?>" href="/admin/development/sql/">
-					<span class="admin-sideout__icon">Рд</span>
-					<span class="admin-sideout__label">Разработка</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $developmentSqlActive ?>" href="/admin/development/sql/">
-					<span class="admin-sideout__label">SQL запросы</span>
-				</a>
-				<a class="admin-sideout__link<?= $settingsActive ?>" href="/admin/settings/">
-					<span class="admin-sideout__icon">На</span>
-					<span class="admin-sideout__label">Настройки</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $configsActive ?>" href="/admin/settings/configs/">
-					<span class="admin-sideout__label">Конфиги</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $templatesActive ?>" href="/admin/settings/templates/">
-					<span class="admin-sideout__label">Шаблоны</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $repositoryActive ?>" href="/admin/settings/repository/">
-					<span class="admin-sideout__label">Репозиторий</span>
-				</a>
-				<a class="admin-sideout__sublink<?= $backupActive ?>" href="/admin/settings/backup/">
-					<span class="admin-sideout__label">Резервное копирование</span>
-				</a>
-				<a class="admin-sideout__nestedlink<?= $backupCreateActive ?>" href="/admin/settings/backup/create/">
-					<span class="admin-sideout__label">Создание копии</span>
-				</a>
-				<a class="admin-sideout__nestedlink<?= $backupListActive ?>" href="/admin/settings/backup/list/">
-					<span class="admin-sideout__label">Список копий</span>
-				</a>
+
+				<div class="admin-sideout__item<?= $resumeActive ?>">
+					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $resumeActive ?>" href="/admin/resume/experience/">
+						<span class="admin-sideout__icon">Рз</span>
+						<span class="admin-sideout__label">Резюме</span>
+					</a>
+					<div class="admin-sideout__flyout">
+						<a class="admin-sideout__flyout-link<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
+					</div>
+				</div>
+
+				<div class="admin-sideout__item<?= $developmentActive ?>">
+					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $developmentActive ?>" href="/admin/development/sql/">
+						<span class="admin-sideout__icon">Рд</span>
+						<span class="admin-sideout__label">Разработка</span>
+					</a>
+					<div class="admin-sideout__flyout">
+						<a class="admin-sideout__flyout-link<?= $developmentSqlActive ?>" href="/admin/development/sql/">SQL запросы</a>
+					</div>
+				</div>
+
+				<div class="admin-sideout__item<?= $settingsActive ?>">
+					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $settingsActive ?>" href="/admin/settings/">
+						<span class="admin-sideout__icon">На</span>
+						<span class="admin-sideout__label">Настройки</span>
+					</a>
+					<div class="admin-sideout__flyout">
+						<a class="admin-sideout__flyout-link<?= $configsActive ?>" href="/admin/settings/configs/">Конфиги</a>
+						<a class="admin-sideout__flyout-link<?= $templatesActive ?>" href="/admin/settings/templates/">Шаблоны</a>
+						<a class="admin-sideout__flyout-link<?= $repositoryActive ?>" href="/admin/settings/repository/">Репозиторий</a>
+						<div class="admin-sideout__flyout-item<?= $backupActive ?>">
+							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $backupActive ?>" href="/admin/settings/backup/">Резервное копирование</a>
+							<div class="admin-sideout__flyout">
+								<a class="admin-sideout__flyout-link<?= $backupCreateActive ?>" href="/admin/settings/backup/create/">Создание копии</a>
+								<a class="admin-sideout__flyout-link<?= $backupListActive ?>" href="/admin/settings/backup/list/">Список копий</a>
+							</div>
+						</div>
+					</div>
+				</div>
 			</nav>
 		</aside>
 

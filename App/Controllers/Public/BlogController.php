@@ -3,6 +3,7 @@ namespace Controllers\Public;
 
 use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Blog\BlogDateFormatter;
+use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
 use App\Services\Security\CsrfService;
 use Models\BlogArticlesModel;
@@ -236,7 +237,7 @@ class BlogController extends BaseController
 
 	private function isEditMode(): bool
 	{
-		return Auth::getInstance()->isAdmin() && (string) ($_GET['edit'] ?? '') === 'true';
+		return (new EditModeService())->isActive();
 	}
 
 	private function mapDbArticles(array $articles): array

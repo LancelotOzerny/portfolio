@@ -28,6 +28,7 @@ class App
 	public function init() : void
 	{
 		$this->requireRoutes();
+		(new \App\Services\Site\EditModeService())->handleRequest();
 	}
 
 	public function start() : void

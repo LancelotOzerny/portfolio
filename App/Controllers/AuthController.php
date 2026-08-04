@@ -91,6 +91,7 @@ class AuthController
 	public function logout(): void
 	{
 		Auth::getInstance()->logout();
+		(new \App\Services\Site\EditModeService())->clear();
 
 		$redirect = (string) ($_GET['back'] ?? '/');
 		if ($redirect === '' || !str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {

@@ -3,6 +3,7 @@
 namespace Modules\Main;
 
 use App\Services\Component\ComponentSettingsStorage;
+use App\Services\Site\EditModeService;
 
 class BaseComponent
 {
@@ -105,7 +106,7 @@ class BaseComponent
 
 	protected function isEditMode(): bool
 	{
-		return (string) ($_GET['edit'] ?? '') === 'true' && Auth::getInstance()->isAdmin();
+		return (new EditModeService())->isActive();
 	}
 
 	protected function isEditableInAdmin(): bool

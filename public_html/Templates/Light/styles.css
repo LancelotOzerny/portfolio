@@ -1524,7 +1524,8 @@ body.light-page {
 @media (max-width: 900px) {
 	.section-header {
 		align-items: flex-start;
-		flex-direction: column;
+		flex-direction: row;
+		justify-content: center;
 	}
 
 	.hero-section {
@@ -1544,6 +1545,11 @@ body.light-page {
 	}
 
 	.page-title--left {
+		text-align: center;
+	}
+
+	.page-title
+	{
 		text-align: center;
 	}
 

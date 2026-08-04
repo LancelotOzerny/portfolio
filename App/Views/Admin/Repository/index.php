@@ -13,7 +13,7 @@ $output = is_array($updateResult) ? trim((string) ($updateResult['output'] ?? ''
 				<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
 			</div>
 
-			<p class="text-secondary mb-4">Обновление рабочей копии проекта из ветки main и сохранение текущих правок в основную ветку.</p>
+			<p class="text-secondary mb-4">Обновление рабочей копии проекта из ветки main и сохранение текущих правок с отправкой через git push.</p>
 
 			<?php if ($message !== ''): ?>
 				<div class="alert <?= $isSuccess ? 'alert-success' : 'alert-danger' ?>" role="alert">

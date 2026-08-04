@@ -106,22 +106,6 @@ class RepositoryController extends BaseController
 			return;
 		}
 
-		$branchResult = $this->runGitCommand($repoRoot, 'rev-parse --abbrev-ref HEAD');
-		if (!$branchResult['success']) {
-			$result['message'] = 'Не удалось определить текущую ветку.';
-			$result['output'] = $branchResult['output'];
-			$this->storeFlashAndRedirect($result);
-			return;
-		}
-
-		$currentBranch = trim($branchResult['output']);
-		if ($currentBranch !== self::TARGET_BRANCH) {
-			$result['message'] = "Текущая ветка: {$currentBranch}. Для сохранения ожидается ветка " . self::TARGET_BRANCH . '.';
-			$result['output'] = $branchResult['output'];
-			$this->storeFlashAndRedirect($result);
-			return;
-		}
-
 		$statusResult = $this->runGitCommand($repoRoot, 'status --porcelain');
 		if (!$statusResult['success']) {
 			$result['message'] = 'Не удалось проверить изменения в репозитории.';
@@ -154,11 +138,11 @@ class RepositoryController extends BaseController
 			return;
 		}
 
-		$pushResult = $this->runGitCommand($repoRoot, 'push origin ' . self::TARGET_BRANCH);
+		$pushResult = $this->runGitCommand($repoRoot, 'push');
 		$result['success'] = $pushResult['success'];
 		$result['message'] = $pushResult['success']
-			? 'Изменения сохранены и отправлены в main.'
-			: 'Коммит создан, но отправить изменения в main не удалось.';
+			? 'Изменения сохранены и отправлены в репозиторий.'
+			: 'Коммит создан, но отправить изменения не удалось.';
 		$result['output'] = trim($addResult['output'] . PHP_EOL . $commitResult['output'] . PHP_EOL . $pushResult['output']);
 
 		$this->storeFlashAndRedirect($result);

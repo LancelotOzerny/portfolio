@@ -1,0 +1,248 @@
+.component-edit {
+	position: relative;
+	display: block;
+	width: 100%;
+	overflow: visible;
+	outline: 2px dashed rgba(87, 71, 230, 0.55);
+	outline-offset: 2px;
+	cursor: pointer;
+}
+
+.component-edit__content {
+	display: block;
+	width: 100%;
+}
+
+.component-edit_fit,
+.component-edit_fit .component-edit__content {
+	height: 100%;
+}
+
+.component-edit_fit .component-edit__content > img {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.component-edit::before {
+	content: attr(data-component-label);
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 10009;
+	padding: 2px 8px;
+	border-radius: 0 0 6px 0;
+	background: #5747e6;
+	color: #fff;
+	font: 600 11px/1.3 Montserrat, Arial, sans-serif;
+	pointer-events: none;
+}
+
+.component-edit__trigger {
+	position: absolute;
+	bottom: 4px;
+	right: 4px;
+	z-index: 10010;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: #5747e6;
+	color: #fff;
+	box-shadow: 0 8px 24px rgba(87, 71, 230, 0.35);
+	cursor: pointer;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(4px);
+	transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+}
+
+.component-edit__trigger svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.component-edit:hover .component-edit__trigger,
+.component-edit:focus-within .component-edit__trigger {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+
+.component-edit__trigger:hover {
+	background: #4638c9;
+}
+
+.component-edit-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 10100;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.component-edit-modal.is-open {
+	display: flex;
+}
+
+.component-edit-modal__dialog {
+	width: min(760px, 100%);
+	max-height: calc(100vh - 48px);
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.component-edit-modal__dialog_wide {
+	width: min(980px, 100%);
+}
+
+.component-edit-modal__header,
+.component-edit-modal__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 18px;
+	border-bottom: 1px solid #e8e2d8;
+	flex-shrink: 0;
+}
+
+.component-edit-modal__footer {
+	border-top: 1px solid #e8e2d8;
+	border-bottom: 0;
+	justify-content: flex-end;
+}
+
+.component-edit-modal__title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.component-edit-modal__body {
+	padding: 18px;
+	overflow: auto;
+}
+
+.component-edit-modal__textarea {
+	width: 100%;
+	min-height: 320px;
+	resize: vertical;
+	padding: 14px;
+	border: 1px solid #d9d9d9;
+	border-radius: 8px;
+	font: 14px/1.5 Consolas, "Courier New", monospace;
+}
+
+.component-edit-modal__field {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 14px;
+}
+
+.component-edit-modal__field:last-child {
+	margin-bottom: 0;
+}
+
+.component-edit-modal__field_checkbox {
+	grid-template-columns: 18px 1fr;
+	align-items: center;
+}
+
+.component-edit-modal__label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #444;
+}
+
+.component-edit-modal__input {
+	width: 100%;
+	min-height: 38px;
+	padding: 8px 12px;
+	border: 1px solid #d9d9d9;
+	border-radius: 8px;
+	font: 14px/1.4 Montserrat, Arial, sans-serif;
+}
+
+.component-edit-modal__checkbox {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+}
+
+.component-edit-modal__message {
+	min-height: 20px;
+	margin-top: 10px;
+	color: #666f7b;
+	font-size: 14px;
+}
+
+.component-edit-modal__button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 38px;
+	padding: 0 14px;
+	border: 1px solid #d9d9d9;
+	border-radius: 6px;
+	background: #fff;
+	color: #171717;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.component-edit-modal__button_primary {
+	border-color: #5747e6;
+	background: #5747e6;
+	color: #fff;
+}
+
+.component-edit-modal__images {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 12px;
+}
+
+.component-edit-modal__image-item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+	border: 2px solid transparent;
+	border-radius: 8px;
+	background: #f7f7f7;
+	cursor: pointer;
+	text-align: left;
+}
+
+.component-edit-modal__image-item:hover,
+.component-edit-modal__image-item.is-selected {
+	border-color: #5747e6;
+}
+
+.component-edit-modal__image-item img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1;
+	object-fit: cover;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.component-edit-modal__image-name {
+	font-size: 12px;
+	color: #555;
+	word-break: break-all;
+}

@@ -3,7 +3,6 @@
 namespace Components\IncludeArea;
 
 use Modules\Main\App;
-use Modules\Main\Auth;
 use Modules\Main\BaseComponent;
 
 class IncludeArea extends BaseComponent
@@ -17,7 +16,16 @@ class IncludeArea extends BaseComponent
 		$this->params = $params;
 		$this->setParam('path', $relativePath);
 		$this->setParam('content', $this->readContent($filePath, $root));
-		$this->setParam('edit_mode', $this->isEditMode());
+	}
+
+	protected function getEditDataAttributes(): string
+	{
+		return ' data-include-area-path="' . htmlspecialchars((string) $this->getParam('path')) . '"';
+	}
+
+	protected function getEditableParamKeys(): array
+	{
+		return ['path'];
 	}
 
 	private function normalizePath(string $path): string
@@ -56,10 +64,5 @@ class IncludeArea extends BaseComponent
 		$targetPath = str_replace('\\', '/', $targetPath);
 
 		return str_starts_with($targetPath, $rootPath);
-	}
-
-	private function isEditMode(): bool
-	{
-		return (string) ($_GET['edit'] ?? '') === 'true' && Auth::getInstance()->isAdmin();
 	}
 }

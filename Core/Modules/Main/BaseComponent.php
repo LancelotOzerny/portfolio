@@ -2,12 +2,19 @@
 
 namespace Modules\Main;
 
+use App\Services\Component\ComponentSettingsStorage;
+
 class BaseComponent
 {
     protected array $params = [];
+	private static bool $editAssetsRegistered = false;
+	private static int $editInstanceCounter = 0;
+	private string $editKey = '';
 
     final public function __construct(array $params = [])
     {
+		$this->editKey = $this->resolveEditKey($params);
+		$params = $this->mergeStoredParams($params);
 		$this->prepareData($params);
 
 		if (isset($params['template']))
@@ -63,13 +70,28 @@ class BaseComponent
 			AssetLoader::getInstance()->addCss($path);
 		}
 
+		$isEditMode = $this->isEditMode() && $this->isEditableInAdmin();
+
+		if ($isEditMode) {
+			$this->registerEditAssets();
+			echo $this->renderEditWrapperOpen();
+			echo '<div class="component-edit__content">';
+		}
+
         if (file_exists($viewPath))
         {
             include $viewPath;
-            return;
+        }
+        else
+        {
+            echo "Template `{$template}` of component `{$classPath}` not found<br/>";
         }
 
-        echo "Template `{$template}` of component `{$classPath}` not found<br/>";
+		if ($isEditMode) {
+			echo '</div>';
+			echo $this->renderEditTriggerButton();
+			echo $this->renderEditWrapperClose();
+		}
     }
 
 	final protected function getClassPath() : string
@@ -79,5 +101,143 @@ class BaseComponent
 		$classPath = dirname($classFile);
 
 		return $classPath;
+	}
+
+	protected function isEditMode(): bool
+	{
+		return (string) ($_GET['edit'] ?? '') === 'true' && Auth::getInstance()->isAdmin();
+	}
+
+	protected function isEditableInAdmin(): bool
+	{
+		return true;
+	}
+
+	protected function getEditDataAttributes(): string
+	{
+		return '';
+	}
+
+	protected function getEditDisplayClass(): string
+	{
+		return '';
+	}
+
+	protected function getEditableParamKeys(): array
+	{
+		$exclude = [
+			'items',
+			'filters',
+			'experience',
+			'content',
+			'edit_mode',
+			'template',
+			'error',
+			'edit_key',
+		];
+
+		$result = [];
+		foreach ($this->params as $key => $value) {
+			if (in_array($key, $exclude, true)) {
+				continue;
+			}
+
+			if (is_scalar($value) || $value === null) {
+				$result[] = $key;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getEditableParamsForJs(): array
+	{
+		$result = [];
+		foreach ($this->getEditableParamKeys() as $key) {
+			$result[$key] = $this->getParam($key);
+		}
+
+		return $result;
+	}
+
+	protected function getEditKey(): string
+	{
+		return $this->editKey;
+	}
+
+	protected function getComponentShortName(): string
+	{
+		$className = (new \ReflectionClass(static::class))->getShortName();
+
+		return $className;
+	}
+
+	private function resolveEditKey(array $params): string
+	{
+		$editKey = trim((string) ($params['edit_key'] ?? ''));
+		if ($editKey !== '') {
+			return $editKey;
+		}
+
+		$page = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+		self::$editInstanceCounter++;
+
+		return $page . '#' . $this->getComponentShortName() . '#' . self::$editInstanceCounter;
+	}
+
+	private function mergeStoredParams(array $params): array
+	{
+		$stored = ComponentSettingsStorage::get($this->editKey);
+		if ($stored === []) {
+			return $params;
+		}
+
+		return array_merge($params, $stored);
+	}
+
+	private function registerEditAssets(): void
+	{
+		if (self::$editAssetsRegistered) {
+			return;
+		}
+
+		self::$editAssetsRegistered = true;
+		AssetLoader::getInstance()->addCss('/Components/ComponentEdit/Default/styles.css');
+		AssetLoader::getInstance()->addJs('/Components/ComponentEdit/Default/script.js');
+	}
+
+	private function renderEditWrapperOpen(): string
+	{
+		$displayClass = trim($this->getEditDisplayClass());
+		$classList = 'component-edit' . ($displayClass !== '' ? ' ' . $displayClass : '');
+		$type = $this->getComponentShortName();
+		$editKey = $this->getEditKey();
+		$paramsJson = json_encode($this->getEditableParamsForJs(), JSON_UNESCAPED_UNICODE);
+		if ($paramsJson === false) {
+			$paramsJson = '{}';
+		}
+
+		return sprintf(
+			'<div class="%s" data-component-type="%s" data-component-key="%s" data-component-label="%s" data-component-params="%s"%s>',
+			htmlspecialchars($classList),
+			htmlspecialchars($type),
+			htmlspecialchars($editKey),
+			htmlspecialchars($type),
+			htmlspecialchars($paramsJson, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+			$this->getEditDataAttributes()
+		);
+	}
+
+	private function renderEditTriggerButton(): string
+	{
+		return '<button class="component-edit__trigger" type="button" aria-label="Настройки компонента" title="Настройки компонента">'
+			. '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+			. '<path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm8.25 3.75a8.18 8.18 0 0 0-.11-1.03l2.02-1.57a.75.75 0 0 0 .18-.96l-1.92-3.32a.75.75 0 0 0-.9-.33l-2.38.96a8.32 8.32 0 0 0-1.78-1.03l-.36-2.54A.75.75 0 0 0 14.7 2h-3.4a.75.75 0 0 0-.74.64l-.36 2.54c-.64.25-1.24.59-1.78 1.03l-2.38-.96a.75.75 0 0 0-.9.33L2.22 8.5a.75.75 0 0 0 .18.96l2.02 1.57c-.07.34-.11.68-.11 1.03s.04.69.11 1.03l-2.02 1.57a.75.75 0 0 0-.18.96l1.92 3.32c.19.33.6.47.9.33l2.38-.96c.54.44 1.14.78 1.78 1.03l.36 2.54c.08.36.38.64.74.64h3.4c.36 0 .66-.28.74-.64l.36-2.54a8.32 8.32 0 0 0 1.78-1.03l2.38.96c.3.12.71-.01.9-.33l1.92-3.32a.75.75 0 0 0-.18-.96l-2.02-1.57c.07-.34.11-.68.11-1.03Z"/>'
+			. '</svg></button>';
+	}
+
+	private function renderEditWrapperClose(): string
+	{
+		return '</div>';
 	}
 }

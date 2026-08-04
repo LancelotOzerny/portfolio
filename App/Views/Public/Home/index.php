@@ -22,7 +22,13 @@
 		</div>
 
 		<div class="hero-photo" aria-label="Фотография Максима Белякова">
-			<img src="/upload/images/main/profile.png" alt="Максим Беляков">
+            <?php
+            (new \Components\ImagePreview\ImagePreview([
+                'edit_key' => 'home.hero-photo',
+                'path' => '/upload/images/main/profile.png',
+                'alt' => 'Максим Беляков',
+            ]))->render();
+            ?>
 		</div>
 	</div>
 </section>
@@ -39,6 +45,7 @@
 		<h2 class="page-title" id="projectsTitle">Проекты</h2>
 		<?php
 		(new \Components\ProjectsGrid\ProjectsGrid([
+			'edit_key' => 'home.projects-grid',
 			'use_filters' => false,
 			'show_tags' => false,
 			'limit' => 6,

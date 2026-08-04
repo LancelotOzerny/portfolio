@@ -10,9 +10,11 @@ class ProjectsGrid extends BaseComponent
 {
 	protected function prepareData(array $params = []): void
 	{
-		$limit = $params['limit'] ?? 0;
+		$limit = (int) ($params['limit'] ?? 0);
 		$excludeId = (int) ($params['exclude_id'] ?? 0);
-		$useRandom = (bool) ($params['random'] ?? false);
+		$useRandom = $this->normalizeBool($params['random'] ?? false, false);
+		$useFilters = $this->normalizeBool($params['use_filters'] ?? false, false);
+		$showTags = $this->normalizeBool($params['show_tags'] ?? true, true);
 
 		$projectsModel = new ProjectsModel();
 		$items = $projectsModel->findAll($useRandom || $excludeId > 0 ? 0 : $limit);
@@ -40,13 +42,13 @@ class ProjectsGrid extends BaseComponent
 		}
 
 		$this->setParam('items', $items);
-		$this->setParam('use_filters', false);
+		$this->setParam('use_filters', $useFilters);
 		$this->setParam('limit', $limit);
 		$this->setParam('exclude_id', $excludeId);
 		$this->setParam('random', $useRandom);
-		$this->setParam('show_tags', ($params['show_tags'] ?? true) !== false && ($params['show_tags'] ?? true) !== 'off');
+		$this->setParam('show_tags', $showTags);
 
-		if ($params['use_filters'] ?? null)
+		if ($useFilters)
 		{
 			$filters = [
 				0 => 'Все проекты'
@@ -62,8 +64,36 @@ class ProjectsGrid extends BaseComponent
 				}
 			}
 
-			$this->setParam('use_filters', true);
 			$this->setParam('filters', $filters);
 		}
+	}
+
+	private function normalizeBool(mixed $value, bool $default): bool
+	{
+		if (is_bool($value)) {
+			return $value;
+		}
+
+		if ($value === null || $value === '') {
+			return $default;
+		}
+
+		if (is_int($value) || is_float($value)) {
+			return (int) $value !== 0;
+		}
+
+		if (is_string($value)) {
+			$normalized = strtolower(trim($value));
+
+			if (in_array($normalized, ['0', 'false', 'off', 'no'], true)) {
+				return false;
+			}
+
+			if (in_array($normalized, ['1', 'true', 'on', 'yes'], true)) {
+				return true;
+			}
+		}
+
+		return $default;
 	}
 }

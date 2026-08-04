@@ -1,0 +1,14 @@
+{
+    "home.projects-grid": {
+        "use_filters": false,
+        "limit": 6,
+        "exclude_id": 0,
+        "random": true,
+        "show_tags": false
+    },
+    "home.hero-photo": {
+        "path": "\/upload\/images\/main\/profile.png",
+        "alt": "Максим Беляков",
+        "title": ""
+    }
+}

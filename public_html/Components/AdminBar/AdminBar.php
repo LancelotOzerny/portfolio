@@ -7,6 +7,11 @@ use Modules\Main\BaseComponent;
 
 class AdminBar extends BaseComponent
 {
+	protected function isEditableInAdmin(): bool
+	{
+		return false;
+	}
+
 	protected function prepareData(array $params = []): void
 	{
 		$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';

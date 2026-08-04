@@ -131,6 +131,13 @@ body.light-page {
 	object-position: 58% center;
 }
 
+.hero-photo > .component-edit {
+	position: absolute;
+	inset: 0;
+	width: auto;
+	height: auto;
+}
+
 .social-section {
 	padding: 50px 0;
 	margin: 50px 0;

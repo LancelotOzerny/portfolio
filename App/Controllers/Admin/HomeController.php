@@ -2,6 +2,8 @@
 
 namespace Controllers\Admin;
 
+use Models\BlogArticlesModel;
+use Models\BlogTopicsModel;
 use Models\ProjectsModel;
 use Models\UsersModel;
 use Modules\Main\BaseController;
@@ -23,6 +25,8 @@ class HomeController extends BaseController
 		$data = [
 			'projectsCount' => (new ProjectsModel())->countAll(),
 			'usersCount' => (new UsersModel())->countAll(),
+			'rubricsCount' => (new BlogTopicsModel())->countAll(),
+			'articlesCount' => (new BlogArticlesModel())->countAll(),
 		];
 
         Template::getInstance()->showHeader();

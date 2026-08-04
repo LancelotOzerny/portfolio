@@ -74,7 +74,7 @@
 			<div class="about-light__photo">
                 <?php
                 (new \Components\ImagePreview\ImagePreview([
-                        'edit_key' => 'home.hero-photo',
+                        'edit_key' => 'home.about-photo',
                         'path' => '/upload/images/main/profile.png',
                         'alt' => 'Максим Беляков',
                 ]))->render();

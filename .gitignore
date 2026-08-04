@@ -7,6 +7,7 @@ App/Configs/Hidden/
 
 public_html/upload/
 upload/
+storage/
 
 *.log
 *.txt

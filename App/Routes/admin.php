@@ -24,6 +24,10 @@ $router->post('/admin/content/tags/create/', \Controllers\Admin\TagsController::
 $router->get('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'edit');
 $router->post('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'update');
 $router->post('/admin/content/tags/{id}/delete/', \Controllers\Admin\TagsController::class, 'delete');
+$router->get('/admin/content/gallery/', \Controllers\Admin\GalleryController::class, 'index');
+$router->post('/admin/content/gallery/album/create/', \Controllers\Admin\GalleryController::class, 'createAlbum');
+$router->post('/admin/content/gallery/upload/', \Controllers\Admin\GalleryController::class, 'upload');
+$router->post('/admin/content/gallery/delete/', \Controllers\Admin\GalleryController::class, 'delete');
 $router->get('/admin/seo/', \Controllers\Admin\SeoController::class, 'index');
 $router->get('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'edit');
 $router->post('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'update');

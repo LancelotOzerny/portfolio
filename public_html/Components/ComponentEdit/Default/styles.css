@@ -209,6 +209,23 @@
 	color: #fff;
 }
 
+.component-edit-modal__gallery {
+	display: grid;
+	gap: 20px;
+}
+
+.component-edit-modal__gallery-album {
+	display: grid;
+	gap: 12px;
+}
+
+.component-edit-modal__gallery-title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+	color: #333;
+}
+
 .component-edit-modal__images {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

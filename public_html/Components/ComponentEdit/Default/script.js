@@ -119,13 +119,13 @@
 		imageModal = createModal(
 			'component-edit-modal_image',
 			'component-edit-modal__dialog_wide',
-			'Выбор изображения',
-			'<div class="component-edit-modal__images"></div><div class="component-edit-modal__message"></div>',
+			'Выбор фото из галереи',
+			'<div class="component-edit-modal__gallery"></div><div class="component-edit-modal__message"></div>',
 			'<button class="component-edit-modal__button" type="button" data-component-edit-close>Отмена</button>' +
 			'<button class="component-edit-modal__button component-edit-modal__button_primary" type="button" data-image-save>Выбрать</button>'
 		);
 
-		imageGrid = imageModal.querySelector('.component-edit-modal__images');
+		imageGrid = imageModal.querySelector('.component-edit-modal__gallery');
 		imageMessage = imageModal.querySelector('.component-edit-modal__message');
 	}
 
@@ -321,33 +321,49 @@
 			});
 	}
 
-	function renderImageGrid(items) {
+	function renderImageGrid(albums) {
 		imageGrid.innerHTML = '';
 
-		if (!items.length) {
-			imageGrid.innerHTML = '<p>Изображения не найдены в /upload.</p>';
+		if (!albums.length) {
+			imageGrid.innerHTML = '<p>В фотогалерее пока нет изображений. Добавьте их в разделе «Контент → Галерея».</p>';
 			return;
 		}
 
-		items.forEach(function (item) {
-			const button = document.createElement('button');
-			button.type = 'button';
-			button.className = 'component-edit-modal__image-item';
-			button.dataset.imagePath = item.path;
-			button.innerHTML = [
-				'<img src="' + item.path + '" alt="">',
-				'<span class="component-edit-modal__image-name">' + item.name + '</span>',
-			].join('');
+		albums.forEach(function (album) {
+			const section = document.createElement('section');
+			section.className = 'component-edit-modal__gallery-album';
 
-			button.addEventListener('click', function () {
-				imageGrid.querySelectorAll('.component-edit-modal__image-item').forEach(function (node) {
-					node.classList.remove('is-selected');
+			const title = document.createElement('h3');
+			title.className = 'component-edit-modal__gallery-title';
+			title.textContent = album.name;
+			section.appendChild(title);
+
+			const grid = document.createElement('div');
+			grid.className = 'component-edit-modal__images';
+
+			(album.photos || []).forEach(function (item) {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'component-edit-modal__image-item';
+				button.dataset.imagePath = item.path;
+				button.innerHTML = [
+					'<img src="' + item.path + '" alt="">',
+					'<span class="component-edit-modal__image-name">' + item.name + '</span>',
+				].join('');
+
+				button.addEventListener('click', function () {
+					imageGrid.querySelectorAll('.component-edit-modal__image-item').forEach(function (node) {
+						node.classList.remove('is-selected');
+					});
+					button.classList.add('is-selected');
+					selectedImagePath = item.path;
 				});
-				button.classList.add('is-selected');
-				selectedImagePath = item.path;
+
+				grid.appendChild(button);
 			});
 
-			imageGrid.appendChild(button);
+			section.appendChild(grid);
+			imageGrid.appendChild(section);
 		});
 	}
 
@@ -359,16 +375,16 @@
 		imageGrid.innerHTML = '';
 		imageModal.classList.add('is-open');
 
-		fetch('/api/images/')
+		fetch('/api/gallery/')
 			.then(function (response) {
 				return response.json();
 			})
 			.then(function (result) {
 				if (!result.success) {
-					throw new Error(result.message || 'Не удалось загрузить изображения.');
+					throw new Error(result.message || 'Не удалось загрузить галерею.');
 				}
 
-				renderImageGrid(result.items || []);
+				renderImageGrid(result.albums || []);
 				imageMessage.textContent = '';
 
 				if (selectedImagePath) {

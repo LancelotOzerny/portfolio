@@ -13,6 +13,7 @@ $blogActive = str_starts_with($currentPath, '/admin/content/blog/') ? ' is-activ
 $blogRubricsActive = str_starts_with($currentPath, '/admin/content/blog/rubrics/') || $currentPath === '/admin/content/blog/' ? ' is-active' : '';
 $blogArticlesActive = str_starts_with($currentPath, '/admin/content/blog/articles/') ? ' is-active' : '';
 $tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
+$galleryActive = str_starts_with($currentPath, '/admin/content/gallery/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
 $developmentSqlActive = str_starts_with($currentPath, '/admin/development/sql/') ? ' is-active' : '';
@@ -273,6 +274,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 							</div>
 						</div>
 						<a class="admin-sideout__flyout-link<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
+						<a class="admin-sideout__flyout-link<?= $galleryActive ?>" href="/admin/content/gallery/">Галерея</a>
 					</div>
 				</div>
 

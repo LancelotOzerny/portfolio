@@ -7,4 +7,5 @@ $router->post('/api/feedback/send/', \Controllers\Api\FeedbackController::class,
 $router->post('/api/include-area/save/', \Controllers\Api\IncludeAreaController::class, 'save');
 $router->post('/api/component/settings/save/', \Controllers\Api\ComponentController::class, 'saveSettings');
 $router->get('/api/images/', \Controllers\Api\ImagesController::class, 'list');
+$router->get('/api/gallery/', \Controllers\Api\GalleryController::class, 'list');
 $router->post('/api/auth/login/', \Controllers\AuthController::class, 'login');

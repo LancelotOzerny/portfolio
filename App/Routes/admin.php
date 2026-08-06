@@ -37,6 +37,8 @@ $router->get('/admin/development/sql/', \Controllers\Admin\DevelopmentController
 $router->post('/admin/development/sql/execute/', \Controllers\Admin\DevelopmentController::class, 'executeSql');
 $router->post('/admin/development/sql/execute-file/', \Controllers\Admin\DevelopmentController::class, 'executeSqlFile');
 $router->post('/admin/development/sql/delete-file/', \Controllers\Admin\DevelopmentController::class, 'deleteSqlFile');
+$router->get('/admin/development/sql/download/{file}/', \Controllers\Admin\DevelopmentController::class, 'downloadSqlFile');
+$router->post('/admin/development/sql/upload/', \Controllers\Admin\DevelopmentController::class, 'uploadSqlFile');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');

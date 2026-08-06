@@ -113,6 +113,50 @@ class DevelopmentController extends BaseController
 		header('Location: /admin/development/sql/');
 	}
 
+	public function downloadSqlFile(string $file): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			$fileName = $this->sanitizeFileName($file);
+			if ($fileName === '') {
+				throw new \RuntimeException('Неверное имя SQL файла.');
+			}
+
+			$filePath = $this->resolveMigrationFilePath($fileName);
+			if (!is_file($filePath)) {
+				throw new \RuntimeException('SQL файл не найден.');
+			}
+
+			header('Content-Type: application/sql; charset=utf-8');
+			header('Content-Disposition: attachment; filename="' . $fileName . '"');
+			header('Content-Length: ' . (string) filesize($filePath));
+			readfile($filePath);
+			exit;
+		} catch (Throwable $e) {
+			http_response_code(404);
+			echo htmlspecialchars($e->getMessage());
+		}
+	}
+
+	public function uploadSqlFile(): void
+	{
+		if (!$this->ensureAdmin() || !$this->validateCsrf()) {
+			return;
+		}
+
+		try {
+			$fileName = $this->storeUploadedMigration($_FILES['sql_file'] ?? []);
+			$this->setFlash(true, 'Файл "' . $fileName . '" загружен.');
+		} catch (Throwable $e) {
+			$this->setFlash(false, $e->getMessage());
+		}
+
+		header('Location: /admin/development/sql/');
+	}
+
 	private function executeAndFlash(string $sql, string $successMessage = 'SQL запрос выполнен.'): void
 	{
 		$sql = trim($sql);
@@ -223,6 +267,57 @@ class DevelopmentController extends BaseController
 		}
 
 		return $file;
+	}
+
+	private function storeUploadedMigration(array $file): string
+	{
+		if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+			throw new \RuntimeException('Не удалось загрузить SQL файл.');
+		}
+
+		$originalName = basename((string) ($file['name'] ?? ''));
+		$fileName = $this->sanitizeFileName($originalName);
+		if ($fileName === '') {
+			throw new \RuntimeException('Можно загрузить только файл с именем вида name.sql.');
+		}
+
+		$tmpPath = (string) ($file['tmp_name'] ?? '');
+		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+			throw new \RuntimeException('Некорректный загруженный файл.');
+		}
+
+		$extension = strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION));
+		if ($extension !== 'sql') {
+			throw new \RuntimeException('Можно загрузить только SQL файл.');
+		}
+
+		$directory = $this->ensureMigrationsDirectory();
+		$targetPath = $directory . DIRECTORY_SEPARATOR . $fileName;
+
+		if (is_file($targetPath)) {
+			throw new \RuntimeException('Файл "' . $fileName . '" уже существует.');
+		}
+
+		if (!move_uploaded_file($tmpPath, $targetPath)) {
+			throw new \RuntimeException('Не удалось сохранить SQL файл.');
+		}
+
+		return $fileName;
+	}
+
+	private function ensureMigrationsDirectory(): string
+	{
+		$directory = $this->getMigrationsDirectory();
+		if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+			throw new \RuntimeException('Не удалось создать папку миграций.');
+		}
+
+		$directoryRealPath = realpath($directory);
+		if ($directoryRealPath === false) {
+			throw new \RuntimeException('Папка миграций не найдена.');
+		}
+
+		return $directoryRealPath;
 	}
 
 	private function getMigrationsDirectory(): string

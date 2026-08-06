@@ -64,7 +64,17 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 						<?php if ($isEditMode && $isDisabled): ?>
 							<span class="blog-article-card__status">Скрыта</span>
 						<?php endif; ?>
-						<span class="blog-article-card__date"><?= htmlspecialchars((string) $article['date']) ?></span>
+						<span class="blog-article-card__meta">
+							<span class="blog-article-card__date"><?= htmlspecialchars((string) $article['date']) ?></span>
+							<?php if (array_key_exists('views_count', $article)): ?>
+								<span class="blog-article-card__views" title="Просмотры">
+									<svg class="blog-article-card__views-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+										<path d="M12 5C7 5 2.7 8.1 1 12c1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5A2.5 2.5 0 1 0 12 14a2.5 2.5 0 0 0 0-5z"/>
+									</svg>
+									<span><?= (int) $article['views_count'] ?></span>
+								</span>
+							<?php endif; ?>
+						</span>
 						<span class="blog-article-card__title"><?= htmlspecialchars((string) $article['title']) ?></span>
 						<span class="blog-article-card__text"><?= htmlspecialchars((string) $article['preview']) ?></span>
 					</span>

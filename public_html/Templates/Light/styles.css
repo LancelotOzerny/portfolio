@@ -676,11 +676,33 @@ body.light-page {
 
 .blog-topic-card__count,
 .blog-article-card__date,
+.blog-article-card__views,
 .blog-detail__meta {
 	color: var(--ml-muted);
 	font-size: 0.86rem;
 	font-weight: 500;
 }
+
+.blog-article-card__meta {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+}
+
+.blog-article-card__views {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.blog-article-card__views-icon {
+	width: 1em;
+	height: 1em;
+	fill: currentColor;
+	flex-shrink: 0;
+}
+
 
 .blog-topic-card__count {
 	color: rgba(255, 255, 255, 0.76);

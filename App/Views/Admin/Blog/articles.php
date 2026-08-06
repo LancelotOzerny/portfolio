@@ -87,6 +87,13 @@ $dateFormatter = new BlogDateFormatter();
 									<div class="small text-secondary mb-3">
 										<div>Рубрика: <?= htmlspecialchars($topicTitle !== '' ? $topicTitle : 'не указана') ?></div>
 										<div>Автор: <?= htmlspecialchars((string) ($article->author ?? '-')) ?></div>
+										<div class="d-flex align-items-center gap-1">
+											<span>Просмотры:</span>
+											<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor">
+												<path d="M12 5C7 5 2.7 8.1 1 12c1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5A2.5 2.5 0 1 0 12 14a2.5 2.5 0 0 0 0-5z"/>
+											</svg>
+											<span><?= (int) ($article->views_count ?? 0) ?></span>
+										</div>
 										<div>Создана: <?= htmlspecialchars($dateFormatter->format((string) ($article->created_at ?? '')) ?: '-') ?></div>
 										<div>Изменена: <?= htmlspecialchars($dateFormatter->format((string) ($article->updated_at ?? '')) ?: '-') ?></div>
 									</div>

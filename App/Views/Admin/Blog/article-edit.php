@@ -64,15 +64,19 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 				<div class="tab-pane fade show active" id="tab-main" role="tabpanel" aria-labelledby="tab-main-link">
 					<div class="row g-3">
 						<?php if (!$isCreate): ?>
-							<div class="col-12 col-md-4">
+							<div class="col-12 col-md-3">
 								<label class="form-label">ID</label>
 								<input type="text" class="form-control" value="<?= $articleId ?>" readonly>
 							</div>
-							<div class="col-12 col-md-4">
+							<div class="col-12 col-md-3">
+								<label class="form-label">Кол-во просмотров</label>
+								<input type="text" class="form-control" value="<?= (int) ($article->views_count ?? 0) ?>" readonly>
+							</div>
+							<div class="col-12 col-md-3">
 								<label class="form-label">created_at</label>
 								<input type="text" class="form-control" value="<?= htmlspecialchars((string) ($article->created_at ?? '')) ?>" readonly>
 							</div>
-							<div class="col-12 col-md-4">
+							<div class="col-12 col-md-3">
 								<label class="form-label">updated_at</label>
 								<input type="text" class="form-control" value="<?= htmlspecialchars((string) ($article->updated_at ?? '')) ?>" readonly>
 							</div>

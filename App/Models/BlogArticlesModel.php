@@ -150,6 +150,34 @@ class BlogArticlesModel extends BaseModel
 		return array_values(array_unique($result));
 	}
 
+	public function registerUniqueView(int $articleId, string $ipAddress): bool
+	{
+		$ipAddress = trim($ipAddress);
+		if ($articleId <= 0 || $ipAddress === '') {
+			return false;
+		}
+
+		try {
+			$insert = (new QueryBuilder('blog_article_views'))->insert([
+				'article_id' => $articleId,
+				'ip_address' => $ipAddress,
+			]);
+
+			if ($this->execInsertQuery($insert) <= 0) {
+				return false;
+			}
+		} catch (Throwable) {
+			return false;
+		}
+
+		$increment = (new QueryBuilder($this->table))->raw(
+			'UPDATE ' . $this->table . ' SET views_count = views_count + 1 WHERE id = :article_id',
+			['article_id' => $articleId]
+		);
+
+		return $this->execWriteQuery($increment);
+	}
+
 	public function replaceTopicIds(int $articleId, array $topicIds): bool
 	{
 		try {

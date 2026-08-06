@@ -2,6 +2,7 @@
 namespace Controllers\Public;
 
 use App\Services\Blog\ArticleContentSanitizer;
+use App\Services\Blog\ArticleViewCounter;
 use App\Services\Blog\BlogDateFormatter;
 use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
@@ -57,6 +58,12 @@ class BlogController extends BaseController
 	{
 		$topicData = $this->findTopic($topic);
 		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+
+		if ($articleData !== null && isset($articleData['id'])) {
+			if ((new ArticleViewCounter())->registerIfUnique((int) $articleData['id'])) {
+				$articleData['views_count'] = (int) ($articleData['views_count'] ?? 0) + 1;
+			}
+		}
 
 		$this->setSeo(SeoContext::custom('/blog/' . $topic . '/' . $article . '/', [
 			'title' => $articleData['title'] ?? 'Статья не найдена',
@@ -265,6 +272,7 @@ class BlogController extends BaseController
 					: '/Templates/Inner/img/no-image.webp',
 				'date' => $dateFormatter->format((string) ($article->created_at ?? '')),
 				'rating' => 0,
+				'views_count' => (int) ($article->views_count ?? 0),
 				'preview' => (string) ($article->preview_text ?? ''),
 				'content' => [(string) ($article->detail_text ?? '')],
 				'detail_text' => (string) ($article->detail_text ?? ''),

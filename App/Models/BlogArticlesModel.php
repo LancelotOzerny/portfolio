@@ -181,17 +181,23 @@ class BlogArticlesModel extends BaseModel
 		return array_values(array_unique($result));
 	}
 
-	public function registerUniqueView(int $articleId, string $ipAddress): bool
+	public function registerUniqueView(int $articleId, string $viewerKey, string $ipAddress = ''): bool
 	{
+		$viewerKey = trim($viewerKey);
 		$ipAddress = trim($ipAddress);
-		if ($articleId <= 0 || $ipAddress === '') {
+		if ($articleId <= 0 || $viewerKey === '') {
 			return false;
+		}
+
+		if ($ipAddress === '' || filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+			$ipAddress = '0.0.0.0';
 		}
 
 		try {
 			$insert = (new QueryBuilder('blog_article_views'))->insert([
 				'article_id' => $articleId,
 				'ip_address' => $ipAddress,
+				'viewer_key' => $viewerKey,
 			]);
 
 			if ($this->execInsertQuery($insert) <= 0) {

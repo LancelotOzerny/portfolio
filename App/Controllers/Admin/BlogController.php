@@ -2,6 +2,7 @@
 
 namespace Controllers\Admin;
 
+use App\Services\Blog\SymbolicCodeService;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Modules\Main\Auth;
@@ -97,7 +98,7 @@ class BlogController extends BaseController
 		$articleId = 0;
 
 		try {
-			$articleId = $model->createForAdmin($normalized['topic_id'], $normalized['title']);
+			$articleId = $model->createForAdmin($normalized['topic_id'], $normalized['title'], $normalized['code']);
 		} catch (Throwable) {
 		}
 
@@ -114,6 +115,7 @@ class BlogController extends BaseController
 				$articleId,
 				$normalized['topic_id'],
 				$normalized['title'],
+				$normalized['code'],
 				$normalized['enabled'],
 				$normalized['preview_text'],
 				$previewImagePath,
@@ -192,7 +194,7 @@ class BlogController extends BaseController
 			return;
 		}
 
-		$normalized = $this->normalizeArticleInput();
+		$normalized = $this->normalizeArticleInput($id);
 		if ($normalized['error'] !== '') {
 			header('Location: /admin/content/blog/articles/' . $id . '/?error=' . rawurlencode($normalized['error']));
 			return;
@@ -209,6 +211,7 @@ class BlogController extends BaseController
 				$id,
 				$normalized['topic_id'],
 				$normalized['title'],
+				$normalized['code'],
 				$normalized['enabled'],
 				$normalized['preview_text'],
 				$previewImagePath,
@@ -279,10 +282,20 @@ class BlogController extends BaseController
 		}
 
 		$title = trim((string) ($_POST['title'] ?? ''));
+		$codeService = new SymbolicCodeService();
+		$code = $codeService->normalize((string) ($_POST['code'] ?? ''));
+		if ($code === '') {
+			$code = $codeService->fromTitle($title);
+		}
 		$description = trim((string) ($_POST['description'] ?? ''));
 		$detailText = (string) ($_POST['detail_text'] ?? '');
 		if ($title === '') {
 			header('Location: /admin/content/blog/rubrics/create/?error=' . rawurlencode('Введите название рубрики.'));
+			return;
+		}
+
+		if (!$codeService->isValid($code)) {
+			header('Location: /admin/content/blog/rubrics/create/?error=' . rawurlencode('Символьный код должен содержать только латинские буквы, цифры, "-" и "_".'));
 			return;
 		}
 
@@ -292,10 +305,16 @@ class BlogController extends BaseController
 		}
 
 		$model = new BlogTopicsModel();
+
+		if ($model->isCodeTaken($code)) {
+			header('Location: /admin/content/blog/rubrics/create/?error=' . rawurlencode('Символьный код уже используется.'));
+			return;
+		}
+
 		$topicId = 0;
 
 		try {
-			$topicId = $model->createForAdmin($title);
+			$topicId = $model->createForAdmin($title, $code);
 		} catch (Throwable) {
 		}
 
@@ -310,6 +329,7 @@ class BlogController extends BaseController
 			$model->updateEditorData(
 				$topicId,
 				$title,
+				$code,
 				$description,
 				$imagePath,
 				$detailText,
@@ -376,6 +396,11 @@ class BlogController extends BaseController
 		}
 
 		$title = trim((string) ($_POST['title'] ?? ''));
+		$codeService = new SymbolicCodeService();
+		$code = $codeService->normalize((string) ($_POST['code'] ?? ''));
+		if ($code === '') {
+			$code = $codeService->fromTitle($title);
+		}
 		$description = trim((string) ($_POST['description'] ?? ''));
 		$imagePath = trim((string) ($_POST['image_path_existing'] ?? (string) ($topic->image_path ?? '')));
 		$detailText = (string) ($_POST['detail_text'] ?? '');
@@ -384,6 +409,16 @@ class BlogController extends BaseController
 
 		if ($title === '') {
 			header('Location: /admin/content/blog/rubrics/' . $id . '/?error=' . rawurlencode('Введите название рубрики.'));
+			return;
+		}
+
+		if (!$codeService->isValid($code)) {
+			header('Location: /admin/content/blog/rubrics/' . $id . '/?error=' . rawurlencode('Символьный код должен содержать только латинские буквы, цифры, "-" и "_".'));
+			return;
+		}
+
+		if ($model->isCodeTaken($code, $id)) {
+			header('Location: /admin/content/blog/rubrics/' . $id . '/?error=' . rawurlencode('Символьный код уже используется.'));
 			return;
 		}
 
@@ -396,7 +431,7 @@ class BlogController extends BaseController
 			$imagePath = $this->saveTopicImageUpload($id, 'image_file', $imagePath);
 			$detailImagePath = $this->saveTopicImageUpload($id, 'detail_image_file', $detailImagePath, 'detail');
 
-			if (!$model->updateEditorData($id, $title, $description, $imagePath, $detailText, $detailImagePath, $enabled)) {
+			if (!$model->updateEditorData($id, $title, $code, $description, $imagePath, $detailText, $detailImagePath, $enabled)) {
 				throw new \RuntimeException('Не удалось сохранить изменения.');
 			}
 
@@ -555,11 +590,16 @@ class BlogController extends BaseController
 		return '/upload/images/blog/articles/' . $fileName;
 	}
 
-	private function normalizeArticleInput(): array
+	private function normalizeArticleInput(?int $excludeArticleId = null): array
 	{
 		$topicIds = $this->normalizeTopicIds($_POST['topic_ids'] ?? []);
 		$topicId = $topicIds[0] ?? 0;
 		$title = trim((string) ($_POST['title'] ?? ''));
+		$codeService = new SymbolicCodeService();
+		$code = $codeService->normalize((string) ($_POST['code'] ?? ''));
+		if ($code === '') {
+			$code = $codeService->fromTitle($title);
+		}
 		$previewText = trim((string) ($_POST['preview_text'] ?? ''));
 		$detailText = (string) ($_POST['detail_text'] ?? '');
 		$author = trim((string) ($_POST['author'] ?? ''));
@@ -572,6 +612,14 @@ class BlogController extends BaseController
 			return ['error' => 'Введите название статьи.'];
 		}
 
+		if (!$codeService->isValid($code)) {
+			return ['error' => 'Символьный код должен содержать только латинские буквы, цифры, "-" и "_".'];
+		}
+
+		if ((new BlogArticlesModel())->isCodeTaken($code, $excludeArticleId)) {
+			return ['error' => 'Символьный код уже используется.'];
+		}
+
 		if (mb_strlen($previewText) > 500) {
 			return ['error' => 'Preview текст должен быть не длиннее 500 символов.'];
 		}
@@ -581,6 +629,7 @@ class BlogController extends BaseController
 			'topic_id' => $topicId,
 			'topic_ids' => $topicIds,
 			'title' => $title,
+			'code' => $code,
 			'enabled' => isset($_POST['enabled']) ? 1 : 0,
 			'preview_text' => $previewText,
 			'detail_text' => $detailText,

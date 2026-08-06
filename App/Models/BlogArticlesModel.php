@@ -10,11 +10,12 @@ class BlogArticlesModel extends BaseModel
 {
 	protected string $table = 'blog_articles';
 
-	public function createForAdmin(int $topicId, string $title): int
+	public function createForAdmin(int $topicId, string $title, string $code): int
 	{
 		$qb = (new QueryBuilder($this->table))->insert([
 			'topic_id' => $topicId,
 			'title' => $title,
+			'code' => $code,
 			'enabled' => 0,
 			'preview_text' => '',
 			'preview_image_path' => '',
@@ -30,6 +31,7 @@ class BlogArticlesModel extends BaseModel
 		int $id,
 		int $topicId,
 		string $title,
+		string $code,
 		int $enabled,
 		string $previewText,
 		string $previewImagePath,
@@ -41,6 +43,7 @@ class BlogArticlesModel extends BaseModel
 			->update([
 				'topic_id' => $topicId,
 				'title' => $title,
+				'code' => $code,
 				'enabled' => $enabled,
 				'preview_text' => $previewText,
 				'preview_image_path' => $previewImagePath,
@@ -51,6 +54,34 @@ class BlogArticlesModel extends BaseModel
 			->where('id', '=', $id);
 
 		return $this->execWriteQuery($qb);
+	}
+
+	public function findByCode(string $code): ?object
+	{
+		$code = trim($code);
+		if ($code === '') {
+			return null;
+		}
+
+		return $this->findBy('code', $code);
+	}
+
+	public function isCodeTaken(string $code, ?int $excludeId = null): bool
+	{
+		$code = trim($code);
+		if ($code === '') {
+			return false;
+		}
+
+		$qb = (new QueryBuilder($this->table))
+			->select(['id'])
+			->where('code', '=', $code);
+
+		if ($excludeId !== null && $excludeId > 0) {
+			$qb->where('id', '!=', $excludeId);
+		}
+
+		return $this->execQuery($qb, true) !== null;
 	}
 
 	public function deleteById(int $id): bool
@@ -295,7 +326,7 @@ class BlogArticlesModel extends BaseModel
 	private function findLatestActiveViaRelations(int $limit): array
 	{
 		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_articles.*, MIN(blog_topics.id) AS topic_id_resolved, MIN(blog_topics.title) AS topic_title')
+			->selectRaw('blog_articles.*, MIN(blog_topics.id) AS topic_id_resolved, MIN(blog_topics.title) AS topic_title, MIN(blog_topics.code) AS topic_code')
 			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
 			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'INNER')
 			->where('blog_articles.enabled', '=', 1)
@@ -314,7 +345,7 @@ class BlogArticlesModel extends BaseModel
 	private function findLatestActiveLegacy(int $limit): array
 	{
 		$qb = (new QueryBuilder($this->table))
-			->selectRaw('blog_articles.*, blog_articles.topic_id AS topic_id_resolved, blog_topics.title AS topic_title')
+			->selectRaw('blog_articles.*, blog_articles.topic_id AS topic_id_resolved, blog_topics.title AS topic_title, blog_topics.code AS topic_code')
 			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER')
 			->where('blog_articles.enabled', '=', 1)
 			->where('blog_topics.enabled', '=', 1)

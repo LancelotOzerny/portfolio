@@ -32,7 +32,7 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 			continue;
 		}
 		?>
-		<a class="blog-topic-card" href="/blog/<?= $topicId ?>/">
+		<a class="blog-topic-card" href="/blog/<?= htmlspecialchars(trim((string) ($topic->code ?? '')) !== '' ? (string) $topic->code : (string) $topicId) ?>/">
 			<img src="<?= htmlspecialchars($imagePath !== '' ? $imagePath : $defaultImage) ?>" alt="<?= htmlspecialchars($title) ?>">
 			<span class="blog-topic-card__overlay" aria-hidden="true"></span>
 			<span class="blog-topic-card__content">

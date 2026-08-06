@@ -3,6 +3,7 @@
 namespace Components\BlogArticlesCarousel;
 
 use App\Services\Blog\BlogDateFormatter;
+use App\Services\Blog\SymbolicCodeService;
 use Models\BlogArticlesModel;
 use Modules\Main\BaseComponent;
 use Throwable;
@@ -22,6 +23,7 @@ class BlogArticlesCarousel extends BaseComponent
 		}
 
 		$dateFormatter = new BlogDateFormatter();
+		$codeService = new SymbolicCodeService();
 		$mappedItems = [];
 
 		foreach ($items as $item) {
@@ -32,6 +34,8 @@ class BlogArticlesCarousel extends BaseComponent
 			}
 
 			$previewImage = trim((string) ($item->preview_image_path ?? ''));
+			$topicSegment = $codeService->resolvePublicSegment((string) ($item->topic_code ?? ''), $topicId);
+			$articleSegment = $codeService->resolvePublicSegment((string) ($item->code ?? ''), $articleId);
 
 			$mappedItems[] = [
 				'id' => $articleId,
@@ -41,7 +45,7 @@ class BlogArticlesCarousel extends BaseComponent
 				'image' => $previewImage !== '' ? $previewImage : '/Templates/Inner/img/no-image.webp',
 				'date' => $dateFormatter->format((string) ($item->created_at ?? '')),
 				'topic_title' => (string) ($item->topic_title ?? ''),
-				'url' => '/blog/' . $topicId . '/' . $articleId . '/',
+				'url' => '/blog/' . rawurlencode($topicSegment) . '/' . rawurlencode($articleSegment) . '/',
 			];
 		}
 

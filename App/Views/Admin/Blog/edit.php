@@ -5,6 +5,7 @@ $topic = $data['topic'] ?? null;
 $isCreate = $topic === null;
 $topicId = (int) ($topic->id ?? 0);
 $title = (string) ($topic->title ?? '');
+$code = (string) ($topic->code ?? '');
 $description = (string) ($topic->preview_text ?? '');
 $isEnabled = (int) ($topic->enabled ?? 0) === 1;
 $imagePath = trim((string) ($topic->image_path ?? ''));
@@ -68,7 +69,23 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 
 						<div class="col-12">
 							<label class="form-label">Название рубрики</label>
-							<input type="text" name="title" class="form-control" value="<?= htmlspecialchars($title) ?>" maxlength="255" required>
+							<input type="text" name="title" id="blog-topic-title" class="form-control" value="<?= htmlspecialchars($title) ?>" maxlength="255" required>
+						</div>
+
+						<div class="col-12">
+							<label class="form-label">Символьный код</label>
+							<input
+								type="text"
+								name="code"
+								id="blog-topic-code"
+								class="form-control font-monospace"
+								value="<?= htmlspecialchars($code) ?>"
+								maxlength="255"
+								pattern="[A-Za-z0-9_-]+"
+								title="Только латинские буквы, цифры, - и _"
+								<?= $isCreate ? '' : 'required' ?>
+							>
+							<div class="form-text">Латинские буквы, цифры, "-" и "_". Заполняется автоматически из названия.</div>
 						</div>
 
 						<div class="col-12">
@@ -147,6 +164,53 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+	const translitMap = {
+		'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh', 'з': 'z',
+		'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r',
+		'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+		'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+	};
+
+	const toSymbolicCode = (value) => {
+		const lower = String(value || '').toLowerCase();
+		let result = '';
+
+		for (const char of lower) {
+			if (Object.prototype.hasOwnProperty.call(translitMap, char)) {
+				result += translitMap[char];
+				continue;
+			}
+
+			if (/[a-z0-9_-]/.test(char)) {
+				result += char;
+				continue;
+			}
+
+			result += '-';
+		}
+
+		return result.replace(/-+/g, '-').replace(/^[-_]+|[-_]+$/g, '');
+	};
+
+	const titleInput = document.getElementById('blog-topic-title');
+	const codeInput = document.getElementById('blog-topic-code');
+	let codeLocked = Boolean(codeInput && codeInput.value.trim() !== '');
+
+	if (titleInput && codeInput) {
+		titleInput.addEventListener('input', () => {
+			if (codeLocked) {
+				return;
+			}
+
+			codeInput.value = toSymbolicCode(titleInput.value);
+		});
+
+		codeInput.addEventListener('input', () => {
+			codeLocked = true;
+			codeInput.value = toSymbolicCode(codeInput.value);
+		});
+	}
+
 	document.querySelectorAll('.blog-topic-image-trigger').forEach((button) => {
 		button.addEventListener('click', () => {
 			const inputId = button.dataset.targetInput;

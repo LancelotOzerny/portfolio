@@ -4,6 +4,7 @@ namespace Controllers\Public;
 use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Blog\ArticleViewCounter;
 use App\Services\Blog\BlogDateFormatter;
+use App\Services\Blog\SymbolicCodeService;
 use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
 use App\Services\Security\CsrfService;
@@ -99,25 +100,15 @@ class BlogController extends BaseController
 			return;
 		}
 
-		if (!ctype_digit($article)) {
-			$this->redirectToArticle($topic, $article, 'Only database articles can be edited here.');
-			return;
-		}
-
 		$model = new BlogArticlesModel();
-		$articleId = (int) $article;
+		$dbArticle = $this->resolveDbArticle($article);
 
-		try {
-			$articleData = $model->findById($articleId);
-		} catch (Throwable) {
-			$articleData = null;
-		}
-
-		if ($articleData === null) {
+		if ($dbArticle === null) {
 			$this->redirectToArticle($topic, $article, 'Article not found.');
 			return;
 		}
 
+		$articleId = (int) ($dbArticle->id ?? 0);
 		$detailText = (new ArticleContentSanitizer())->sanitize((string) ($_POST['detail_text'] ?? ''));
 
 		try {
@@ -126,23 +117,30 @@ class BlogController extends BaseController
 			$topicIds = [];
 		}
 
-		$topicId = (int) ($topicIds[0] ?? (int) ($articleData->topic_id ?? 0));
+		$topicId = (int) ($topicIds[0] ?? (int) ($dbArticle->topic_id ?? 0));
 		if ($topicId <= 0) {
 			$this->redirectToArticle($topic, $article, 'Article topic was not found.');
 			return;
 		}
 
+		$codeService = new SymbolicCodeService();
+		$articleCode = $codeService->resolvePublicSegment(
+			(string) ($dbArticle->code ?? ''),
+			$articleId
+		);
+
 		try {
 			if (!$model->updateEditorData(
 				$articleId,
 				$topicId,
-				(string) ($articleData->title ?? ''),
-				(int) ($articleData->enabled ?? 0),
-				(string) ($articleData->preview_text ?? ''),
-				(string) ($articleData->preview_image_path ?? ''),
+				(string) ($dbArticle->title ?? ''),
+				(string) ($dbArticle->code ?? $articleCode),
+				(int) ($dbArticle->enabled ?? 0),
+				(string) ($dbArticle->preview_text ?? ''),
+				(string) ($dbArticle->preview_image_path ?? ''),
 				$detailText,
-				(string) ($articleData->detail_image_path ?? ''),
-				(string) ($articleData->author ?? '')
+				(string) ($dbArticle->detail_image_path ?? ''),
+				(string) ($dbArticle->author ?? '')
 			)) {
 				throw new \RuntimeException('Unable to save article.');
 			}
@@ -152,7 +150,7 @@ class BlogController extends BaseController
 			return;
 		}
 
-		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($article) . '/?edit=true&saved=1');
+		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($articleCode) . '/?edit=true&saved=1');
 	}
 
 	public function uploadDetailImage(string $topic, string $article): void
@@ -164,7 +162,9 @@ class BlogController extends BaseController
 		}
 
 		try {
-			$url = $this->saveInlineArticleImage((int) $article, 'image');
+			$dbArticle = $this->resolveDbArticle($article);
+			$articleId = (int) ($dbArticle->id ?? 0);
+			$url = $this->saveInlineArticleImage($articleId, 'image');
 			echo json_encode([
 				'success' => 1,
 				'file' => [
@@ -190,7 +190,9 @@ class BlogController extends BaseController
 		}
 
 		try {
-			$file = $this->saveInlineArticleFile((int) $article, 'file');
+			$dbArticle = $this->resolveDbArticle($article);
+			$articleId = (int) ($dbArticle->id ?? 0);
+			$file = $this->saveInlineArticleFile($articleId, 'file');
 			echo json_encode([
 				'success' => 1,
 				'file' => $file,
@@ -207,35 +209,48 @@ class BlogController extends BaseController
 
 	private function findTopic(string $slug): ?array
 	{
-		if (ctype_digit($slug)) {
-			try {
-				$topic = (new BlogTopicsModel())->findById((int) $slug);
-			} catch (Throwable) {
-				$topic = null;
-			}
+		$codeService = new SymbolicCodeService();
+		$topicsModel = new BlogTopicsModel();
+		$topic = null;
 
-			if ($topic !== null) {
-				try {
-					$articles = (new BlogArticlesModel())->findByTopicId((int) $slug, !$this->isEditMode());
-				} catch (Throwable) {
-					$articles = [];
+		try {
+			if (ctype_digit($slug)) {
+				$topic = $topicsModel->findById((int) $slug);
+				if ($topic === null) {
+					$topic = $topicsModel->findByCode($slug);
 				}
-
-				return [
-					'name' => (string) ($topic->title ?? 'Без названия'),
-					'slug' => (string) ($topic->id ?? $slug),
-					'description' => trim((string) ($topic->detail_text ?? '')) !== ''
-						? (string) ($topic->detail_text ?? '')
-						: (string) ($topic->preview_text ?? ''),
-					'detail_image_path' => (string) ($topic->detail_image_path ?? ''),
-					'articles' => $this->mapDbArticles($articles),
-				];
+			} else {
+				$topic = $topicsModel->findByCode($slug);
 			}
+		} catch (Throwable) {
+			$topic = null;
 		}
 
-		foreach ($this->getTopics() as $topic) {
-			if ($topic['slug'] === $slug) {
-				return $topic;
+		if ($topic !== null) {
+			$topicId = (int) ($topic->id ?? 0);
+
+			try {
+				$articles = (new BlogArticlesModel())->findByTopicId($topicId, !$this->isEditMode());
+			} catch (Throwable) {
+				$articles = [];
+			}
+
+			return [
+				'id' => $topicId,
+				'name' => (string) ($topic->title ?? 'Без названия'),
+				'slug' => $codeService->resolvePublicSegment((string) ($topic->code ?? ''), $topicId),
+				'code' => (string) ($topic->code ?? ''),
+				'description' => trim((string) ($topic->detail_text ?? '')) !== ''
+					? (string) ($topic->detail_text ?? '')
+					: (string) ($topic->preview_text ?? ''),
+				'detail_image_path' => (string) ($topic->detail_image_path ?? ''),
+				'articles' => $this->mapDbArticles($articles),
+			];
+		}
+
+		foreach ($this->getTopics() as $demoTopic) {
+			if ($demoTopic['slug'] === $slug) {
+				return $demoTopic;
 			}
 		}
 
@@ -251,6 +266,7 @@ class BlogController extends BaseController
 	{
 		$result = [];
 		$dateFormatter = new BlogDateFormatter();
+		$codeService = new SymbolicCodeService();
 
 		foreach ($articles as $article) {
 			$articleId = (int) ($article->id ?? 0);
@@ -258,11 +274,14 @@ class BlogController extends BaseController
 				continue;
 			}
 
+			$code = (string) ($article->code ?? '');
+
 			$result[] = [
 				'id' => $articleId,
 				'topic_id' => (int) ($article->topic_id ?? 0),
 				'title' => (string) ($article->title ?? 'Без названия'),
-				'slug' => (string) $articleId,
+				'slug' => $codeService->resolvePublicSegment($code, $articleId),
+				'code' => $code,
 				'enabled' => (int) ($article->enabled ?? 0) === 1,
 				'detail_image' => trim((string) ($article->detail_image_path ?? '')) !== ''
 					? (string) ($article->detail_image_path ?? '')
@@ -286,12 +305,38 @@ class BlogController extends BaseController
 	private function findArticle(array $topic, string $slug): ?array
 	{
 		foreach ($topic['articles'] as $article) {
-			if ($article['slug'] === $slug) {
+			if (($article['slug'] ?? '') === $slug) {
+				return $article;
+			}
+
+			if (ctype_digit($slug) && (string) ($article['id'] ?? '') === $slug) {
+				return $article;
+			}
+
+			if (($article['code'] ?? '') !== '' && ($article['code'] ?? '') === $slug) {
 				return $article;
 			}
 		}
 
 		return null;
+	}
+
+	private function resolveDbArticle(string $slug): ?object
+	{
+		$model = new BlogArticlesModel();
+
+		try {
+			if (ctype_digit($slug)) {
+				$article = $model->findById((int) $slug);
+				if ($article !== null) {
+					return $article;
+				}
+			}
+
+			return $model->findByCode($slug);
+		} catch (Throwable) {
+			return null;
+		}
 	}
 
 	private function redirectToArticle(string $topic, string $article, string $error): void
@@ -313,9 +358,9 @@ class BlogController extends BaseController
 			return false;
 		}
 
-		if (!ctype_digit($article)) {
+		if ($this->resolveDbArticle($article) === null) {
 			http_response_code(400);
-			echo json_encode(['success' => 0, 'error' => 'Invalid article id.']);
+			echo json_encode(['success' => 0, 'error' => 'Invalid article.']);
 			return false;
 		}
 

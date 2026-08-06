@@ -9,10 +9,11 @@ class BlogTopicsModel extends BaseModel
 {
 	protected string $table = 'blog_topics';
 
-	public function createForAdmin(string $title): int
+	public function createForAdmin(string $title, string $code): int
 	{
 		$qb = (new QueryBuilder($this->table))->insert([
 			'title' => $title,
+			'code' => $code,
 			'preview_text' => '',
 			'detail_text' => '',
 			'detail_image_path' => '',
@@ -26,6 +27,7 @@ class BlogTopicsModel extends BaseModel
 	public function updateEditorData(
 		int $id,
 		string $title,
+		string $code,
 		string $description,
 		string $imagePath,
 		string $detailText,
@@ -36,6 +38,7 @@ class BlogTopicsModel extends BaseModel
 		$qb = (new QueryBuilder($this->table))
 			->update([
 				'title' => $title,
+				'code' => $code,
 				'preview_text' => $description,
 				'image_path' => $imagePath,
 				'detail_text' => $detailText,
@@ -45,6 +48,34 @@ class BlogTopicsModel extends BaseModel
 			->where('id', '=', $id);
 
 		return $this->execWriteQuery($qb);
+	}
+
+	public function findByCode(string $code): ?object
+	{
+		$code = trim($code);
+		if ($code === '') {
+			return null;
+		}
+
+		return $this->findBy('code', $code);
+	}
+
+	public function isCodeTaken(string $code, ?int $excludeId = null): bool
+	{
+		$code = trim($code);
+		if ($code === '') {
+			return false;
+		}
+
+		$qb = (new QueryBuilder($this->table))
+			->select(['id'])
+			->where('code', '=', $code);
+
+		if ($excludeId !== null && $excludeId > 0) {
+			$qb->where('id', '!=', $excludeId);
+		}
+
+		return $this->execQuery($qb, true) !== null;
 	}
 
 	public function deleteById(int $id): bool

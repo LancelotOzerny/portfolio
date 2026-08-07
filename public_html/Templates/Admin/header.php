@@ -17,6 +17,7 @@ $galleryActive = str_starts_with($currentPath, '/admin/content/gallery/') ? ' is
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
 $developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
 $developmentSqlActive = str_starts_with($currentPath, '/admin/development/sql/') ? ' is-active' : '';
+$developmentTodoActive = str_starts_with($currentPath, '/admin/development/todo/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 $seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
@@ -305,6 +306,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					</a>
 					<div class="admin-sideout__flyout">
 						<a class="admin-sideout__flyout-link<?= $developmentSqlActive ?>" href="/admin/development/sql/">SQL запросы</a>
+						<a class="admin-sideout__flyout-link<?= $developmentTodoActive ?>" href="/admin/development/todo/">To Do List</a>
 					</div>
 				</div>
 

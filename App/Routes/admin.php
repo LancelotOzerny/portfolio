@@ -39,6 +39,12 @@ $router->post('/admin/development/sql/execute-file/', \Controllers\Admin\Develop
 $router->post('/admin/development/sql/delete-file/', \Controllers\Admin\DevelopmentController::class, 'deleteSqlFile');
 $router->get('/admin/development/sql/download/{file}/', \Controllers\Admin\DevelopmentController::class, 'downloadSqlFile');
 $router->post('/admin/development/sql/upload/', \Controllers\Admin\DevelopmentController::class, 'uploadSqlFile');
+$router->get('/admin/development/todo/', \Controllers\Admin\TodoController::class, 'index');
+$router->post('/admin/development/todo/tasks/create/', \Controllers\Admin\TodoController::class, 'createTask');
+$router->post('/admin/development/todo/tasks/reorder/', \Controllers\Admin\TodoController::class, 'reorderTasks');
+$router->post('/admin/development/todo/tasks/{id}/update/', \Controllers\Admin\TodoController::class, 'updateTask');
+$router->post('/admin/development/todo/tasks/{id}/delete/', \Controllers\Admin\TodoController::class, 'deleteTask');
+$router->post('/admin/development/todo/columns/{id}/color/', \Controllers\Admin\TodoController::class, 'updateColumnColor');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');

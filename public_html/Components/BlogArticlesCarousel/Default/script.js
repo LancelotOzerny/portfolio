@@ -4,6 +4,8 @@
 		return;
 	}
 
+	const EDGE_EPSILON = 1;
+
 	carousels.forEach(function (carousel) {
 		const viewport = carousel.querySelector('.blog-carousel__viewport');
 		const track = carousel.querySelector('.blog-carousel__track');
@@ -32,25 +34,29 @@
 			return Math.max(0, track.scrollWidth - viewport.clientWidth);
 		}
 
-		function updateButtons() {
-			prevButton.disabled = offset <= 0;
-			nextButton.disabled = offset >= getMaxOffset();
+		function updateButtons(maxOffset) {
+			const limit = typeof maxOffset === 'number' ? maxOffset : getMaxOffset();
+			prevButton.disabled = offset <= EDGE_EPSILON;
+			nextButton.disabled = limit <= EDGE_EPSILON || offset >= limit - EDGE_EPSILON;
 		}
 
 		function applyOffset() {
 			const maxOffset = getMaxOffset();
 			offset = Math.max(0, Math.min(offset, maxOffset));
 			track.style.transform = 'translateX(' + (-offset) + 'px)';
-			updateButtons();
+			updateButtons(maxOffset);
 		}
 
 		prevButton.addEventListener('click', function () {
-			offset -= getStep();
+			const step = getStep();
+			offset = offset - step <= EDGE_EPSILON ? 0 : offset - step;
 			applyOffset();
 		});
 
 		nextButton.addEventListener('click', function () {
-			offset += getStep();
+			const maxOffset = getMaxOffset();
+			const step = getStep();
+			offset = offset + step >= maxOffset - EDGE_EPSILON ? maxOffset : offset + step;
 			applyOffset();
 		});
 

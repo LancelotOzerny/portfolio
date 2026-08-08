@@ -25,11 +25,12 @@
 		</div>
 
 		<nav class="light-footer__sitemap" aria-label="Карта сайта">
-			<a href="/">Главная</a>
-			<a href="/about/">О себе</a>
-			<a href="/projects/">Проекты</a>
-			<a href="/blog/">Блог</a>
-			<a href="/contacts/">Контакты</a>
+			<?php
+			(new \Components\Navigation\Navigation([
+				'type' => 'Main',
+				'template' => 'FooterHorizontal',
+			]))->render();
+			?>
 		</nav>
 
 		<div class="light-footer__bottom">

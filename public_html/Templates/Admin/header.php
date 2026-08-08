@@ -18,12 +18,12 @@ $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '
 $developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
 $developmentSqlActive = str_starts_with($currentPath, '/admin/development/sql/') ? ' is-active' : '';
 $developmentTodoActive = str_starts_with($currentPath, '/admin/development/todo/') ? ' is-active' : '';
+$developmentRepositoryActive = str_starts_with($currentPath, '/admin/development/repository/') ? ' is-active' : '';
 $settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
 $resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
 $seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
 $configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
 $templatesActive = str_starts_with($currentPath, '/admin/settings/templates/') ? ' is-active' : '';
-$repositoryActive = str_starts_with($currentPath, '/admin/settings/repository/') ? ' is-active' : '';
 $backupActive = str_starts_with($currentPath, '/admin/settings/backup/') ? ' is-active' : '';
 $backupCreateActive = str_starts_with($currentPath, '/admin/settings/backup/create/') ? ' is-active' : '';
 $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/') ? ' is-active' : '';
@@ -307,6 +307,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<div class="admin-sideout__flyout">
 						<a class="admin-sideout__flyout-link<?= $developmentSqlActive ?>" href="/admin/development/sql/">SQL запросы</a>
 						<a class="admin-sideout__flyout-link<?= $developmentTodoActive ?>" href="/admin/development/todo/">To Do List</a>
+						<a class="admin-sideout__flyout-link<?= $developmentRepositoryActive ?>" href="/admin/development/repository/">Репозиторий</a>
 					</div>
 				</div>
 
@@ -318,7 +319,6 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 					<div class="admin-sideout__flyout">
 						<a class="admin-sideout__flyout-link<?= $configsActive ?>" href="/admin/settings/configs/">Конфиги</a>
 						<a class="admin-sideout__flyout-link<?= $templatesActive ?>" href="/admin/settings/templates/">Шаблоны</a>
-						<a class="admin-sideout__flyout-link<?= $repositoryActive ?>" href="/admin/settings/repository/">Репозиторий</a>
 						<div class="admin-sideout__flyout-item<?= $backupActive ?>">
 							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $backupActive ?>" href="/admin/settings/backup/">Резервное копирование</a>
 							<div class="admin-sideout__flyout">

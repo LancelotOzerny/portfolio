@@ -45,6 +45,9 @@ $router->post('/admin/development/todo/tasks/reorder/', \Controllers\Admin\TodoC
 $router->post('/admin/development/todo/tasks/{id}/update/', \Controllers\Admin\TodoController::class, 'updateTask');
 $router->post('/admin/development/todo/tasks/{id}/delete/', \Controllers\Admin\TodoController::class, 'deleteTask');
 $router->post('/admin/development/todo/columns/{id}/color/', \Controllers\Admin\TodoController::class, 'updateColumnColor');
+$router->get('/admin/development/repository/', \Controllers\Admin\RepositoryController::class, 'index');
+$router->post('/admin/development/repository/update/', \Controllers\Admin\RepositoryController::class, 'update');
+$router->post('/admin/development/repository/save/', \Controllers\Admin\RepositoryController::class, 'save');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');
@@ -54,9 +57,6 @@ $router->post('/admin/settings/templates/{code}/', \Controllers\Admin\TemplatesC
 $router->post('/admin/settings/templates/delete/{code}/', \Controllers\Admin\TemplatesController::class, 'delete');
 $router->get('/admin/settings/configs/', \Controllers\Admin\ConfigsController::class, 'index');
 $router->post('/admin/settings/configs/save/', \Controllers\Admin\ConfigsController::class, 'save');
-$router->get('/admin/settings/repository/', \Controllers\Admin\RepositoryController::class, 'index');
-$router->post('/admin/settings/repository/update/', \Controllers\Admin\RepositoryController::class, 'update');
-$router->post('/admin/settings/repository/save/', \Controllers\Admin\RepositoryController::class, 'save');
 $router->get('/admin/settings/backup/', \Controllers\Admin\BackupController::class, 'index');
 $router->get('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'create');
 $router->post('/admin/settings/backup/create/', \Controllers\Admin\BackupController::class, 'store');

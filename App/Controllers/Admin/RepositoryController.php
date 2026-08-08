@@ -114,6 +114,15 @@ class RepositoryController extends BaseController
 			return;
 		}
 
+		$commitMessage = trim((string) ($_POST['commit_message'] ?? ''));
+		$result['commitMessage'] = $commitMessage;
+
+		if ($commitMessage === '') {
+			$result['message'] = 'Укажите текст коммита.';
+			$this->storeFlashAndRedirect($result);
+			return;
+		}
+
 		if (trim($statusResult['output']) === '') {
 			$result['success'] = true;
 			$result['message'] = 'Нет изменений для сохранения.';
@@ -129,7 +138,6 @@ class RepositoryController extends BaseController
 			return;
 		}
 
-		$commitMessage = 'Правки сайта от ' . date('d.m.Y');
 		$commitResult = $this->runGitCommit($repoRoot, $commitMessage);
 		if (!$commitResult['success']) {
 			$result['message'] = 'Не удалось создать коммит с изменениями.';
@@ -162,7 +170,7 @@ class RepositoryController extends BaseController
 	private function storeFlashAndRedirect(array $result): void
 	{
 		$_SESSION[self::FLASH_KEY] = $result;
-		header('Location: /admin/settings/repository/');
+		header('Location: /admin/development/repository/');
 	}
 
 	private function runGitCommit(string $repoRoot, string $message): array

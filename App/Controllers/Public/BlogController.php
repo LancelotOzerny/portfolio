@@ -2,6 +2,7 @@
 namespace Controllers\Public;
 
 use App\Services\Blog\ArticleContentSanitizer;
+use App\Services\Blog\ArticleRatingService;
 use App\Services\Blog\ArticleViewCounter;
 use App\Services\Blog\BlogDateFormatter;
 use App\Services\Blog\SymbolicCodeService;
@@ -59,11 +60,21 @@ class BlogController extends BaseController
 	{
 		$topicData = $this->findTopic($topic);
 		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+		$rating = [
+			'average' => 0.0,
+			'count' => 0,
+			'user_rating' => null,
+			'can_vote' => false,
+		];
 
 		if ($articleData !== null && isset($articleData['id'])) {
-			if ((new ArticleViewCounter())->registerIfUnique((int) $articleData['id'])) {
+			$articleId = (int) $articleData['id'];
+			if ((new ArticleViewCounter())->registerIfUnique($articleId)) {
 				$articleData['views_count'] = (int) ($articleData['views_count'] ?? 0) + 1;
 			}
+
+			$rating = (new ArticleRatingService())->getState($articleId);
+			$articleData['rating'] = $rating['average'];
 		}
 
 		$this->setSeo(SeoContext::custom('/blog/' . $topic . '/' . $article . '/', [
@@ -80,6 +91,7 @@ class BlogController extends BaseController
 		$this->render('detail', [
 			'topic' => $topicData,
 			'article' => $articleData,
+			'rating' => $rating,
 			'is_admin' => Auth::getInstance()->isAdmin(),
 			'edit_mode' => $this->isEditMode(),
 			'csrf_token' => (new CsrfService())->getToken(),
@@ -87,6 +99,42 @@ class BlogController extends BaseController
 			'save_error' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
 		Template::getInstance()->showFooter();
+	}
+
+	public function rate(string $topic, string $article): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$topicData = $this->findTopic($topic);
+		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+		$articleId = (int) ($articleData['id'] ?? 0);
+
+		if ($articleId <= 0) {
+			http_response_code(404);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Статья не найдена.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			http_response_code(403);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Недействительный CSRF-токен.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		$rating = (int) ($_POST['rating'] ?? 0);
+		$result = (new ArticleRatingService())->vote($articleId, $rating);
+
+		if (!$result['success']) {
+			http_response_code(400);
+		}
+
+		echo json_encode($result, JSON_UNESCAPED_UNICODE);
 	}
 
 	public function updateDetail(string $topic, string $article): void
@@ -267,6 +315,21 @@ class BlogController extends BaseController
 		$result = [];
 		$dateFormatter = new BlogDateFormatter();
 		$codeService = new SymbolicCodeService();
+		$articleIds = [];
+
+		foreach ($articles as $article) {
+			$articleId = (int) ($article->id ?? 0);
+			if ($articleId > 0) {
+				$articleIds[] = $articleId;
+			}
+		}
+
+		$ratingSummaries = [];
+		try {
+			$ratingSummaries = (new BlogArticlesModel())->getRatingSummariesByArticleIds($articleIds);
+		} catch (Throwable) {
+			$ratingSummaries = [];
+		}
 
 		foreach ($articles as $article) {
 			$articleId = (int) ($article->id ?? 0);
@@ -275,6 +338,10 @@ class BlogController extends BaseController
 			}
 
 			$code = (string) ($article->code ?? '');
+			$ratingSummary = $ratingSummaries[$articleId] ?? [
+				'average' => 0.0,
+				'count' => 0,
+			];
 
 			$result[] = [
 				'id' => $articleId,
@@ -290,7 +357,8 @@ class BlogController extends BaseController
 					? (string) ($article->preview_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',
 				'date' => $dateFormatter->format((string) ($article->created_at ?? '')),
-				'rating' => 0,
+				'rating' => (float) ($ratingSummary['average'] ?? 0),
+				'rating_count' => (int) ($ratingSummary['count'] ?? 0),
 				'views_count' => (int) ($article->views_count ?? 0),
 				'preview' => (string) ($article->preview_text ?? ''),
 				'content' => [(string) ($article->detail_text ?? '')],

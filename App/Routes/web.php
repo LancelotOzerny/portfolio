@@ -10,6 +10,7 @@ $router->get('/portfolio/{id}/', \Controllers\Public\PortfolioController::class,
 $router->get('/blog/', \Controllers\Public\BlogController::class,  'index');
 $router->get('/blog/{topic}/', \Controllers\Public\BlogController::class,  'topic');
 $router->get('/blog/{topic}/{article}/', \Controllers\Public\BlogController::class,  'detail');
+$router->post('/blog/{topic}/{article}/rate/', \Controllers\Public\BlogController::class,  'rate');
 $router->post('/blog/{topic}/{article}/save/', \Controllers\Public\BlogController::class,  'updateDetail');
 $router->post('/blog/{topic}/{article}/image/', \Controllers\Public\BlogController::class,  'uploadDetailImage');
 $router->post('/blog/{topic}/{article}/file/', \Controllers\Public\BlogController::class,  'uploadDetailFile');

@@ -871,14 +871,79 @@ body.light-page {
 }
 
 .blog-rating__stars {
-	color: #f0b35a;
+	display: inline-flex;
+	align-items: center;
+	gap: 1px;
+	color: rgba(240, 179, 90, 0.35);
 	letter-spacing: 0;
 	white-space: nowrap;
+}
+
+.blog-rating__star {
+	color: inherit;
+	line-height: 1;
+}
+
+.blog-rating__star.is-active {
+	color: #f0b35a;
 }
 
 .blog-rating__value {
 	color: var(--ml-muted);
 	font-size: 0.8rem;
+}
+
+.blog-article-vote {
+	display: grid;
+	justify-items: center;
+	gap: 10px;
+	margin-top: 50px;
+	padding-top: 24px;
+	border-top: 1px solid var(--ml-line);
+	text-align: center;
+}
+
+.blog-article-vote__label {
+	color: var(--ml-ink);
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.blog-article-vote__stars {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.blog-article-vote__star {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: rgba(240, 179, 90, 0.35);
+	font-size: 1.75rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.blog-article-vote__star.is-active {
+	color: #f0b35a;
+}
+
+.blog-article-vote__star:hover,
+.blog-article-vote__star:focus-visible {
+	transform: translateY(-1px);
+}
+
+.blog-article-vote__message {
+	color: var(--ml-muted);
+	font-size: 0.9rem;
+}
+
+.blog-article-card__rating {
+	margin-top: 4px;
 }
 
 .blog-breadcrumbs {
@@ -984,6 +1049,13 @@ body.light-page {
 	background: linear-gradient(90deg, rgba(23, 23, 23, 0.34) 0%, rgba(23, 23, 23, 0.18) 56%, rgba(23, 23, 23, 0.08) 100%);
 }
 
+.blog-detail-hero__title-block {
+	display: grid;
+	gap: 0;
+	width: fit-content;
+	max-width: 820px;
+}
+
 .blog-detail-hero h2 {
 	max-width: 820px;
 	margin: 0;
@@ -1032,9 +1104,21 @@ body.light-page {
 }
 
 .blog-detail-hero .blog-rating {
-	border-color: rgba(255, 255, 255, 0.24);
-	background: rgba(255, 255, 255, 0.12);
+	margin: 0;
+	padding-left: 14px;
+	padding-right: 14px;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 	color: #fff;
+}
+
+.blog-detail-hero .blog-rating__stars {
+	color: rgba(255, 255, 255, 0.28);
+}
+
+.blog-detail-hero .blog-rating__star.is-active {
+	color: #f0b35a;
 }
 
 .blog-detail-hero .blog-rating__value {

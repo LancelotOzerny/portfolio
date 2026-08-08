@@ -9,6 +9,21 @@ $csrfToken = (string) ($data['csrf_token'] ?? '');
 $saveSuccess = (bool) ($data['save_success'] ?? false);
 $saveError = trim((string) ($data['save_error'] ?? ''));
 $canEditArticle = $isAdmin && $editMode && isset($article['id']);
+$rating = is_array($data['rating'] ?? null) ? $data['rating'] : [];
+$ratingAverage = (float) ($rating['average'] ?? 0);
+$ratingCount = (int) ($rating['count'] ?? 0);
+$userRating = isset($rating['user_rating']) && $rating['user_rating'] !== null ? (int) $rating['user_rating'] : null;
+
+$renderStarsMarkup = static function (float $value, int $max = 5): string {
+	$filled = (int) max(0, min($max, round($value)));
+	$markup = '';
+
+	for ($i = 1; $i <= $max; $i++) {
+		$markup .= '<span class="blog-rating__star' . ($i <= $filled ? ' is-active' : '') . '" aria-hidden="true">★</span>';
+	}
+
+	return $markup;
+};
 
 $renderArticleContent = static function (string $rawContent): void {
 	$rawContent = trim($rawContent);
@@ -58,7 +73,13 @@ if ($topic === null || $article === null) {
 			<span>/</span>
 			<span><?= htmlspecialchars((string) $article['title']) ?></span>
 		</nav>
-		<h2><?= htmlspecialchars((string) $article['title']) ?></h2>
+		<div class="blog-detail-hero__title-block">
+			<h2><?= htmlspecialchars((string) $article['title']) ?></h2>
+			<div class="blog-rating" data-blog-rating-summary>
+				<span class="blog-rating__stars" data-blog-rating-stars><?= $renderStarsMarkup($ratingAverage) ?></span>
+				<span class="blog-rating__value" data-blog-rating-value><?= number_format($ratingAverage, 1, '.', '') ?></span>
+			</div>
+		</div>
 		<p><?= htmlspecialchars((string) $article['preview']) ?></p>
 		<div class="blog-detail__meta">
 			<span><?= htmlspecialchars((string) $article['date']) ?></span>
@@ -94,10 +115,158 @@ if ($topic === null || $article === null) {
 		<?php if (!$canEditArticle): ?>
 			<article class="blog-detail__content">
 				<?php $renderArticleContent((string) ($article['detail_text'] ?? implode("\n\n", $article['content'] ?? []))); ?>
+
+				<?php if (isset($article['id'])): ?>
+					<?php $voteValue = $userRating ?? 0; ?>
+					<section
+						class="blog-article-vote"
+						data-blog-vote
+						data-user-rating="<?= (int) $voteValue ?>"
+						data-rate-url="/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/rate/"
+						aria-label="Оценка статьи"
+					>
+						<div class="blog-article-vote__stars" style="padding-top: 25px" role="radiogroup" aria-label="Рейтинг от 1 до 5">
+							<?php for ($star = 1; $star <= 5; $star++): ?>
+								<button
+									type="button"
+									class="blog-article-vote__star<?= $star <= $voteValue ? ' is-active' : '' ?>"
+									data-rating="<?= $star ?>"
+									aria-label="<?= $star ?> из 5"
+								>★</button>
+							<?php endfor; ?>
+						</div>
+						<div class="blog-article-vote__message" data-blog-vote-message>
+							<?php if ($userRating !== null): ?>
+								Ваша оценка: <?= (int) $userRating ?> из 5
+							<?php elseif ($ratingCount > 0): ?>
+								Средняя оценка: <?= number_format($ratingAverage, 1, '.', '') ?> (<?= $ratingCount ?>)
+							<?php else: ?>
+								Поставьте оценку от 1 до 5
+							<?php endif; ?>
+						</div>
+						<input type="hidden" data-blog-vote-csrf value="<?= htmlspecialchars($csrfToken) ?>">
+					</section>
+				<?php endif; ?>
 			</article>
 		<?php endif; ?>
 	</div>
 </section>
+
+<?php if (!$canEditArticle && isset($article['id'])): ?>
+	<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const voteRoot = document.querySelector('[data-blog-vote]');
+		if (!voteRoot) {
+			return;
+		}
+
+		const stars = Array.from(voteRoot.querySelectorAll('.blog-article-vote__star'));
+		const messageNode = voteRoot.querySelector('[data-blog-vote-message]');
+		const csrfInput = voteRoot.querySelector('[data-blog-vote-csrf]');
+		const summaryStars = document.querySelector('[data-blog-rating-stars]');
+		const summaryValue = document.querySelector('[data-blog-rating-value]');
+		let userRating = Number(voteRoot.getAttribute('data-user-rating') || 0);
+		let isSubmitting = false;
+
+		const renderStars = (container, value) => {
+			if (!container) {
+				return;
+			}
+
+			const filled = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
+			container.innerHTML = '';
+
+			for (let i = 1; i <= 5; i++) {
+				const star = document.createElement('span');
+				star.className = 'blog-rating__star' + (i <= filled ? ' is-active' : '');
+				star.setAttribute('aria-hidden', 'true');
+				star.textContent = '★';
+				container.appendChild(star);
+			}
+		};
+
+		const paintVoteStars = (value) => {
+			stars.forEach((star) => {
+				const rating = Number(star.getAttribute('data-rating') || 0);
+				star.classList.toggle('is-active', rating > 0 && rating <= value);
+			});
+		};
+
+		const applyVoteResult = (rating, average, message) => {
+			userRating = rating;
+			voteRoot.setAttribute('data-user-rating', String(rating));
+			paintVoteStars(rating);
+			renderStars(summaryStars, average);
+			if (summaryValue) {
+				summaryValue.textContent = Number(average || 0).toFixed(1);
+			}
+			if (messageNode) {
+				messageNode.textContent = message || ('Ваша оценка: ' + rating + ' из 5');
+			}
+		};
+
+		paintVoteStars(userRating);
+
+		stars.forEach((star) => {
+			star.addEventListener('mouseenter', () => {
+				paintVoteStars(Number(star.getAttribute('data-rating') || 0));
+			});
+
+			star.addEventListener('focus', () => {
+				paintVoteStars(Number(star.getAttribute('data-rating') || 0));
+			});
+
+			star.addEventListener('click', async () => {
+				if (isSubmitting) {
+					return;
+				}
+
+				const rating = Number(star.getAttribute('data-rating') || 0);
+				if (rating < 1 || rating > 5) {
+					return;
+				}
+
+				isSubmitting = true;
+				const formData = new FormData();
+				formData.append('_csrf', csrfInput ? csrfInput.value : '');
+				formData.append('rating', String(rating));
+
+				try {
+					const response = await fetch(voteRoot.getAttribute('data-rate-url') || '', {
+						method: 'POST',
+						body: formData,
+						credentials: 'same-origin'
+					});
+					const result = await response.json();
+
+					if (!result || !result.success) {
+						if (messageNode) {
+							messageNode.textContent = (result && result.message) ? result.message : 'Не удалось сохранить оценку.';
+						}
+						return;
+					}
+
+					applyVoteResult(
+						Number(result.user_rating || rating),
+						result.average,
+						result.message
+					);
+				} catch (error) {
+					if (messageNode) {
+						messageNode.textContent = 'Не удалось сохранить оценку.';
+					}
+				} finally {
+					isSubmitting = false;
+				}
+			});
+		});
+
+		voteRoot.addEventListener('mouseleave', () => {
+			paintVoteStars(userRating);
+		});
+	});
+	</script>
+<?php endif; ?>
 
 <?php if ($canEditArticle): ?>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.30.8/dist/editorjs.umd.min.js"></script>

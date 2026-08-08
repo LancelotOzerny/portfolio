@@ -215,6 +215,130 @@ class BlogArticlesModel extends BaseModel
 		return $this->execWriteQuery($increment);
 	}
 
+	/**
+	 * @return array{average: float, count: int}
+	 */
+	public function getRatingSummary(int $articleId): array
+	{
+		$summaries = $this->getRatingSummariesByArticleIds([$articleId]);
+
+		return $summaries[$articleId] ?? [
+			'average' => 0.0,
+			'count' => 0,
+		];
+	}
+
+	/**
+	 * @param list<int> $articleIds
+	 * @return array<int, array{average: float, count: int}>
+	 */
+	public function getRatingSummariesByArticleIds(array $articleIds): array
+	{
+		$ids = [];
+		foreach ($articleIds as $articleId) {
+			$articleId = (int) $articleId;
+			if ($articleId > 0) {
+				$ids[$articleId] = $articleId;
+			}
+		}
+
+		if ($ids === []) {
+			return [];
+		}
+
+		$qb = (new QueryBuilder('blog_article_ratings'))
+			->selectRaw('article_id, AVG(rating) AS avg_rating, COUNT(*) AS votes_count')
+			->whereIn('article_id', array_values($ids))
+			->groupBy('article_id');
+
+		$rows = $this->execQuery($qb) ?? [];
+		$result = [];
+
+		foreach ($rows as $row) {
+			$articleId = (int) ($row->article_id ?? 0);
+			if ($articleId <= 0) {
+				continue;
+			}
+
+			$count = (int) ($row->votes_count ?? 0);
+			$result[$articleId] = [
+				'average' => $count > 0 ? round((float) ($row->avg_rating ?? 0), 1) : 0.0,
+				'count' => $count,
+			];
+		}
+
+		return $result;
+	}
+
+	public function findViewerRating(int $articleId, string $viewerKey): ?int
+	{
+		$viewerKey = trim($viewerKey);
+		if ($articleId <= 0 || $viewerKey === '') {
+			return null;
+		}
+
+		$qb = (new QueryBuilder('blog_article_ratings'))
+			->select(['rating'])
+			->where('article_id', '=', $articleId)
+			->where('viewer_key', '=', $viewerKey);
+
+		$row = $this->execQuery($qb, true);
+		if ($row === null) {
+			return null;
+		}
+
+		$rating = (int) ($row->rating ?? 0);
+		if ($rating < 1 || $rating > 5) {
+			return null;
+		}
+
+		return $rating;
+	}
+
+	public function saveViewerRating(
+		int $articleId,
+		string $viewerKey,
+		int $rating,
+		string $ipAddress = ''
+	): bool {
+		$viewerKey = trim($viewerKey);
+		$ipAddress = trim($ipAddress);
+
+		if ($articleId <= 0 || $viewerKey === '' || $rating < 1 || $rating > 5) {
+			return false;
+		}
+
+		if ($ipAddress === '' || filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+			$ipAddress = '0.0.0.0';
+		}
+
+		$existing = $this->findViewerRating($articleId, $viewerKey);
+		if ($existing !== null) {
+			if ($existing === $rating) {
+				return true;
+			}
+
+			$update = (new QueryBuilder('blog_article_ratings'))
+				->update([
+					'rating' => $rating,
+					'ip_address' => $ipAddress,
+				])
+				->where('article_id', '=', $articleId)
+				->where('viewer_key', '=', $viewerKey);
+
+			return $this->execWriteQuery($update);
+		}
+
+		$insert = (new QueryBuilder('blog_article_ratings'))->insert([
+			'article_id' => $articleId,
+			'ip_address' => $ipAddress,
+			'viewer_key' => $viewerKey,
+			'rating' => $rating,
+		]);
+
+		return $this->execInsertQuery($insert) > 0;
+	}
+
 	public function replaceTopicIds(int $articleId, array $topicIds): bool
 	{
 		try {

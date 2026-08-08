@@ -4,6 +4,17 @@
 $topic = $data['topic'] ?? null;
 $isEditMode = (bool) ($data['edit_mode'] ?? false);
 
+$renderStarsMarkup = static function (float $value, int $max = 5): string {
+	$filled = (int) max(0, min($max, round($value)));
+	$markup = '';
+
+	for ($i = 1; $i <= $max; $i++) {
+		$markup .= '<span class="blog-rating__star' . ($i <= $filled ? ' is-active' : '') . '" aria-hidden="true">★</span>';
+	}
+
+	return $markup;
+};
+
 if ($topic === null) {
 	?>
 	<section class="light-page-hero">
@@ -77,6 +88,13 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 						</span>
 						<span class="blog-article-card__title"><?= htmlspecialchars((string) $article['title']) ?></span>
 						<span class="blog-article-card__text"><?= htmlspecialchars((string) $article['preview']) ?></span>
+						<?php if (array_key_exists('rating', $article)): ?>
+							<?php $cardRating = (float) ($article['rating'] ?? 0); ?>
+							<span class="blog-rating blog-article-card__rating">
+								<span class="blog-rating__stars"><?= $renderStarsMarkup($cardRating) ?></span>
+								<span class="blog-rating__value"><?= number_format($cardRating, 1, '.', '') ?></span>
+							</span>
+						<?php endif; ?>
 					</span>
 				</a>
 			<?php endforeach; ?>

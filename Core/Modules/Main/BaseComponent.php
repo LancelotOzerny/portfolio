@@ -158,7 +158,56 @@ class BaseComponent
 			$result[$key] = $this->getParam($key);
 		}
 
+		$result['template'] = (string) ($this->getParam('template') ?: 'Default');
+
 		return $result;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	protected function getAvailableTemplates(): array
+	{
+		$classPath = $this->getClassPath();
+		if (!is_dir($classPath)) {
+			return ['Default'];
+		}
+
+		$templates = [];
+		$entries = scandir($classPath);
+		if ($entries === false) {
+			return ['Default'];
+		}
+
+		foreach ($entries as $entry) {
+			if ($entry === '.' || $entry === '..') {
+				continue;
+			}
+
+			$templateDir = $classPath . DIRECTORY_SEPARATOR . $entry;
+			if (!is_dir($templateDir)) {
+				continue;
+			}
+
+			if (!is_file($templateDir . DIRECTORY_SEPARATOR . 'index.php')) {
+				continue;
+			}
+
+			$templates[] = $entry;
+		}
+
+		sort($templates, SORT_STRING);
+
+		if ($templates === []) {
+			return ['Default'];
+		}
+
+		if (in_array('Default', $templates, true)) {
+			$templates = array_values(array_diff($templates, ['Default']));
+			array_unshift($templates, 'Default');
+		}
+
+		return $templates;
 	}
 
 	protected function getEditKey(): string
@@ -218,13 +267,19 @@ class BaseComponent
 			$paramsJson = '{}';
 		}
 
+		$templatesList = implode(',', $this->getAvailableTemplates());
+		if ($templatesList === '') {
+			$templatesList = 'Default';
+		}
+
 		return sprintf(
-			'<div class="%s" data-component-type="%s" data-component-key="%s" data-component-label="%s" data-component-params="%s"%s>',
+			'<div class="%s" data-component-type="%s" data-component-key="%s" data-component-label="%s" data-component-params="%s" data-component-templates="%s"%s>',
 			htmlspecialchars($classList),
 			htmlspecialchars($type),
 			htmlspecialchars($editKey),
 			htmlspecialchars($type),
 			htmlspecialchars($paramsJson, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+			htmlspecialchars($templatesList, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 			$this->getEditDataAttributes()
 		);
 	}

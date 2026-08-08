@@ -53,6 +53,24 @@
 			return;
 		}
 
+		if (event.target.closest('[data-open-include-area]')) {
+			if (activeSettingsComponent) {
+				const component = activeSettingsComponent;
+				closeModal(settingsModal);
+				openIncludeAreaModal(component);
+			}
+			return;
+		}
+
+		if (event.target.closest('[data-open-image-gallery]')) {
+			if (activeSettingsComponent) {
+				const component = activeSettingsComponent;
+				closeModal(settingsModal);
+				openImageModal(component);
+			}
+			return;
+		}
+
 		if (event.target.closest('[data-image-save]')) {
 			saveImageSelection();
 		}
@@ -137,6 +155,29 @@
 		}
 	}
 
+	function parseComponentTemplates(component) {
+		const raw = (component.getAttribute('data-component-templates') || '').trim();
+		if (raw === '') {
+			return ['Default'];
+		}
+
+		return raw.split(',')
+			.map(function (item) {
+				return item.trim();
+			})
+			.filter(function (item) {
+				return item !== '';
+			});
+	}
+
+	function getParamLabel(key) {
+		if (key === 'template') {
+			return 'Шаблон компонента';
+		}
+
+		return key;
+	}
+
 	function getComponentContent(component) {
 		return component.querySelector('.component-edit__content');
 	}
@@ -213,14 +254,49 @@
 			});
 	}
 
-	function buildSettingsField(key, value) {
+	function buildTemplateField(component, currentValue) {
+		const templates = parseComponentTemplates(component);
+		const selected = String(currentValue || 'Default');
+		const optionsList = templates.slice();
+
+		if (selected && optionsList.indexOf(selected) === -1) {
+			optionsList.unshift(selected);
+		}
+
+		if (optionsList.length === 0) {
+			optionsList.push('Default');
+		}
+
+		const options = optionsList.map(function (templateName) {
+			const name = String(templateName);
+			return '<option value="' + escapeHtml(name) + '"' + (name === selected ? ' selected' : '') + '>'
+				+ escapeHtml(name)
+				+ '</option>';
+		}).join('');
+
+		return [
+			'<label class="component-edit-modal__field">',
+			'<span class="component-edit-modal__label">' + escapeHtml(getParamLabel('template')) + '</span>',
+			'<select class="component-edit-modal__input component-edit-modal__select" name="template" data-param-type="string">',
+			options,
+			'</select>',
+			'</label>',
+		].join('');
+	}
+
+	function buildSettingsField(key, value, component) {
+		if (key === 'template') {
+			return buildTemplateField(component, value);
+		}
+
 		const type = getParamType(value);
+		const label = getParamLabel(key);
 
 		if (type === 'boolean') {
 			return [
 				'<label class="component-edit-modal__field component-edit-modal__field_checkbox">',
 				'<input class="component-edit-modal__checkbox" type="checkbox" name="' + escapeHtml(key) + '" data-param-type="boolean"' + (value ? ' checked' : '') + '>',
-				'<span class="component-edit-modal__label">' + escapeHtml(key) + '</span>',
+				'<span class="component-edit-modal__label">' + escapeHtml(label) + '</span>',
 				'</label>',
 			].join('');
 		}
@@ -228,7 +304,7 @@
 		if (type === 'number') {
 			return [
 				'<label class="component-edit-modal__field">',
-				'<span class="component-edit-modal__label">' + escapeHtml(key) + '</span>',
+				'<span class="component-edit-modal__label">' + escapeHtml(label) + '</span>',
 				'<input class="component-edit-modal__input" type="number" name="' + escapeHtml(key) + '" data-param-type="number" value="' + escapeHtml(value) + '">',
 				'</label>',
 			].join('');
@@ -236,7 +312,7 @@
 
 		return [
 			'<label class="component-edit-modal__field">',
-			'<span class="component-edit-modal__label">' + escapeHtml(key) + '</span>',
+			'<span class="component-edit-modal__label">' + escapeHtml(label) + '</span>',
 			'<input class="component-edit-modal__input" type="text" name="' + escapeHtml(key) + '" data-param-type="string" value="' + escapeHtml(value == null ? '' : value) + '">',
 			'</label>',
 		].join('');
@@ -264,26 +340,48 @@
 		return params;
 	}
 
+	function buildSpecialActions(component) {
+		const type = component.dataset.componentType;
+
+		if (type === 'IncludeArea') {
+			return '<div class="component-edit-modal__actions">'
+				+ '<button class="component-edit-modal__button" type="button" data-open-include-area>Редактировать содержимое</button>'
+				+ '</div>';
+		}
+
+		if (type === 'ImagePreview') {
+			return '<div class="component-edit-modal__actions">'
+				+ '<button class="component-edit-modal__button" type="button" data-open-image-gallery>Выбрать из галереи</button>'
+				+ '</div>';
+		}
+
+		return '';
+	}
+
 	function openSettingsModal(component) {
 		ensureSettingsModal();
 		activeSettingsComponent = component;
 		settingsMessage.textContent = '';
 
 		const params = parseComponentParams(component);
-		const entries = Object.entries(params);
+		const orderedKeys = Object.keys(params).filter(function (key) {
+			return key !== 'template';
+		});
+		orderedKeys.unshift('template');
 
-		if (entries.length === 0) {
-			settingsForm.innerHTML = '<p>У компонента нет редактируемых настроек.</p>';
-		} else {
-			settingsForm.innerHTML = entries.map(function (entry) {
-				return buildSettingsField(entry[0], entry[1]);
-			}).join('');
-		}
+		const fields = orderedKeys.map(function (key) {
+			const value = Object.prototype.hasOwnProperty.call(params, key)
+				? params[key]
+				: (key === 'template' ? 'Default' : '');
+			return buildSettingsField(key, value, component);
+		}).join('');
+
+		settingsForm.innerHTML = fields + buildSpecialActions(component);
 
 		settingsModal.classList.add('is-open');
-		const firstInput = settingsForm.querySelector('input');
-		if (firstInput) {
-			firstInput.focus();
+		const firstField = settingsForm.querySelector('select, input');
+		if (firstField) {
+			firstField.focus();
 		}
 	}
 
@@ -436,18 +534,6 @@
 	}
 
 	function openComponentEditor(component) {
-		const type = component.dataset.componentType;
-
-		if (type === 'IncludeArea') {
-			openIncludeAreaModal(component);
-			return;
-		}
-
-		if (type === 'ImagePreview') {
-			openImageModal(component);
-			return;
-		}
-
 		openSettingsModal(component);
 	}
 

@@ -8,7 +8,8 @@ $showAdminSidebar = Auth::getInstance()->isAdmin();
 
 $homeActive = $currentPath === '/admin/' ? ' is-active' : '';
 $contentActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/') ? ' is-active' : '';
-$projectsActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
+$projectsMenuActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
+$projectsListActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
 $blogActive = str_starts_with($currentPath, '/admin/content/blog/') ? ' is-active' : '';
 $blogRubricsActive = str_starts_with($currentPath, '/admin/content/blog/rubrics/') || $currentPath === '/admin/content/blog/' ? ' is-active' : '';
 $blogArticlesActive = str_starts_with($currentPath, '/admin/content/blog/articles/') ? ' is-active' : '';
@@ -266,7 +267,13 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 						<span class="admin-sideout__label">Контент</span>
 					</a>
 					<div class="admin-sideout__flyout">
-						<a class="admin-sideout__flyout-link<?= $projectsActive ?>" href="/admin/projects/">Проекты</a>
+						<div class="admin-sideout__flyout-item<?= $projectsMenuActive ?>">
+							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $projectsMenuActive ?>" href="/admin/projects/">Проекты</a>
+							<div class="admin-sideout__flyout">
+								<a class="admin-sideout__flyout-link<?= $projectsListActive ?>" href="/admin/projects/">Список проектов</a>
+								<a class="admin-sideout__flyout-link<?= $tagsActive ?>" href="/admin/content/tags/">Теги проектов</a>
+							</div>
+						</div>
 						<div class="admin-sideout__flyout-item<?= $blogActive ?>">
 							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $blogActive ?>" href="/admin/content/blog/">Блог</a>
 							<div class="admin-sideout__flyout">
@@ -274,7 +281,6 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 								<a class="admin-sideout__flyout-link<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
 							</div>
 						</div>
-						<a class="admin-sideout__flyout-link<?= $tagsActive ?>" href="/admin/content/tags/">Теги</a>
 						<a class="admin-sideout__flyout-link<?= $galleryActive ?>" href="/admin/content/gallery/">Галерея</a>
 					</div>
 				</div>

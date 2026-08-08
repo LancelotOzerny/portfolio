@@ -23,13 +23,16 @@ class ArticleContentSanitizer
 		'h6',
 		'i',
 		'img',
+		'li',
 		'mark',
+		'ol',
 		'p',
 		'pre',
 		's',
 		'span',
 		'strong',
 		'u',
+		'ul',
 	];
 
 	public function sanitize(string $html): string
@@ -208,7 +211,7 @@ class ArticleContentSanitizer
 
 	private function sanitizeWithoutDom(string $html): string
 	{
-		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br>');
+		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><ul><ol><li>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
 

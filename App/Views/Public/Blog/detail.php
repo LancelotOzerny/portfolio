@@ -271,6 +271,7 @@ if ($topic === null || $article === null) {
 <?php if ($canEditArticle): ?>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.30.8/dist/editorjs.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.8/dist/header.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@1.10.0/dist/list.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/image@2.10.3/dist/image.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.7.6/dist/quote.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@editorjs/code@2.9.3/dist/code.umd.min.js"></script>
@@ -285,7 +286,7 @@ if ($topic === null || $article === null) {
 		const uploadUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/image/';
 		const uploadFileUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/file/';
 
-		if (!window.EditorJS || !editorRoot || !editorInput || !blocksInput || !form) {
+		if (!window.EditorJS || !window.List || !editorRoot || !editorInput || !blocksInput || !form) {
 			return;
 		}
 
@@ -603,11 +604,32 @@ if ($topic === null || $article === null) {
 				const tagName = element.tagName.toLowerCase();
 
 				if (/^h[1-6]$/.test(tagName)) {
+					let level = Number(tagName.slice(1));
+					if (level === 1) {
+						level = 3;
+					}
+
 					blocks.push({
 						type: 'header',
 						data: {
 							text: element.innerHTML,
-							level: Number(tagName.slice(1))
+							level: level
+						}
+					});
+					return;
+				}
+
+				if (tagName === 'ul' || tagName === 'ol') {
+					const items = Array.from(element.children)
+						.filter((child) => child.tagName.toLowerCase() === 'li')
+						.map((item) => item.innerHTML)
+						.filter((itemHtml) => String(itemHtml || '').replace(/<br\s*\/?>/gi, '').trim() !== '');
+
+					blocks.push({
+						type: 'list',
+						data: {
+							style: tagName === 'ol' ? 'ordered' : 'unordered',
+							items: items.length > 0 ? items : ['']
 						}
 					});
 					return;
@@ -682,8 +704,26 @@ if ($topic === null || $article === null) {
 			const data = block.data || {};
 
 			if (block.type === 'header') {
-				const level = [1, 2, 3, 4, 5, 6].includes(Number(data.level)) ? Number(data.level) : 2;
+				let level = Number(data.level);
+				if (level === 1 || ![2, 3, 4, 5, 6].includes(level)) {
+					level = 3;
+				}
 				return `<h${level}>${sanitizeInlineHtml(data.text)}</h${level}>`;
+			}
+
+			if (block.type === 'list') {
+				const tag = data.style === 'ordered' ? 'ol' : 'ul';
+				const items = Array.isArray(data.items) ? data.items : [];
+				const listItems = items
+					.map((item) => {
+						const content = typeof item === 'string'
+							? item
+							: (item && typeof item.content === 'string' ? item.content : '');
+						return `<li>${sanitizeInlineHtml(content)}</li>`;
+					})
+					.join('');
+
+				return listItems !== '' ? `<${tag}>${listItems}</${tag}>` : '';
 			}
 
 			if (block.type === 'image') {
@@ -725,8 +765,15 @@ if ($topic === null || $article === null) {
 					class: Header,
 					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor'],
 					config: {
-						levels: [1, 2, 3, 4, 5, 6],
-						defaultLevel: 2
+						levels: [2, 3, 4, 5, 6],
+						defaultLevel: 3
+					}
+				},
+				list: {
+					class: List,
+					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor'],
+					config: {
+						defaultStyle: 'unordered'
 					}
 				},
 				image: {

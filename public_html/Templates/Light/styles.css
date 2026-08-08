@@ -726,11 +726,22 @@ body.light-page {
 .blog-topic-card__text,
 .blog-article-card__text,
 .blog-detail__content p,
+.blog-detail__content ul,
+.blog-detail__content ol,
 .blog-comment p {
 	margin: 0;
 	color: var(--ml-muted);
 	font-size: 1rem;
 	line-height: 1.7;
+}
+
+.blog-detail__content ul,
+.blog-detail__content ol {
+	padding-left: 1.4em;
+}
+
+.blog-detail__content li + li {
+	margin-top: 0.35em;
 }
 
 .blog-topic-card__text {

@@ -215,6 +215,29 @@ class BlogArticlesModel extends BaseModel
 		return $this->execWriteQuery($increment);
 	}
 
+	public function countViewsSince(string $sinceDatetime): int
+	{
+		$sinceDatetime = trim($sinceDatetime);
+		if ($sinceDatetime === '') {
+			return 0;
+		}
+
+		try {
+			$qb = (new QueryBuilder('blog_article_views'))
+				->count()
+				->where('created_at', '>=', $sinceDatetime);
+
+			$result = $this->execQuery($qb, true);
+			if (!is_object($result)) {
+				return 0;
+			}
+
+			return (int) ($result->total ?? 0);
+		} catch (Throwable) {
+			return 0;
+		}
+	}
+
 	/**
 	 * @return array{average: float, count: int}
 	 */

@@ -5,6 +5,8 @@ $projectsCount = (int) ($data['projectsCount'] ?? 0);
 $usersCount = (int) ($data['usersCount'] ?? 0);
 $rubricsCount = (int) ($data['rubricsCount'] ?? 0);
 $articlesCount = (int) ($data['articlesCount'] ?? 0);
+$blogViewsWeekCount = (int) ($data['blogViewsWeekCount'] ?? 0);
+$blogViewsMonthCount = (int) ($data['blogViewsMonthCount'] ?? 0);
 
 $renderStatCard = static function (string $label, string $value, string $valueClass = 'h3'): void {
 	?>
@@ -25,6 +27,16 @@ $renderStatCard = static function (string $label, string $value, string $valueCl
 		.admin-dashboard__section {
 			padding: 25px 0;
 		}
+
+		.admin-dashboard__subsection {
+			margin-top: 1.5rem;
+		}
+
+		.admin-dashboard__subsection-title {
+			font-size: 0.95rem;
+			font-weight: 600;
+			margin-bottom: 0.75rem;
+		}
 	</style>
 
 	<div class="card border-0 shadow-sm mb-4">
@@ -39,8 +51,16 @@ $renderStatCard = static function (string $label, string $value, string $valueCl
 		<div class="row g-3">
 			<?php $renderStatCard('Проекты', (string) $projectsCount); ?>
 			<?php $renderStatCard('Пользователи', (string) $usersCount); ?>
-			<?php $renderStatCard('Рубрики', (string) $rubricsCount); ?>
-			<?php $renderStatCard('Статьи', (string) $articlesCount); ?>
+		</div>
+
+		<div class="admin-dashboard__subsection">
+			<h4 class="admin-dashboard__subsection-title text-secondary">Информация о Блоге</h4>
+			<div class="row g-3">
+				<?php $renderStatCard('Рубрики', (string) $rubricsCount); ?>
+				<?php $renderStatCard('Статьи', (string) $articlesCount); ?>
+				<?php $renderStatCard('Просмотры за неделю', (string) $blogViewsWeekCount); ?>
+				<?php $renderStatCard('Просмотры за месяц', (string) $blogViewsMonthCount); ?>
+			</div>
 		</div>
 	</div>
 

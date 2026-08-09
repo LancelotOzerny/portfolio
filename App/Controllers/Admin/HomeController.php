@@ -22,11 +22,15 @@ class HomeController extends BaseController
 
         Template::getInstance()->setParam('title', 'Панель администратора');
 
+		$articlesModel = new BlogArticlesModel();
+
 		$data = [
 			'projectsCount' => (new ProjectsModel())->countAll(),
 			'usersCount' => (new UsersModel())->countAll(),
 			'rubricsCount' => (new BlogTopicsModel())->countAll(),
-			'articlesCount' => (new BlogArticlesModel())->countAll(),
+			'articlesCount' => $articlesModel->countAll(),
+			'blogViewsWeekCount' => $articlesModel->countViewsSince(date('Y-m-d H:i:s', strtotime('-7 days'))),
+			'blogViewsMonthCount' => $articlesModel->countViewsSince(date('Y-m-d H:i:s', strtotime('-30 days'))),
 		];
 
         Template::getInstance()->showHeader();

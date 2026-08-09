@@ -23,14 +23,22 @@ class HomeController extends BaseController
         Template::getInstance()->setParam('title', 'Панель администратора');
 
 		$articlesModel = new BlogArticlesModel();
+		$weekSince = date('Y-m-d H:i:s', strtotime('-7 days'));
+		$monthSince = date('Y-m-d H:i:s', strtotime('-30 days'));
 
 		$data = [
 			'projectsCount' => (new ProjectsModel())->countAll(),
 			'usersCount' => (new UsersModel())->countAll(),
 			'rubricsCount' => (new BlogTopicsModel())->countAll(),
 			'articlesCount' => $articlesModel->countAll(),
-			'blogViewsWeekCount' => $articlesModel->countViewsSince(date('Y-m-d H:i:s', strtotime('-7 days'))),
-			'blogViewsMonthCount' => $articlesModel->countViewsSince(date('Y-m-d H:i:s', strtotime('-30 days'))),
+			'blogViewsWeekCount' => $articlesModel->countViewsSince($weekSince),
+			'blogViewsMonthCount' => $articlesModel->countViewsSince($monthSince),
+			'topArticlesWeek' => $articlesModel->findTopViewedArticles($weekSince, 5),
+			'topArticlesMonth' => $articlesModel->findTopViewedArticles($monthSince, 5),
+			'topArticlesAllTime' => $articlesModel->findTopViewedArticles(null, 5),
+			'topRubricWeek' => $articlesModel->findTopViewedTopic($weekSince),
+			'topRubricMonth' => $articlesModel->findTopViewedTopic($monthSince),
+			'topRubricAllTime' => $articlesModel->findTopViewedTopic(null),
 		];
 
         Template::getInstance()->showHeader();

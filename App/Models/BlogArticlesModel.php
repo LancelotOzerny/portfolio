@@ -239,6 +239,48 @@ class BlogArticlesModel extends BaseModel
 	}
 
 	/**
+	 * @return list<object>
+	 */
+	public function findTopViewedArticles(?string $sinceDatetime = null, int $limit = 5): array
+	{
+		$limit = max(1, $limit);
+
+		try {
+			$qb = (new QueryBuilder('blog_article_views'))
+				->selectRaw('blog_articles.id AS id, blog_articles.title AS title, COUNT(blog_article_views.id) AS views_count')
+				->join('blog_articles', 'blog_article_views.article_id', 'blog_articles.id', 'INNER');
+
+			$this->applyViewsSinceFilter($qb, $sinceDatetime);
+
+			$qb->groupBy(['blog_articles.id', 'blog_articles.title'])
+				->orderBy('views_count', 'DESC')
+				->orderBy('blog_articles.id', 'DESC')
+				->limit($limit);
+
+			return $this->execQuery($qb) ?? [];
+		} catch (Throwable) {
+			return [];
+		}
+	}
+
+	public function findTopViewedTopic(?string $sinceDatetime = null): ?object
+	{
+		try {
+			$topic = $this->findTopViewedTopicViaRelations($sinceDatetime);
+			if ($topic !== null) {
+				return $topic;
+			}
+		} catch (Throwable) {
+		}
+
+		try {
+			return $this->findTopViewedTopicLegacy($sinceDatetime);
+		} catch (Throwable) {
+			return null;
+		}
+	}
+
+	/**
 	 * @return array{average: float, count: int}
 	 */
 	public function getRatingSummary(int $articleId): array
@@ -510,5 +552,59 @@ class BlogArticlesModel extends BaseModel
 		}
 
 		return $this->execQuery($qb) ?? [];
+	}
+
+	private function findTopViewedTopicViaRelations(?string $sinceDatetime): ?object
+	{
+		$qb = (new QueryBuilder('blog_article_views'))
+			->selectRaw('blog_topics.id AS id, blog_topics.title AS title, COUNT(blog_article_views.id) AS views_count')
+			->join('blog_article_topic_relations', 'blog_article_views.article_id', 'blog_article_topic_relations.article_id', 'INNER')
+			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'INNER');
+
+		$this->applyViewsSinceFilter($qb, $sinceDatetime);
+
+		$qb->groupBy(['blog_topics.id', 'blog_topics.title'])
+			->orderBy('views_count', 'DESC')
+			->orderBy('blog_topics.id', 'DESC')
+			->limit(1);
+
+		$result = $this->execQuery($qb, true);
+		if (!is_object($result) || (int) ($result->views_count ?? 0) <= 0) {
+			return null;
+		}
+
+		return $result;
+	}
+
+	private function findTopViewedTopicLegacy(?string $sinceDatetime): ?object
+	{
+		$qb = (new QueryBuilder('blog_article_views'))
+			->selectRaw('blog_topics.id AS id, blog_topics.title AS title, COUNT(blog_article_views.id) AS views_count')
+			->join('blog_articles', 'blog_article_views.article_id', 'blog_articles.id', 'INNER')
+			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER');
+
+		$this->applyViewsSinceFilter($qb, $sinceDatetime);
+
+		$qb->groupBy(['blog_topics.id', 'blog_topics.title'])
+			->orderBy('views_count', 'DESC')
+			->orderBy('blog_topics.id', 'DESC')
+			->limit(1);
+
+		$result = $this->execQuery($qb, true);
+		if (!is_object($result) || (int) ($result->views_count ?? 0) <= 0) {
+			return null;
+		}
+
+		return $result;
+	}
+
+	private function applyViewsSinceFilter(QueryBuilder $qb, ?string $sinceDatetime): void
+	{
+		$sinceDatetime = trim((string) $sinceDatetime);
+		if ($sinceDatetime === '') {
+			return;
+		}
+
+		$qb->where('blog_article_views.created_at', '>=', $sinceDatetime);
 	}
 }

@@ -2,6 +2,7 @@
 /* @var array $data */
 
 $topic = $data['topic'] ?? null;
+$isAdmin = (bool) ($data['is_admin'] ?? false);
 $isEditMode = (bool) ($data['edit_mode'] ?? false);
 
 $renderStarsMarkup = static function (float $value, int $max = 5): string {
@@ -62,7 +63,7 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 			<?php endif; ?>
 
 			<?php if (empty($topic['articles'])): ?>
-				<div class="blog-empty-state"><?= $isEditMode ? 'В этой рубрике пока нет статей.' : 'В этой рубрике пока нет активных статей.' ?></div>
+				<div class="blog-empty-state"><?= $isAdmin ? 'В этой рубрике пока нет статей.' : 'В этой рубрике пока нет активных статей.' ?></div>
 			<?php endif; ?>
 
 			<?php foreach ($topic['articles'] as $article): ?>
@@ -72,7 +73,7 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 						<img src="<?= htmlspecialchars((string) $article['image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>">
 					</span>
 					<span class="blog-article-card__content">
-						<?php if ($isEditMode && $isDisabled): ?>
+						<?php if ($isAdmin && $isDisabled): ?>
 							<span class="blog-article-card__status">Скрыта</span>
 						<?php endif; ?>
 						<span class="blog-article-card__meta">

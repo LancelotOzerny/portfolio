@@ -77,10 +77,12 @@ class BlogController extends BaseController
 			$articleData['rating'] = $rating['average'];
 		}
 
+		$isArticleEnabled = (bool) ($articleData['enabled'] ?? true);
+
 		$this->setSeo(SeoContext::custom('/blog/' . $topic . '/' . $article . '/', [
 			'title' => $articleData['title'] ?? 'Статья не найдена',
 			'description' => $articleData['preview'] ?? 'Тестовая статья блога.',
-			'robots_index' => $articleData !== null,
+			'robots_index' => $articleData !== null && $isArticleEnabled,
 		]));
 
 		Template::getInstance()->setParam('title', $articleData['title'] ?? 'Статья не найдена');
@@ -278,7 +280,7 @@ class BlogController extends BaseController
 			$topicId = (int) ($topic->id ?? 0);
 
 			try {
-				$articles = (new BlogArticlesModel())->findByTopicId($topicId, !$this->isEditMode());
+				$articles = (new BlogArticlesModel())->findByTopicId($topicId, !$this->isAdmin());
 			} catch (Throwable) {
 				$articles = [];
 			}

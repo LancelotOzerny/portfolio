@@ -2,7 +2,7 @@
 	<div class="site-container light-page-hero__container">
 		<h1 class="page-title"><?= \Modules\Main\Template::getInstance()->getParam('title') ?></h1>
 		<p class="light-page-hero__text">
-			Опишите задачу, сроки и ожидания. Я вернусь с понятными вопросами или предложением.
+			Если есть вопросы или предложения - я на связи!
 		</p>
 	</div>
 </section>

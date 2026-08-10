@@ -1,9 +1,6 @@
 <section class="light-page-hero">
 	<div class="site-container light-page-hero__container">
 		<h1 class="page-title"><?= htmlspecialchars((string) \Modules\Main\Template::getInstance()->getParam('title')) ?></h1>
-		<p class="light-page-hero__text">
-			Тестовый раздел с темами будущих статей. Сейчас здесь только статическая верстка без базы данных.
-		</p>
 	</div>
 </section>
 

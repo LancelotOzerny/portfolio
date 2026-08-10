@@ -342,6 +342,16 @@ if ($topic === null || $article === null) {
 		StrikeTool.title = 'Зачеркнутый текст';
 		StrikeTool.icon = '<s>S</s>';
 
+		class SuperscriptTool extends InlineTagTool {}
+		SuperscriptTool.tag = 'sup';
+		SuperscriptTool.title = 'Верхняя сноска';
+		SuperscriptTool.icon = 'x²';
+
+		class SubscriptTool extends InlineTagTool {}
+		SubscriptTool.tag = 'sub';
+		SubscriptTool.title = 'Нижняя сноска';
+		SubscriptTool.icon = 'x₂';
+
 		class InlineColorTool {
 			static get isInline() {
 				return true;
@@ -530,6 +540,187 @@ if ($topic === null || $article === null) {
 			}
 		}
 
+		class TableBlockTool {
+			static get toolbox() {
+				return {
+					title: 'Таблица',
+					icon: '<svg width="17" height="15" viewBox="0 0 17 15"><rect x="1" y="1" width="15" height="13" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1 5h15M1 10h15M6 1v13M11 1v13" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'
+				};
+			}
+
+			static get pasteConfig() {
+				return {
+					tags: ['TABLE']
+				};
+			}
+
+			constructor({ data, api }) {
+				this.api = api;
+				this.data = this.normalizeData(data);
+				this.wrapper = null;
+			}
+
+			normalizeData(data) {
+				const source = data && typeof data === 'object' ? data : {};
+				const rows = Array.isArray(source.rows)
+					? source.rows
+						.map((row) => Array.isArray(row) ? row.map((cell) => String(cell ?? '')) : null)
+						.filter((row) => row !== null && row.length > 0)
+					: [];
+
+				if (rows.length === 0) {
+					return {
+						withHead: true,
+						rows: [['', ''], ['', '']]
+					};
+				}
+
+				const columnCount = Math.max(...rows.map((row) => row.length), 1);
+				return {
+					withHead: source.withHead !== false,
+					rows: rows.map((row) => {
+						const normalized = row.slice(0, columnCount);
+						while (normalized.length < columnCount) {
+							normalized.push('');
+						}
+						return normalized;
+					})
+				};
+			}
+
+			render() {
+				this.wrapper = document.createElement('div');
+				this.wrapper.className = 'blog-editor-table-block';
+				this.draw();
+				return this.wrapper;
+			}
+
+			draw() {
+				if (!this.wrapper) {
+					return;
+				}
+
+				this.wrapper.innerHTML = '';
+
+				const table = document.createElement('table');
+				table.className = 'blog-editor-table-block__table';
+
+				this.data.rows.forEach((row, rowIndex) => {
+					const tr = document.createElement('tr');
+					row.forEach((cellHtml, cellIndex) => {
+						const cell = document.createElement(this.data.withHead && rowIndex === 0 ? 'th' : 'td');
+						cell.contentEditable = 'true';
+						cell.innerHTML = cellHtml;
+						cell.dataset.row = String(rowIndex);
+						cell.dataset.col = String(cellIndex);
+						tr.appendChild(cell);
+					});
+					table.appendChild(tr);
+				});
+
+				this.wrapper.appendChild(table);
+			}
+
+			renderSettings() {
+				const wrapper = document.createElement('div');
+
+				const createButton = (label, onClick) => {
+					const button = document.createElement('div');
+					button.className = this.api.styles.settingsButton;
+					button.textContent = label;
+					button.addEventListener('click', () => {
+						this.readFromDom();
+						onClick();
+						this.draw();
+					});
+					wrapper.appendChild(button);
+				};
+
+				createButton('+ строка', () => {
+					const columns = this.data.rows[0] ? this.data.rows[0].length : 1;
+					this.data.rows.push(Array.from({ length: columns }, () => ''));
+				});
+				createButton('− строка', () => {
+					if (this.data.rows.length > 1) {
+						this.data.rows.pop();
+					}
+				});
+				createButton('+ столбец', () => {
+					this.data.rows.forEach((row) => row.push(''));
+				});
+				createButton('− столбец', () => {
+					if ((this.data.rows[0] || []).length > 1) {
+						this.data.rows.forEach((row) => row.pop());
+					}
+				});
+
+				const headButton = document.createElement('div');
+				headButton.className = this.api.styles.settingsButton + (this.data.withHead ? ' ' + this.api.styles.settingsButtonActive : '');
+				headButton.textContent = 'Заголовок';
+				headButton.addEventListener('click', () => {
+					this.readFromDom();
+					this.data.withHead = !this.data.withHead;
+					headButton.classList.toggle(this.api.styles.settingsButtonActive, this.data.withHead);
+					this.draw();
+				});
+				wrapper.appendChild(headButton);
+
+				return wrapper;
+			}
+
+			readFromDom() {
+				if (!this.wrapper) {
+					return;
+				}
+
+				const rows = [];
+				this.wrapper.querySelectorAll('tr').forEach((tr) => {
+					const cells = [];
+					tr.querySelectorAll('th, td').forEach((cell) => {
+						cells.push(cell.innerHTML);
+					});
+					if (cells.length > 0) {
+						rows.push(cells);
+					}
+				});
+
+				if (rows.length > 0) {
+					this.data.rows = rows;
+				}
+			}
+
+			save() {
+				this.readFromDom();
+				return {
+					withHead: this.data.withHead !== false,
+					rows: this.data.rows
+				};
+			}
+
+			onPaste(event) {
+				const table = event.detail && event.detail.data ? event.detail.data : null;
+				if (!(table instanceof HTMLElement) || table.tagName !== 'TABLE') {
+					return;
+				}
+
+				const rows = [];
+				table.querySelectorAll('tr').forEach((tr) => {
+					const cells = [];
+					tr.querySelectorAll('th, td').forEach((cell) => {
+						cells.push(flattenBlockHtmlToInline(cell.innerHTML));
+					});
+					if (cells.length > 0) {
+						rows.push(cells);
+					}
+				});
+
+				this.data = this.normalizeData({
+					withHead: table.querySelector('th') !== null,
+					rows: rows
+				});
+			}
+		}
+
 		const escapeHtml = (value) => String(value || '')
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -537,10 +728,83 @@ if ($topic === null || $article === null) {
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
 
+		const flattenBlockHtmlToInline = (html) => {
+			const template = document.createElement('template');
+			template.innerHTML = String(html || '');
+			const blockTags = new Set(['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'TR', 'UL', 'OL']);
+
+			const getDepth = (node) => {
+				let depth = 0;
+				let current = node;
+				while (current.parentNode) {
+					depth += 1;
+					current = current.parentNode;
+				}
+				return depth;
+			};
+
+			while (true) {
+				const blocks = Array.from(template.content.querySelectorAll('*'))
+					.filter((element) => blockTags.has(element.tagName))
+					.sort((left, right) => getDepth(right) - getDepth(left));
+
+				if (blocks.length === 0) {
+					break;
+				}
+
+				const element = blocks[0];
+				if (element.nextSibling) {
+					element.after(document.createElement('br'));
+				}
+				element.replaceWith(...element.childNodes);
+			}
+
+			return sanitizeInlineHtml(template.innerHTML)
+				.replace(/(?:<br\s*\/?>\s*)+$/gi, '')
+				.replace(/^(?:<br\s*\/?>\s*)+/gi, '')
+				.replace(/(?:<br\s*\/?>\s*){3,}/gi, '<br><br>');
+		};
+
+		const clipboardToInlineHtml = (clipboardData) => {
+			const html = clipboardData.getData('text/html');
+			if (html) {
+				return flattenBlockHtmlToInline(html);
+			}
+
+			return escapeHtml(clipboardData.getData('text/plain') || '').replace(/\r\n|\r|\n/g, '<br>');
+		};
+
+		const insertInlineHtml = (html) => {
+			if (document.queryCommandSupported && document.queryCommandSupported('insertHTML')) {
+				document.execCommand('insertHTML', false, html);
+				return;
+			}
+
+			const selection = window.getSelection();
+			if (!selection || selection.rangeCount === 0) {
+				return;
+			}
+
+			const range = selection.getRangeAt(0);
+			range.deleteContents();
+			const template = document.createElement('template');
+			template.innerHTML = html;
+			const fragment = template.content;
+			const lastNode = fragment.lastChild;
+			range.insertNode(fragment);
+
+			if (lastNode) {
+				range.setStartAfter(lastNode);
+				range.collapse(true);
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+		};
+
 		const sanitizeInlineHtml = (html) => {
 			const template = document.createElement('template');
 			template.innerHTML = String(html || '');
-			const allowedTags = new Set(['A', 'B', 'BR', 'CODE', 'I', 'MARK', 'S', 'SPAN', 'STRONG', 'U', 'EM']);
+			const allowedTags = new Set(['A', 'B', 'BR', 'CODE', 'I', 'MARK', 'S', 'SPAN', 'STRONG', 'SUB', 'SUP', 'U', 'EM']);
 
 			template.content.querySelectorAll('*').forEach((element) => {
 				if (!allowedTags.has(element.tagName)) {
@@ -622,7 +886,7 @@ if ($topic === null || $article === null) {
 				if (tagName === 'ul' || tagName === 'ol') {
 					const items = Array.from(element.children)
 						.filter((child) => child.tagName.toLowerCase() === 'li')
-						.map((item) => item.innerHTML)
+						.map((item) => flattenBlockHtmlToInline(item.innerHTML))
 						.filter((itemHtml) => String(itemHtml || '').replace(/<br\s*\/?>/gi, '').trim() !== '');
 
 					blocks.push({
@@ -630,6 +894,28 @@ if ($topic === null || $article === null) {
 						data: {
 							style: tagName === 'ol' ? 'ordered' : 'unordered',
 							items: items.length > 0 ? items : ['']
+						}
+					});
+					return;
+				}
+
+				if (tagName === 'table') {
+					const rows = [];
+					element.querySelectorAll('tr').forEach((tr) => {
+						const cells = [];
+						tr.querySelectorAll('th, td').forEach((cell) => {
+							cells.push(flattenBlockHtmlToInline(cell.innerHTML));
+						});
+						if (cells.length > 0) {
+							rows.push(cells);
+						}
+					});
+
+					blocks.push({
+						type: 'table',
+						data: {
+							withHead: element.querySelector('th') !== null,
+							rows: rows.length > 0 ? rows : [['', ''], ['', '']]
 						}
 					});
 					return;
@@ -653,7 +939,7 @@ if ($topic === null || $article === null) {
 					blocks.push({
 						type: 'quote',
 						data: {
-							text: element.innerHTML,
+							text: flattenBlockHtmlToInline(element.innerHTML),
 							caption: '',
 							alignment: 'left'
 						}
@@ -719,7 +1005,7 @@ if ($topic === null || $article === null) {
 						const content = typeof item === 'string'
 							? item
 							: (item && typeof item.content === 'string' ? item.content : '');
-						return `<li>${sanitizeInlineHtml(content)}</li>`;
+						return `<li>${sanitizeInlineHtml(flattenBlockHtmlToInline(content))}</li>`;
 					})
 					.join('');
 
@@ -735,7 +1021,28 @@ if ($topic === null || $article === null) {
 			}
 
 			if (block.type === 'quote') {
-				return `<blockquote>${sanitizeInlineHtml(data.text)}</blockquote>`;
+				return `<blockquote>${sanitizeInlineHtml(flattenBlockHtmlToInline(data.text))}</blockquote>`;
+			}
+
+			if (block.type === 'table') {
+				const rows = Array.isArray(data.rows) ? data.rows : [];
+				if (rows.length === 0) {
+					return '';
+				}
+
+				const withHead = data.withHead !== false;
+				const renderRow = (row, cellTag) => {
+					const cells = Array.isArray(row) ? row : [];
+					return `<tr>${cells.map((cell) => `<${cellTag}>${sanitizeInlineHtml(flattenBlockHtmlToInline(cell))}</${cellTag}>`).join('')}</tr>`;
+				};
+
+				if (withHead) {
+					const headHtml = renderRow(rows[0] || [], 'th');
+					const bodyHtml = rows.slice(1).map((row) => renderRow(row, 'td')).join('');
+					return `<table><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
+				}
+
+				return `<table><tbody>${rows.map((row) => renderRow(row, 'td')).join('')}</tbody></table>`;
 			}
 
 			if (block.type === 'code') {
@@ -759,11 +1066,11 @@ if ($topic === null || $article === null) {
 			data: {
 				blocks: htmlToBlocks(initialHtml)
 			},
-			inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor'],
+			inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
 			tools: {
 				header: {
 					class: Header,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor'],
+					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
 					config: {
 						levels: [2, 3, 4, 5, 6],
 						defaultLevel: 3
@@ -771,7 +1078,7 @@ if ($topic === null || $article === null) {
 				},
 				list: {
 					class: List,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor'],
+					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
 					config: {
 						defaultStyle: 'unordered'
 					}
@@ -798,8 +1105,9 @@ if ($topic === null || $article === null) {
 				},
 				quote: {
 					class: Quote,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'textColor', 'markerColor']
+					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor']
 				},
+				table: TableBlockTool,
 				code: CodeTool,
 				file: {
 					class: FileBlockTool,
@@ -810,6 +1118,8 @@ if ($topic === null || $article === null) {
 				},
 				underline: UnderlineTool,
 				strike: StrikeTool,
+				superscript: SuperscriptTool,
+				subscript: SubscriptTool,
 				textColor: {
 					class: InlineColorTool,
 					config: {
@@ -830,6 +1140,31 @@ if ($topic === null || $article === null) {
 				}
 			}
 		});
+
+		document.addEventListener('paste', (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			if (!target || !editorRoot.contains(target)) {
+				return;
+			}
+
+			const inList = Boolean(target.closest('.cdx-list'));
+			const inQuote = Boolean(target.closest('.cdx-quote'));
+			if (!inList && !inQuote) {
+				return;
+			}
+
+			if (!event.clipboardData) {
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+			if (typeof event.stopImmediatePropagation === 'function') {
+				event.stopImmediatePropagation();
+			}
+
+			insertInlineHtml(clipboardToInlineHtml(event.clipboardData));
+		}, true);
 
 		form.addEventListener('submit', async (event) => {
 			event.preventDefault();

@@ -31,6 +31,14 @@ class ArticleContentSanitizer
 		's',
 		'span',
 		'strong',
+		'sub',
+		'sup',
+		'table',
+		'tbody',
+		'td',
+		'th',
+		'thead',
+		'tr',
 		'u',
 		'ul',
 	];
@@ -107,6 +115,7 @@ class ArticleContentSanitizer
 			'img' => ['src', 'alt', 'title'],
 			'mark' => ['style'],
 			'span' => ['style'],
+			'td', 'th' => ['colspan', 'rowspan'],
 			default => [],
 		};
 
@@ -126,6 +135,20 @@ class ArticleContentSanitizer
 
 		if ($tagName === 'mark' || $tagName === 'span') {
 			$this->sanitizeStyleAttribute($element);
+		}
+
+		if ($tagName === 'td' || $tagName === 'th') {
+			$this->sanitizeTableCellAttributes($element);
+		}
+	}
+
+	private function sanitizeTableCellAttributes(DOMElement $element): void
+	{
+		foreach (['colspan', 'rowspan'] as $attributeName) {
+			$value = trim($element->getAttribute($attributeName));
+			if ($value === '' || preg_match('/^[1-9][0-9]{0,2}$/', $value) !== 1) {
+				$element->removeAttribute($attributeName);
+			}
 		}
 	}
 
@@ -211,7 +234,7 @@ class ArticleContentSanitizer
 
 	private function sanitizeWithoutDom(string $html): string
 	{
-		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><ul><ol><li>');
+		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><ul><ol><li><table><thead><tbody><tr><th><td><sup><sub>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
 

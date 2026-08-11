@@ -56,6 +56,18 @@ class BlogArticlesModel extends BaseModel
 		return $this->execWriteQuery($qb);
 	}
 
+	public function updateBasicInfo(int $id, string $title, string $previewText): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update([
+				'title' => $title,
+				'preview_text' => $previewText,
+			])
+			->where('id', '=', $id);
+
+		return $this->execWriteQuery($qb);
+	}
+
 	public function findByCode(string $code): ?object
 	{
 		$code = trim($code);

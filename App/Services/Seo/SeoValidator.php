@@ -35,6 +35,19 @@ class SeoValidator
 		];
 	}
 
+	public function validateBlogSeoForm(array $input): array
+	{
+		$title = $this->nullableString($input['title'] ?? null, 255);
+		$description = $this->nullableString($input['description'] ?? null, 320);
+		$keywords = $this->nullableString($input['keywords'] ?? null, 500);
+
+		return [
+			'title' => $title,
+			'description' => $description,
+			'keywords' => $keywords,
+		];
+	}
+
 	private function nullableString(mixed $value, int $maxLength): ?string
 	{
 		$value = trim((string) $value);

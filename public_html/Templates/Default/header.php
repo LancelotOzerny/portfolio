@@ -14,8 +14,6 @@
 <body>
 <?php
 (new \Components\AdminBar\AdminBar())->render();
-<!-- NAVIGATION -->
-<?php
 (new \Components\Navigation\Navigation(['type' => 'main']))->render();
 ?>
 

@@ -179,7 +179,60 @@ EventDispatcher::getInstance()->listen(
 );
 ```
 
+### `App\Events\Admin\AdminBarBuildEvent`
+
+Формирование центральной зоны публичного AdminBar (полоска сверху сайта).
+
+**Когда вызывается:** при рендере `Components\AdminBar\AdminBar` на публичных страницах (для администратора).
+
+**Данные:**
+
+- `getCurrentPath(): string` — текущий URI path;
+- `isEditMode(): bool` — включён ли режим редактирования;
+- `getGroups(): AdminBarGroup[]` — группы кнопок по центру;
+- `addGroup(AdminBarGroup $group, ?string $afterId = null)` — добавить группу;
+- `removeGroup(string $id)` — удалить группу;
+- `findGroup(string $id): ?AdminBarGroup` — найти группу.
+
+**Слушатель блога:** `App\Listeners\Admin\BlogAdminBarListener`  
+На `/blog/{topic}/` и `/blog/{topic}/{article}/` в режиме редактирования добавляет группу:
+
+- id: `blog`
+- label: `Блог`
+- кнопки: `blog.basic` («Базовая информация»), `blog.seo` («SEO»)
+
+### Пример: добавить свою группу в AdminBar
+
+```php
+use App\Events\Admin\AdminBarBuildEvent;
+use App\Services\Admin\Bar\AdminBarAction;
+use App\Services\Admin\Bar\AdminBarGroup;
+use Modules\Main\Event\EventDispatcher;
+
+EventDispatcher::getInstance()->listen(
+    AdminBarBuildEvent::class,
+    function (AdminBarBuildEvent $event): void {
+        if (!$event->isEditMode()) {
+            return;
+        }
+
+        $event->addGroup(new AdminBarGroup(
+            id: 'custom',
+            label: 'Раздел',
+            actions: [
+                new AdminBarAction(
+                    id: 'custom.action',
+                    label: 'Действие',
+                    attributes: ['data-my-action' => '1'],
+                ),
+            ],
+        ));
+    }
+);
+```
+
 ## Замечания
 
-- Пока реализовано только событие админ-меню; диспетчер готов к новым событиям без смены архитектуры.
-- Не меняйте разметку меню напрямую в `header.php` — расширяйте через `AdminMenuBuildEvent`.
+- Текущие события: `AdminMenuBuildEvent`, `AdminBarBuildEvent`.
+- Не меняйте разметку админ-меню в `header.php` — расширяйте через `AdminMenuBuildEvent`.
+- Не меняйте центр AdminBar напрямую в шаблоне компонента — расширяйте через `AdminBarBuildEvent`.

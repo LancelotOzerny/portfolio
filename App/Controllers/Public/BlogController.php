@@ -9,9 +9,11 @@ use App\Services\Blog\BlogDateFormatter;
 use App\Services\Blog\SymbolicCodeService;
 use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
+use App\Services\Seo\SeoValidator;
 use App\Services\Security\CsrfService;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
+use Models\SeoMetaModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
@@ -37,22 +39,46 @@ class BlogController extends BaseController
 	public function topic(string $topic): void
 	{
 		$topicData = $this->findTopic($topic);
+		$topicId = (int) ($topicData['id'] ?? 0);
+		$path = '/blog/' . $topic . '/';
 
-		$this->setSeo(SeoContext::custom('/blog/' . $topic . '/', [
-			'title' => $topicData['name'] ?? 'Тема не найдена',
-			'description' => $topicData['description'] ?? 'Тестовая тема блога.',
-			'robots_index' => $topicData !== null,
-		]));
+		if ($topicData !== null && $topicId > 0) {
+			$this->setSeo(SeoContext::entity(
+				'blog_topic',
+				(string) $topicId,
+				[
+					'title' => $topicData['name'] ?? 'Тема не найдена',
+					'description' => $topicData['description'] ?? 'Тестовая тема блога.',
+					'robots_index' => true,
+				],
+				$path
+			));
+		} else {
+			$this->setSeo(SeoContext::custom($path, [
+				'title' => $topicData['name'] ?? 'Тема не найдена',
+				'description' => $topicData['description'] ?? 'Тестовая тема блога.',
+				'robots_index' => false,
+			]));
+		}
 
 		Template::getInstance()->setParam('title', $topicData['name'] ?? 'Тема не найдена');
 		Template::getInstance()->setParam('subtitle', 'Статьи выбранной темы');
 		Template::getInstance()->setParam('show_contact_cta', false);
 
+		$editMode = $this->isEditMode();
+		$seoForm = ($editMode && $topicId > 0)
+			? $this->getSeoFormData('blog_topic', (string) $topicId)
+			: ['title' => '', 'description' => '', 'keywords' => ''];
+
 		Template::getInstance()->showHeader();
 		$this->render('topic', [
 			'topic' => $topicData,
 			'is_admin' => Auth::getInstance()->isAdmin(),
-			'edit_mode' => $this->isEditMode(),
+			'edit_mode' => $editMode,
+			'csrf_token' => (new CsrfService())->getToken(),
+			'save_success' => isset($_GET['saved']) && $_GET['saved'] === '1',
+			'save_error' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+			'seo_form' => $seoForm,
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -82,12 +108,27 @@ class BlogController extends BaseController
 		}
 
 		$isArticleEnabled = (bool) ($articleData['enabled'] ?? true);
+		$articleId = (int) ($articleData['id'] ?? 0);
+		$path = '/blog/' . $topic . '/' . $article . '/';
 
-		$this->setSeo(SeoContext::custom('/blog/' . $topic . '/' . $article . '/', [
-			'title' => $articleData['title'] ?? 'Статья не найдена',
-			'description' => $articleData['preview'] ?? 'Тестовая статья блога.',
-			'robots_index' => $articleData !== null && $isArticleEnabled,
-		]));
+		if ($articleData !== null && $articleId > 0) {
+			$this->setSeo(SeoContext::entity(
+				'blog_article',
+				(string) $articleId,
+				[
+					'title' => $articleData['title'] ?? 'Статья не найдена',
+					'description' => $articleData['preview'] ?? 'Тестовая статья блога.',
+					'robots_index' => $isArticleEnabled,
+				],
+				$path
+			));
+		} else {
+			$this->setSeo(SeoContext::custom($path, [
+				'title' => $articleData['title'] ?? 'Статья не найдена',
+				'description' => $articleData['preview'] ?? 'Тестовая статья блога.',
+				'robots_index' => false,
+			]));
+		}
 
 		Template::getInstance()->setParam('title', $articleData['title'] ?? 'Статья не найдена');
 		Template::getInstance()->setParam('subtitle', 'Детальная страница статьи');
@@ -102,6 +143,11 @@ class BlogController extends BaseController
 			? $comments
 			: (is_array($articleData['comments'] ?? null) ? $articleData['comments'] : []);
 
+		$editMode = $this->isEditMode();
+		$seoForm = ($editMode && $articleId > 0)
+			? $this->getSeoFormData('blog_article', (string) $articleId)
+			: ['title' => '', 'description' => '', 'keywords' => ''];
+
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
 			'topic' => $topicData,
@@ -110,10 +156,11 @@ class BlogController extends BaseController
 			'comments' => $comments,
 			'default_author_name' => $defaultAuthorName,
 			'is_admin' => Auth::getInstance()->isAdmin(),
-			'edit_mode' => $this->isEditMode(),
+			'edit_mode' => $editMode,
 			'csrf_token' => (new CsrfService())->getToken(),
 			'save_success' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'save_error' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+			'seo_form' => $seoForm,
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -302,6 +349,187 @@ class BlogController extends BaseController
 			$this->redirectToArticle($topic, $article, $message !== '' ? $message : 'Unable to save article.');
 			return;
 		}
+
+		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($articleCode) . '/?edit=true&saved=1');
+	}
+
+	public function updateTopicBasic(string $topic): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			$this->redirectToTopic($topic, 'Недействительный CSRF-токен.');
+			return;
+		}
+
+		$dbTopic = $this->resolveDbTopic($topic);
+		if ($dbTopic === null) {
+			$this->redirectToTopic($topic, 'Рубрика не найдена.');
+			return;
+		}
+
+		$title = trim((string) ($_POST['title'] ?? ''));
+		$description = trim((string) ($_POST['description'] ?? ''));
+
+		if ($title === '') {
+			$this->redirectToTopic($topic, 'Укажите название.');
+			return;
+		}
+
+		if (mb_strlen($title) > 255 || mb_strlen($description) > 500) {
+			$this->redirectToTopic($topic, 'Превышена максимальная длина поля.');
+			return;
+		}
+
+		$usesDetailText = trim((string) ($dbTopic->detail_text ?? '')) !== '';
+		$previewText = $usesDetailText ? (string) ($dbTopic->preview_text ?? '') : $description;
+		$detailText = $usesDetailText ? $description : (string) ($dbTopic->detail_text ?? '');
+
+		try {
+			if (!(new BlogTopicsModel())->updateBasicInfo(
+				(int) $dbTopic->id,
+				$title,
+				$previewText,
+				$detailText
+			)) {
+				throw new \RuntimeException('Не удалось сохранить рубрику.');
+			}
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->redirectToTopic($topic, $message !== '' ? $message : 'Не удалось сохранить рубрику.');
+			return;
+		}
+
+		$codeService = new SymbolicCodeService();
+		$topicCode = $codeService->resolvePublicSegment(
+			(string) ($dbTopic->code ?? ''),
+			(int) $dbTopic->id
+		);
+
+		header('Location: /blog/' . rawurlencode($topicCode) . '/?edit=true&saved=1');
+	}
+
+	public function updateTopicSeo(string $topic): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			$this->redirectToTopic($topic, 'Недействительный CSRF-токен.');
+			return;
+		}
+
+		$dbTopic = $this->resolveDbTopic($topic);
+		if ($dbTopic === null) {
+			$this->redirectToTopic($topic, 'Рубрика не найдена.');
+			return;
+		}
+
+		try {
+			$fields = (new SeoValidator())->validateBlogSeoForm($_POST);
+			$this->saveEntitySeo('blog_topic', (string) ((int) $dbTopic->id), $fields);
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->redirectToTopic($topic, $message !== '' ? $message : 'Не удалось сохранить SEO.');
+			return;
+		}
+
+		$codeService = new SymbolicCodeService();
+		$topicCode = $codeService->resolvePublicSegment(
+			(string) ($dbTopic->code ?? ''),
+			(int) $dbTopic->id
+		);
+
+		header('Location: /blog/' . rawurlencode($topicCode) . '/?edit=true&saved=1');
+	}
+
+	public function updateArticleBasic(string $topic, string $article): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			$this->redirectToArticle($topic, $article, 'Недействительный CSRF-токен.');
+			return;
+		}
+
+		$dbArticle = $this->resolveDbArticle($article);
+		if ($dbArticle === null) {
+			$this->redirectToArticle($topic, $article, 'Статья не найдена.');
+			return;
+		}
+
+		$title = trim((string) ($_POST['title'] ?? ''));
+		$description = trim((string) ($_POST['description'] ?? ''));
+
+		if ($title === '') {
+			$this->redirectToArticle($topic, $article, 'Укажите название.');
+			return;
+		}
+
+		if (mb_strlen($title) > 255 || mb_strlen($description) > 500) {
+			$this->redirectToArticle($topic, $article, 'Превышена максимальная длина поля.');
+			return;
+		}
+
+		try {
+			if (!(new BlogArticlesModel())->updateBasicInfo(
+				(int) $dbArticle->id,
+				$title,
+				$description
+			)) {
+				throw new \RuntimeException('Не удалось сохранить статью.');
+			}
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->redirectToArticle($topic, $article, $message !== '' ? $message : 'Не удалось сохранить статью.');
+			return;
+		}
+
+		$codeService = new SymbolicCodeService();
+		$articleCode = $codeService->resolvePublicSegment(
+			(string) ($dbArticle->code ?? ''),
+			(int) $dbArticle->id
+		);
+
+		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($articleCode) . '/?edit=true&saved=1');
+	}
+
+	public function updateArticleSeo(string $topic, string $article): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			$this->redirectToArticle($topic, $article, 'Недействительный CSRF-токен.');
+			return;
+		}
+
+		$dbArticle = $this->resolveDbArticle($article);
+		if ($dbArticle === null) {
+			$this->redirectToArticle($topic, $article, 'Статья не найдена.');
+			return;
+		}
+
+		try {
+			$fields = (new SeoValidator())->validateBlogSeoForm($_POST);
+			$this->saveEntitySeo('blog_article', (string) ((int) $dbArticle->id), $fields);
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->redirectToArticle($topic, $article, $message !== '' ? $message : 'Не удалось сохранить SEO.');
+			return;
+		}
+
+		$codeService = new SymbolicCodeService();
+		$articleCode = $codeService->resolvePublicSegment(
+			(string) ($dbArticle->code ?? ''),
+			(int) $dbArticle->id
+		);
 
 		header('Location: /blog/' . rawurlencode($topic) . '/' . rawurlencode($articleCode) . '/?edit=true&saved=1');
 	}
@@ -510,6 +738,78 @@ class BlogController extends BaseController
 		} catch (Throwable) {
 			return null;
 		}
+	}
+
+	private function resolveDbTopic(string $slug): ?object
+	{
+		$model = new BlogTopicsModel();
+
+		try {
+			if (ctype_digit($slug)) {
+				$topic = $model->findById((int) $slug);
+				if ($topic !== null) {
+					return $topic;
+				}
+			}
+
+			return $model->findByCode($slug);
+		} catch (Throwable) {
+			return null;
+		}
+	}
+
+	/**
+	 * @return array{title: string, description: string, keywords: string}
+	 */
+	private function getSeoFormData(string $type, string $key): array
+	{
+		try {
+			$record = (new SeoMetaModel())->findByTarget($type, $key);
+		} catch (Throwable) {
+			$record = null;
+		}
+
+		return [
+			'title' => (string) ($record->title ?? ''),
+			'description' => (string) ($record->description ?? ''),
+			'keywords' => (string) ($record->keywords ?? ''),
+		];
+	}
+
+	/**
+	 * @param array{title: ?string, description: ?string, keywords: ?string} $fields
+	 */
+	private function saveEntitySeo(string $type, string $key, array $fields): void
+	{
+		$model = new SeoMetaModel();
+		$existing = null;
+
+		try {
+			$existing = $model->findByTarget($type, $key);
+		} catch (Throwable) {
+			$existing = null;
+		}
+
+		$payload = [
+			'title' => $fields['title'],
+			'description' => $fields['description'],
+			'keywords' => $fields['keywords'],
+			'canonical_url' => $existing->canonical_url ?? null,
+			'robots_index' => (int) ($existing->robots_index ?? 1),
+			'robots_follow' => (int) ($existing->robots_follow ?? 1),
+			'og_title' => $existing->og_title ?? null,
+			'og_description' => $existing->og_description ?? null,
+			'og_image' => $existing->og_image ?? null,
+		];
+
+		if (!$model->saveByTarget($type, $key, $payload)) {
+			throw new \RuntimeException('Не удалось сохранить SEO.');
+		}
+	}
+
+	private function redirectToTopic(string $topic, string $error): void
+	{
+		header('Location: /blog/' . rawurlencode($topic) . '/?edit=true&error=' . rawurlencode($error));
 	}
 
 	private function redirectToArticle(string $topic, string $article, string $error): void

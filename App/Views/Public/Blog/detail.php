@@ -60,6 +60,7 @@ if ($topic === null || $article === null) {
 
 $canEditArticle = $isAdmin && $editMode && isset($article['id']);
 $comments = is_array($data['comments'] ?? null) ? $data['comments'] : [];
+$seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 ?>
 
 <section class="blog-detail-hero">
@@ -88,6 +89,21 @@ $comments = is_array($data['comments'] ?? null) ? $data['comments'] : [];
 		</div>
 	</div>
 </section>
+
+<?php if ($canEditArticle): ?>
+	<?php
+	$basicAction = '/blog/' . rawurlencode((string) $topic['slug']) . '/' . rawurlencode((string) $article['slug']) . '/settings/basic/';
+	$seoAction = '/blog/' . rawurlencode((string) $topic['slug']) . '/' . rawurlencode((string) $article['slug']) . '/settings/seo/';
+	$basicTitle = (string) ($article['title'] ?? '');
+	$basicDescription = (string) ($article['preview'] ?? '');
+	$seoTitle = (string) ($seoForm['title'] ?? '');
+	$seoDescription = (string) ($seoForm['description'] ?? '');
+	$seoKeywords = (string) ($seoForm['keywords'] ?? '');
+	$basicTitleLabel = 'Название статьи';
+	$basicDescriptionLabel = 'Описание';
+	include __DIR__ . '/_settings-modals.php';
+	?>
+<?php endif; ?>
 
 <section class="light-page-section blog-page blog-detail">
 	<div class="site-container">

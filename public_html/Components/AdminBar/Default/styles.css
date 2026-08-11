@@ -53,6 +53,66 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 	flex: 1 1 auto;
 	min-width: 50px;
 	margin: 0 50px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 18px;
+}
+
+.admin-bar__group
+{
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.admin-bar__group-label
+{
+	color: rgba(255, 255, 255, .62);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.admin-bar__group-actions
+{
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.admin-bar__action
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 14px;
+	border: 1px solid rgba(255, 255, 255, .22);
+	border-radius: 10px;
+	background: rgba(255, 255, 255, .08);
+	color: #ffffff;
+	text-decoration: none;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.admin-bar__action:hover,
+.admin-bar__action:focus-visible
+{
+	background: rgba(255, 255, 255, .16);
+	border-color: rgba(255, 255, 255, .4);
+	outline: none;
+	transform: translateY(-1px);
 }
 
 .admin-bar__admin-button
@@ -156,6 +216,34 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 	outline: none;
 }
 
+.admin-bar__logout
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 48px;
+	padding: 0 14px;
+	border-radius: 12px;
+	color: #ffffff;
+	text-decoration: none;
+	font-size: 14px;
+	font-weight: 600;
+	transition: background-color .2s ease;
+}
+
+.admin-bar__logout:hover,
+.admin-bar__logout:focus-visible
+{
+	background: rgba(255, 255, 255, .1);
+	outline: none;
+}
+
+.admin-bar__logout-label
+{
+	white-space: nowrap;
+}
+
 .admin-bar__icon
 {
 	display: block;
@@ -163,7 +251,9 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 }
 
 .admin-bar__button:hover .admin-bar__icon,
-.admin-bar__button:focus-visible .admin-bar__icon
+.admin-bar__button:focus-visible .admin-bar__icon,
+.admin-bar__logout:hover .admin-bar__icon,
+.admin-bar__logout:focus-visible .admin-bar__icon
 {
 	transform: scale(1.12);
 }
@@ -172,10 +262,12 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 {
 	.admin-bar__button,
 	.admin-bar__admin-button,
+	.admin-bar__action,
 	.admin-bar__icon,
 	.admin-bar__toggle,
 	.admin-bar__toggle-track,
-	.admin-bar__toggle-thumb
+	.admin-bar__toggle-thumb,
+	.admin-bar__logout
 	{
 		transition-duration: .01ms !important;
 	}
@@ -192,6 +284,24 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 	{
 		margin: 0 12px;
 		min-width: 0;
+		gap: 10px;
+	}
+
+	.admin-bar__group
+	{
+		gap: 8px;
+	}
+
+	.admin-bar__group-label
+	{
+		display: none;
+	}
+
+	.admin-bar__action
+	{
+		min-height: 36px;
+		padding: 0 10px;
+		font-size: 12px;
 	}
 
 	.admin-bar__admin-button
@@ -200,8 +310,15 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 		padding: 0 14px;
 	}
 
-	.admin-bar__toggle-label
+	.admin-bar__toggle-label,
+	.admin-bar__logout-label
 	{
 		display: none;
+	}
+
+	.admin-bar__logout
+	{
+		width: 48px;
+		padding: 0;
 	}
 }

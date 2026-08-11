@@ -4,6 +4,10 @@
 $topic = $data['topic'] ?? null;
 $isAdmin = (bool) ($data['is_admin'] ?? false);
 $isEditMode = (bool) ($data['edit_mode'] ?? false);
+$csrfToken = (string) ($data['csrf_token'] ?? '');
+$saveSuccess = (bool) ($data['save_success'] ?? false);
+$saveError = trim((string) ($data['save_error'] ?? ''));
+$seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 
 $renderStarsMarkup = static function (float $value, int $max = 5): string {
 	$filled = (int) max(0, min($max, round($value)));
@@ -30,6 +34,7 @@ if ($topic === null) {
 }
 
 $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
+$canEditTopic = $isEditMode && isset($topic['id']) && (int) $topic['id'] > 0;
 ?>
 
 <?php if ($detailImagePath !== ''): ?>
@@ -54,6 +59,29 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 
 <section class="light-page-section blog-page">
 	<div class="site-container">
+		<?php if ($canEditTopic): ?>
+			<?php
+			$basicAction = '/blog/' . rawurlencode((string) $topic['slug']) . '/settings/basic/';
+			$seoAction = '/blog/' . rawurlencode((string) $topic['slug']) . '/settings/seo/';
+			$basicTitle = (string) ($topic['name'] ?? '');
+			$basicDescription = (string) ($topic['description'] ?? '');
+			$seoTitle = (string) ($seoForm['title'] ?? '');
+			$seoDescription = (string) ($seoForm['description'] ?? '');
+			$seoKeywords = (string) ($seoForm['keywords'] ?? '');
+			$basicTitleLabel = 'Название рубрики';
+			$basicDescriptionLabel = 'Описание';
+			include __DIR__ . '/_settings-modals.php';
+			?>
+		<?php endif; ?>
+
+		<?php if ($saveSuccess): ?>
+			<div class="blog-editor-alert blog-editor-alert_success">Изменения сохранены.</div>
+		<?php endif; ?>
+
+		<?php if ($saveError !== ''): ?>
+			<div class="blog-editor-alert blog-editor-alert_error"><?= htmlspecialchars($saveError) ?></div>
+		<?php endif; ?>
+
 		<div class="blog-articles blog-articles_cards">
 			<?php if ($isEditMode): ?>
 				<?php

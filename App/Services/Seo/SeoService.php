@@ -26,7 +26,8 @@ class SeoService
 		$canonical = '';
 		$ogTitle = '';
 		$ogDescription = '';
-		$ogType = $context->getTargetType() === 'project' ? 'article' : 'website';
+		$ogType = in_array($context->getTargetType(), ['project', 'blog_article'], true) ? 'article' : 'website';
+		$keywords = '';
 
 		if ($context->getTargetType() === 'page') {
 			$page = $this->config->getPage($context->getTargetKey()) ?? [];
@@ -40,6 +41,7 @@ class SeoService
 		$entity = $context->getEntityData();
 		$title = $this->pickNonEmpty($title, (string) ($entity['title'] ?? ''));
 		$description = $this->pickNonEmpty($description, (string) ($entity['description'] ?? ''));
+		$keywords = $this->pickNonEmpty($keywords, (string) ($entity['keywords'] ?? ''));
 		$ogTitle = $this->pickNonEmpty($ogTitle, (string) ($entity['og_title'] ?? ''));
 		$ogDescription = $this->pickNonEmpty($ogDescription, (string) ($entity['og_description'] ?? ''));
 		$ogImage = $this->pickNonEmpty($ogImage, $this->normalizeNullableString($entity['og_image'] ?? null));
@@ -59,6 +61,7 @@ class SeoService
 		if ($db !== null) {
 			$title = $this->pickNonEmpty($title, (string) ($db->title ?? ''));
 			$description = $this->pickNonEmpty($description, (string) ($db->description ?? ''));
+			$keywords = $this->pickNonEmpty($keywords, (string) ($db->keywords ?? ''));
 			$canonical = trim((string) ($db->canonical_url ?? ''));
 			$ogTitle = trim((string) ($db->og_title ?? ''));
 			$ogDescription = trim((string) ($db->og_description ?? ''));
@@ -89,6 +92,7 @@ class SeoService
 			ogImage: $this->toAbsoluteUrl($site, $ogImage),
 			ogType: $ogType,
 			siteName: (string) ($site['name'] ?? ''),
+			keywords: $keywords,
 		);
 	}
 

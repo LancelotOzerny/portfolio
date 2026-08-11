@@ -26,6 +26,7 @@ class SeoMetaModel extends BaseModel
 		$payload = [
 			'title' => $data['title'] ?? null,
 			'description' => $data['description'] ?? null,
+			'keywords' => $data['keywords'] ?? null,
 			'canonical_url' => $data['canonical_url'] ?? null,
 			'robots_index' => (int) ($data['robots_index'] ?? 1),
 			'robots_follow' => (int) ($data['robots_follow'] ?? 1),

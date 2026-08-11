@@ -7,7 +7,7 @@ use InvalidArgumentException;
 
 class SeoContext
 {
-	private const ALLOWED_ENTITY_TYPES = ['project'];
+	private const ALLOWED_ENTITY_TYPES = ['project', 'blog_topic', 'blog_article'];
 
 	/**
 	 * @param array<string, mixed> $entityData

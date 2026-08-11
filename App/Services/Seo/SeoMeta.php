@@ -15,6 +15,7 @@ class SeoMeta
 		public readonly ?string $ogImage,
 		public readonly string $ogType = 'website',
 		public readonly string $siteName = '',
+		public readonly string $keywords = '',
 	) {
 	}
 }

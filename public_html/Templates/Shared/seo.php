@@ -19,6 +19,9 @@ $robots[] = $seo->follow ? 'follow' : 'nofollow';
 <?php if ($seo->description !== ''): ?>
 <meta name="description" content="<?= $escape($seo->description) ?>">
 <?php endif; ?>
+<?php if ($seo->keywords !== ''): ?>
+<meta name="keywords" content="<?= $escape($seo->keywords) ?>">
+<?php endif; ?>
 <meta name="robots" content="<?= $escape(implode(', ', $robots)) ?>">
 <link rel="canonical" href="<?= $escape($seo->canonical) ?>">
 

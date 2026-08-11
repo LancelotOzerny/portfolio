@@ -1,34 +1,14 @@
 <?php
 /** @var \Modules\Main\Template $this */
 
+use App\Services\Admin\Menu\AdminMenuService;
 use Modules\Main\Auth;
 
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $showAdminSidebar = Auth::getInstance()->isAdmin();
-
-$homeActive = $currentPath === '/admin/' ? ' is-active' : '';
-$contentActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/') ? ' is-active' : '';
-$projectsMenuActive = str_starts_with($currentPath, '/admin/projects/') || str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
-$projectsListActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-active' : '';
-$blogActive = str_starts_with($currentPath, '/admin/content/blog/') ? ' is-active' : '';
-$blogRubricsActive = str_starts_with($currentPath, '/admin/content/blog/rubrics/') || $currentPath === '/admin/content/blog/' ? ' is-active' : '';
-$blogArticlesActive = str_starts_with($currentPath, '/admin/content/blog/articles/') ? ' is-active' : '';
-$blogCommentsActive = str_starts_with($currentPath, '/admin/content/blog/comments/') ? ' is-active' : '';
-$tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
-$galleryActive = str_starts_with($currentPath, '/admin/content/gallery/') ? ' is-active' : '';
-$usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
-$developmentActive = str_starts_with($currentPath, '/admin/development/') ? ' is-active' : '';
-$developmentSqlActive = str_starts_with($currentPath, '/admin/development/sql/') ? ' is-active' : '';
-$developmentTodoActive = str_starts_with($currentPath, '/admin/development/todo/') ? ' is-active' : '';
-$developmentRepositoryActive = str_starts_with($currentPath, '/admin/development/repository/') ? ' is-active' : '';
-$settingsActive = str_starts_with($currentPath, '/admin/settings/') ? ' is-active' : '';
-$resumeActive = str_starts_with($currentPath, '/admin/resume/') ? ' is-active' : '';
-$seoActive = str_starts_with($currentPath, '/admin/seo/') ? ' is-active' : '';
-$configsActive = str_starts_with($currentPath, '/admin/settings/configs/') ? ' is-active' : '';
-$templatesActive = str_starts_with($currentPath, '/admin/settings/templates/') ? ' is-active' : '';
-$backupActive = str_starts_with($currentPath, '/admin/settings/backup/') ? ' is-active' : '';
-$backupCreateActive = str_starts_with($currentPath, '/admin/settings/backup/create/') ? ' is-active' : '';
-$backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/') ? ' is-active' : '';
+$adminMenuHtml = $showAdminSidebar
+	? (new AdminMenuService())->renderNav($currentPath)
+	: '';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -257,85 +237,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 			</div>
 
 			<nav class="admin-sideout__nav">
-				<a class="admin-sideout__link<?= $homeActive ?>" href="/admin/">
-					<span class="admin-sideout__icon">Гл</span>
-					<span class="admin-sideout__label">Главная</span>
-				</a>
-
-				<div class="admin-sideout__item<?= $contentActive ?>">
-					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $contentActive ?>" href="/admin/projects/">
-						<span class="admin-sideout__icon">Кн</span>
-						<span class="admin-sideout__label">Контент</span>
-					</a>
-					<div class="admin-sideout__flyout">
-						<div class="admin-sideout__flyout-item<?= $projectsMenuActive ?>">
-							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $projectsMenuActive ?>" href="/admin/projects/">Проекты</a>
-							<div class="admin-sideout__flyout">
-								<a class="admin-sideout__flyout-link<?= $projectsListActive ?>" href="/admin/projects/">Список проектов</a>
-								<a class="admin-sideout__flyout-link<?= $tagsActive ?>" href="/admin/content/tags/">Теги проектов</a>
-							</div>
-						</div>
-						<div class="admin-sideout__flyout-item<?= $blogActive ?>">
-							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $blogActive ?>" href="/admin/content/blog/">Блог</a>
-							<div class="admin-sideout__flyout">
-								<a class="admin-sideout__flyout-link<?= $blogRubricsActive ?>" href="/admin/content/blog/rubrics/">Рубрики</a>
-								<a class="admin-sideout__flyout-link<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
-								<a class="admin-sideout__flyout-link<?= $blogCommentsActive ?>" href="/admin/content/blog/comments/">Комментарии</a>
-							</div>
-						</div>
-						<a class="admin-sideout__flyout-link<?= $galleryActive ?>" href="/admin/content/gallery/">Галерея</a>
-					</div>
-				</div>
-
-				<a class="admin-sideout__link<?= $seoActive ?>" href="/admin/seo/">
-					<span class="admin-sideout__icon">SE</span>
-					<span class="admin-sideout__label">SEO</span>
-				</a>
-
-				<a class="admin-sideout__link<?= $usersActive ?>" href="/admin/users/">
-					<span class="admin-sideout__icon">По</span>
-					<span class="admin-sideout__label">Пользователи</span>
-				</a>
-
-				<div class="admin-sideout__item<?= $resumeActive ?>">
-					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $resumeActive ?>" href="/admin/resume/experience/">
-						<span class="admin-sideout__icon">Рз</span>
-						<span class="admin-sideout__label">Резюме</span>
-					</a>
-					<div class="admin-sideout__flyout">
-						<a class="admin-sideout__flyout-link<?= $resumeActive ?>" href="/admin/resume/experience/">Опыт работы</a>
-					</div>
-				</div>
-
-				<div class="admin-sideout__item<?= $developmentActive ?>">
-					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $developmentActive ?>" href="/admin/development/sql/">
-						<span class="admin-sideout__icon">Рд</span>
-						<span class="admin-sideout__label">Разработка</span>
-					</a>
-					<div class="admin-sideout__flyout">
-						<a class="admin-sideout__flyout-link<?= $developmentSqlActive ?>" href="/admin/development/sql/">SQL запросы</a>
-						<a class="admin-sideout__flyout-link<?= $developmentTodoActive ?>" href="/admin/development/todo/">To Do List</a>
-						<a class="admin-sideout__flyout-link<?= $developmentRepositoryActive ?>" href="/admin/development/repository/">Репозиторий</a>
-					</div>
-				</div>
-
-				<div class="admin-sideout__item<?= $settingsActive ?>">
-					<a class="admin-sideout__link admin-sideout__link--has-flyout<?= $settingsActive ?>" href="/admin/settings/">
-						<span class="admin-sideout__icon">На</span>
-						<span class="admin-sideout__label">Настройки</span>
-					</a>
-					<div class="admin-sideout__flyout">
-						<a class="admin-sideout__flyout-link<?= $configsActive ?>" href="/admin/settings/configs/">Конфиги</a>
-						<a class="admin-sideout__flyout-link<?= $templatesActive ?>" href="/admin/settings/templates/">Шаблоны</a>
-						<div class="admin-sideout__flyout-item<?= $backupActive ?>">
-							<a class="admin-sideout__flyout-link admin-sideout__flyout-link--has-flyout<?= $backupActive ?>" href="/admin/settings/backup/">Резервное копирование</a>
-							<div class="admin-sideout__flyout">
-								<a class="admin-sideout__flyout-link<?= $backupCreateActive ?>" href="/admin/settings/backup/create/">Создание копии</a>
-								<a class="admin-sideout__flyout-link<?= $backupListActive ?>" href="/admin/settings/backup/list/">Список копий</a>
-							</div>
-						</div>
-					</div>
-				</div>
+				<?= $adminMenuHtml ?>
 			</nav>
 		</aside>
 

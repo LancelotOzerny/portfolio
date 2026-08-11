@@ -28,6 +28,7 @@ class App
 	public function init() : void
 	{
 		$this->requireRoutes();
+		$this->requireEventListeners();
 		(new \App\Services\Site\EditModeService())->handleRequest();
 	}
 
@@ -73,6 +74,15 @@ class App
 			{
 				require_once "{$folder}/{$file}";
 			}
+		}
+	}
+
+	protected function requireEventListeners() : void
+	{
+		$file = $this->root . '/App/Events/listeners.php';
+
+		if (is_file($file)) {
+			require_once $file;
 		}
 	}
 }

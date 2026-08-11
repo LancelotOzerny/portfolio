@@ -19,7 +19,7 @@ class DBConnection
 		$login = $connectionData->login ?? 'root';
 		$password = $connectionData->password ?? '';
 		$host = $connectionData->host ?? 'localhost';
-		$charset = $connectionData->charset ?? 'utf8';
+		$charset = $connectionData->charset ?? 'utf8mb4';
 
         if (!self::$connection)
 		{

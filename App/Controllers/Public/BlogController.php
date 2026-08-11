@@ -1,6 +1,7 @@
 <?php
 namespace Controllers\Public;
 
+use App\Services\Blog\ArticleCommentService;
 use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Blog\ArticleRatingService;
 use App\Services\Blog\ArticleViewCounter;
@@ -66,6 +67,7 @@ class BlogController extends BaseController
 			'user_rating' => null,
 			'can_vote' => false,
 		];
+		$comments = [];
 
 		if ($articleData !== null && isset($articleData['id'])) {
 			$articleId = (int) $articleData['id'];
@@ -75,6 +77,8 @@ class BlogController extends BaseController
 
 			$rating = (new ArticleRatingService())->getState($articleId);
 			$articleData['rating'] = $rating['average'];
+			$comments = (new ArticleCommentService())->getTreeForArticle($articleId);
+			$articleData['comments'] = $comments;
 		}
 
 		$isArticleEnabled = (bool) ($articleData['enabled'] ?? true);
@@ -89,11 +93,22 @@ class BlogController extends BaseController
 		Template::getInstance()->setParam('subtitle', 'Детальная страница статьи');
 		Template::getInstance()->setParam('show_contact_cta', false);
 
+		$currentUser = Auth::getInstance()->getCurrentUser();
+		$defaultAuthorName = $currentUser !== null
+			? trim((string) ($currentUser->login ?? ''))
+			: '';
+
+		$comments = $comments !== []
+			? $comments
+			: (is_array($articleData['comments'] ?? null) ? $articleData['comments'] : []);
+
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
 			'topic' => $topicData,
 			'article' => $articleData,
 			'rating' => $rating,
+			'comments' => $comments,
+			'default_author_name' => $defaultAuthorName,
 			'is_admin' => Auth::getInstance()->isAdmin(),
 			'edit_mode' => $this->isEditMode(),
 			'csrf_token' => (new CsrfService())->getToken(),
@@ -131,6 +146,94 @@ class BlogController extends BaseController
 
 		$rating = (int) ($_POST['rating'] ?? 0);
 		$result = (new ArticleRatingService())->vote($articleId, $rating);
+
+		if (!$result['success']) {
+			http_response_code(400);
+		}
+
+		echo json_encode($result, JSON_UNESCAPED_UNICODE);
+	}
+
+	public function commentStore(string $topic, string $article): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$topicData = $this->findTopic($topic);
+		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+		$articleId = (int) ($articleData['id'] ?? 0);
+
+		if ($articleId <= 0) {
+			http_response_code(404);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Статья не найдена.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			http_response_code(403);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Недействительный CSRF-токен.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		$parentId = (int) ($_POST['parent_id'] ?? 0);
+		$currentUser = Auth::getInstance()->getCurrentUser();
+		$authorName = $currentUser !== null
+			? trim((string) ($currentUser->login ?? ''))
+			: 'Аноним';
+		if ($authorName === '') {
+			$authorName = 'Аноним';
+		}
+
+		$result = (new ArticleCommentService())->addComment(
+			$articleId,
+			$authorName,
+			(string) ($_POST['comment'] ?? ''),
+			$parentId > 0 ? $parentId : null
+		);
+
+		if (!$result['success']) {
+			http_response_code(400);
+		}
+
+		echo json_encode($result, JSON_UNESCAPED_UNICODE);
+	}
+
+	public function commentVote(string $topic, string $article): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$topicData = $this->findTopic($topic);
+		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+		$articleId = (int) ($articleData['id'] ?? 0);
+
+		if ($articleId <= 0) {
+			http_response_code(404);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Статья не найдена.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		if (!(new CsrfService())->validate((string) ($_POST['_csrf'] ?? ''))) {
+			http_response_code(403);
+			echo json_encode([
+				'success' => false,
+				'message' => 'Недействительный CSRF-токен.',
+			], JSON_UNESCAPED_UNICODE);
+			return;
+		}
+
+		$result = (new ArticleCommentService())->vote(
+			$articleId,
+			(int) ($_POST['comment_id'] ?? 0),
+			(int) ($_POST['vote'] ?? 0)
+		);
 
 		if (!$result['success']) {
 			http_response_code(400);

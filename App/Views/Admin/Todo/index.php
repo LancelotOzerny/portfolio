@@ -480,22 +480,20 @@ foreach ($columns as $column) {
 
 		state.tasks.forEach((task) => {
 			const taskId = Number(task.id);
-			if (taskId <= 0 || taskId === currentId) {
+			if (taskId <= 0 || taskId === currentId || isTaskDone(task)) {
 				return;
 			}
 
-			const doneLabel = isTaskDone(task) ? ' (готово)' : '';
 			options.push(
 				'<option value="' + taskId + '"' + (selectedIds.has(taskId) ? ' selected' : '') + '>'
 				+ escapeHtml(task.title || ('Задача #' + taskId))
-				+ doneLabel
 				+ '</option>'
 			);
 		});
 
 		dependencySelect.innerHTML = options.length
 			? options.join('')
-			: '<option value="" disabled>Пока нет других задач</option>';
+			: '<option value="" disabled>Пока нет доступных задач</option>';
 	};
 
 	const getSelectedDependencyIds = () => Array.from(dependencySelect.selectedOptions)

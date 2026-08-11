@@ -16,4 +16,5 @@ $router->post('/blog/{topic}/{article}/image/', \Controllers\Public\BlogControll
 $router->post('/blog/{topic}/{article}/file/', \Controllers\Public\BlogController::class,  'uploadDetailFile');
 $router->get('/certificates/', \Controllers\Public\CertificatesController::class,  'index');
 $router->get('/contacts/', \Controllers\Public\ContactsController::class,  'index');
+$router->get('/cookies/', \Controllers\Public\CookiesController::class, 'index');
 $router->get('/auth/logout/', \Controllers\AuthController::class, 'logout');

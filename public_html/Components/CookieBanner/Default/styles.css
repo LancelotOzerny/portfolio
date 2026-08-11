@@ -1,0 +1,103 @@
+.cookie-banner {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 1200;
+	padding: 16px 0;
+	border-top: 1px solid var(--ml-line);
+	background: rgba(255, 255, 255, 0.96);
+	box-shadow: 0 -18px 48px rgba(23, 23, 23, 0.1);
+	backdrop-filter: blur(8px);
+}
+
+.cookie-banner[hidden] {
+	display: none !important;
+}
+
+.cookie-banner__container {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px 20px;
+}
+
+.cookie-banner__text {
+	margin: 0;
+	flex: 1 1 280px;
+	color: var(--ml-muted);
+	font-size: 0.95rem;
+	line-height: 1.55;
+}
+
+.cookie-banner__link {
+	color: var(--ml-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.cookie-banner__actions {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.cookie-banner__button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 148px;
+	min-height: 44px;
+	padding: 0 18px;
+	border: 1px solid var(--ml-ink);
+	border-radius: 6px;
+	background: #fff;
+	color: var(--ml-ink);
+	font: inherit;
+	font-weight: 600;
+	line-height: 1;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.cookie-banner__button:hover {
+	background: var(--ml-ink);
+	color: #fff;
+	transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+	.cookie-banner {
+		padding: 14px 0;
+	}
+
+	.cookie-banner__container {
+		align-items: stretch;
+	}
+
+	.cookie-banner__actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		width: 100%;
+	}
+
+	.cookie-banner__button {
+		width: 100%;
+		min-width: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cookie-banner__button {
+		transition: none;
+	}
+
+	.cookie-banner__button:hover {
+		transform: none;
+	}
+}

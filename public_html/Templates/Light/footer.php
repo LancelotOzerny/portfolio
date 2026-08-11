@@ -35,6 +35,7 @@
 
 		<div class="light-footer__bottom">
 			<span>&copy; 2026 Максим Беляков. Все права защищены.</span>
+			<a href="/cookies/">Политика куки</a>
 		</div>
 	</div>
 </footer>

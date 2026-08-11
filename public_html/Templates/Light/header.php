@@ -15,6 +15,9 @@
 <body class="light-page">
 <?php
 (new \Components\AdminBar\AdminBar())->render();
+(new \Components\CookieBanner\CookieBanner([
+	'cooldown_days' => 365,
+]))->render();
 (new \Components\Navigation\Navigation([
 	'type' => 'Main',
 	'template' => 'College',

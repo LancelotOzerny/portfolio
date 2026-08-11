@@ -27,7 +27,20 @@ class TodoController extends BaseController
 			$columnsModel->ensureDefaults();
 			$columns = $columnsModel->findAllOrdered();
 
-			$tasks = (new AdminTodoTasksModel())->findAllOrdered();
+			$tasksModel = new AdminTodoTasksModel();
+			$plannedColumnId = 0;
+			foreach ($columns as $column) {
+				if ((string) ($column->code ?? '') === 'planned') {
+					$plannedColumnId = (int) ($column->id ?? 0);
+					break;
+				}
+			}
+
+			if ($plannedColumnId > 0) {
+				$this->moveNewlyLockedTasksToPlanned($tasksModel, $columnsModel, $plannedColumnId);
+			}
+
+			$tasks = $tasksModel->findAllOrdered();
 			foreach ($tasks as $task) {
 				$columnId = (int) ($task->column_id ?? 0);
 				if ($columnId <= 0) {
@@ -60,6 +73,7 @@ class TodoController extends BaseController
 			$columnId = (int) ($_POST['column_id'] ?? 0);
 			$title = trim((string) ($_POST['title'] ?? ''));
 			$description = trim((string) ($_POST['description'] ?? ''));
+			$dependencyIds = $this->parseDependencyIds($_POST['dependency_ids'] ?? ($_POST['dependency_id'] ?? null));
 
 			if ($columnId <= 0) {
 				throw new \InvalidArgumentException('Колонка не выбрана.');
@@ -78,18 +92,25 @@ class TodoController extends BaseController
 				throw new \RuntimeException('Колонка не найдена.');
 			}
 
-			$taskId = (new AdminTodoTasksModel())->createTask($columnId, $title, $description);
+			$model = new AdminTodoTasksModel();
+			$dependencyIds = $this->resolveDependencyIds($model, $dependencyIds);
+
+			if ($this->hasActiveDependencies($model, $dependencyIds)) {
+				$columnId = $this->requirePlannedColumnId();
+			}
+
+			$taskId = $model->createTask($columnId, $title, $description, $dependencyIds);
 			if ($taskId <= 0) {
 				throw new \RuntimeException('Не удалось создать задачу.');
 			}
 
-			$task = (new AdminTodoTasksModel())->findById($taskId);
+			$task = $model->findById($taskId);
 			if ($task === null) {
 				throw new \RuntimeException('Задача создана, но не найдена.');
 			}
 
 			return [
-				'task' => $this->mapTask($task),
+				'task' => $this->mapTask($model, $task),
 			];
 		});
 	}
@@ -99,6 +120,7 @@ class TodoController extends BaseController
 		$this->handleJsonRequest(function () use ($id): array {
 			$title = trim((string) ($_POST['title'] ?? ''));
 			$description = trim((string) ($_POST['description'] ?? ''));
+			$dependencyIds = $this->parseDependencyIds($_POST['dependency_ids'] ?? ($_POST['dependency_id'] ?? null));
 
 			if ($title === '') {
 				throw new \InvalidArgumentException('Введите название задачи.');
@@ -114,7 +136,13 @@ class TodoController extends BaseController
 				throw new \RuntimeException('Задача не найдена.');
 			}
 
-			if (!$model->updateTask($id, $title, $description)) {
+			$dependencyIds = $this->resolveDependencyIds($model, $dependencyIds, $id);
+			$columnId = null;
+			if ($this->hasActiveDependencies($model, $dependencyIds)) {
+				$columnId = $this->requirePlannedColumnId();
+			}
+
+			if (!$model->updateTask($id, $title, $description, $dependencyIds, $columnId)) {
 				throw new \RuntimeException('Не удалось сохранить задачу.');
 			}
 
@@ -124,7 +152,7 @@ class TodoController extends BaseController
 			}
 
 			return [
-				'task' => $this->mapTask($updated),
+				'task' => $this->mapTask($model, $updated),
 			];
 		});
 	}
@@ -176,8 +204,40 @@ class TodoController extends BaseController
 				}
 			}
 
-			if (!(new AdminTodoTasksModel())->reorder($columnId, $normalizedIds)) {
+			$model = new AdminTodoTasksModel();
+			$columnsModel = new AdminTodoColumnsModel();
+			$plannedColumnId = $this->findColumnIdByCode($columnsModel, 'planned');
+			$isPlannedColumn = (string) ($column->code ?? '') === 'planned';
+
+			if (!$isPlannedColumn) {
+				$tasksById = [];
+				foreach ($model->findAllOrdered() as $task) {
+					$tasksById[(int) ($task->id ?? 0)] = $task;
+				}
+
+				$columnsById = [];
+				foreach ($columnsModel->findAllOrdered() as $boardColumn) {
+					$columnsById[(int) ($boardColumn->id ?? 0)] = $boardColumn;
+				}
+
+				foreach ($normalizedIds as $taskId) {
+					$task = $tasksById[$taskId] ?? null;
+					if ($task === null) {
+						continue;
+					}
+
+					if ($this->isTaskLocked($model, $task, $tasksById, $columnsById)) {
+						throw new \InvalidArgumentException('Заблокированные задачи можно хранить только в колонке «Планируется».');
+					}
+				}
+			}
+
+			if (!$model->reorder($columnId, $normalizedIds)) {
 				throw new \RuntimeException('Не удалось сохранить порядок задач.');
+			}
+
+			if ($plannedColumnId > 0) {
+				$this->moveNewlyLockedTasksToPlanned($model, $columnsModel, $plannedColumnId);
 			}
 
 			return [
@@ -214,15 +274,184 @@ class TodoController extends BaseController
 		});
 	}
 
-	private function mapTask(object $task): array
+	private function mapTask(AdminTodoTasksModel $model, object $task): array
 	{
+		$dependencyIds = $model->decodeDependencyIds($task->dependency_ids ?? ($task->dependency_id ?? null));
+
 		return [
 			'id' => (int) ($task->id ?? 0),
 			'column_id' => (int) ($task->column_id ?? 0),
 			'title' => (string) ($task->title ?? ''),
 			'description' => (string) ($task->description ?? ''),
+			'dependency_ids' => $dependencyIds,
 			'sort_order' => (int) ($task->sort_order ?? 0),
 		];
+	}
+
+	/**
+	 * @return list<int>
+	 */
+	private function parseDependencyIds(mixed $value): array
+	{
+		if ($value === null || $value === '') {
+			return [];
+		}
+
+		if (!is_array($value)) {
+			$value = [$value];
+		}
+
+		$result = [];
+		foreach ($value as $item) {
+			$id = (int) $item;
+			if ($id > 0) {
+				$result[$id] = $id;
+			}
+		}
+
+		return array_values($result);
+	}
+
+	/**
+	 * @param list<int> $dependencyIds
+	 * @return list<int>
+	 */
+	private function resolveDependencyIds(AdminTodoTasksModel $model, array $dependencyIds, int $taskId = 0): array
+	{
+		$result = [];
+
+		foreach ($dependencyIds as $dependencyId) {
+			$dependencyId = (int) $dependencyId;
+			if ($dependencyId <= 0) {
+				continue;
+			}
+
+			if ($taskId > 0 && $dependencyId === $taskId) {
+				throw new \InvalidArgumentException('Задача не может зависеть от себя.');
+			}
+
+			$dependency = $model->findById($dependencyId);
+			if ($dependency === null) {
+				throw new \InvalidArgumentException('Задача-зависимость не найдена.');
+			}
+
+			$result[$dependencyId] = $dependencyId;
+		}
+
+		return array_values($result);
+	}
+
+	/**
+	 * @param list<int> $dependencyIds
+	 */
+	private function hasActiveDependencies(AdminTodoTasksModel $model, array $dependencyIds): bool
+	{
+		if ($dependencyIds === []) {
+			return false;
+		}
+
+		$columnsModel = new AdminTodoColumnsModel();
+		$columnsById = [];
+		foreach ($columnsModel->findAllOrdered() as $column) {
+			$columnsById[(int) ($column->id ?? 0)] = $column;
+		}
+
+		foreach ($dependencyIds as $dependencyId) {
+			$dependency = $model->findById((int) $dependencyId);
+			if ($dependency === null) {
+				continue;
+			}
+
+			$column = $columnsById[(int) ($dependency->column_id ?? 0)] ?? null;
+			if ($column === null || (string) ($column->code ?? '') !== 'done') {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param array<int, object> $tasksById
+	 * @param array<int, object> $columnsById
+	 */
+	private function isTaskLocked(
+		AdminTodoTasksModel $model,
+		object $task,
+		array $tasksById,
+		array $columnsById
+	): bool {
+		$dependencyIds = $model->decodeDependencyIds($task->dependency_ids ?? ($task->dependency_id ?? null));
+		if ($dependencyIds === []) {
+			return false;
+		}
+
+		foreach ($dependencyIds as $dependencyId) {
+			$parent = $tasksById[$dependencyId] ?? null;
+			if ($parent === null) {
+				continue;
+			}
+
+			$column = $columnsById[(int) ($parent->column_id ?? 0)] ?? null;
+			if ($column === null || (string) ($column->code ?? '') !== 'done') {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function requirePlannedColumnId(): int
+	{
+		$plannedColumnId = $this->findColumnIdByCode(new AdminTodoColumnsModel(), 'planned');
+		if ($plannedColumnId <= 0) {
+			throw new \RuntimeException('Колонка «Планируется» не найдена.');
+		}
+
+		return $plannedColumnId;
+	}
+
+	private function findColumnIdByCode(AdminTodoColumnsModel $columnsModel, string $code): int
+	{
+		foreach ($columnsModel->findAllOrdered() as $column) {
+			if ((string) ($column->code ?? '') === $code) {
+				return (int) ($column->id ?? 0);
+			}
+		}
+
+		return 0;
+	}
+
+	private function moveNewlyLockedTasksToPlanned(
+		AdminTodoTasksModel $model,
+		AdminTodoColumnsModel $columnsModel,
+		int $plannedColumnId
+	): void {
+		$tasksById = [];
+		foreach ($model->findAllOrdered() as $task) {
+			$tasksById[(int) ($task->id ?? 0)] = $task;
+		}
+
+		$columnsById = [];
+		foreach ($columnsModel->findAllOrdered() as $column) {
+			$columnsById[(int) ($column->id ?? 0)] = $column;
+		}
+
+		foreach ($tasksById as $taskId => $task) {
+			if ($taskId <= 0) {
+				continue;
+			}
+
+			if (!$this->isTaskLocked($model, $task, $tasksById, $columnsById)) {
+				continue;
+			}
+
+			if ((int) ($task->column_id ?? 0) === $plannedColumnId) {
+				continue;
+			}
+
+			$model->moveToColumn($taskId, $plannedColumnId);
+		}
 	}
 
 	private function handleJsonRequest(callable $callback): void

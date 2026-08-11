@@ -21,11 +21,30 @@ foreach ($columns as $column) {
 	];
 
 	foreach ($tasksByColumn[$columnId] ?? [] as $task) {
+		$dependencyIds = [];
+		if (isset($task->dependency_ids)) {
+			$decoded = json_decode((string) $task->dependency_ids, true);
+			if (is_array($decoded)) {
+				foreach ($decoded as $dependencyId) {
+					$dependencyId = (int) $dependencyId;
+					if ($dependencyId > 0) {
+						$dependencyIds[] = $dependencyId;
+					}
+				}
+			}
+		} elseif (!empty($task->dependency_id)) {
+			$dependencyId = (int) $task->dependency_id;
+			if ($dependencyId > 0) {
+				$dependencyIds[] = $dependencyId;
+			}
+		}
+
 		$boardPayload['tasks'][] = [
 			'id' => (int) ($task->id ?? 0),
 			'column_id' => $columnId,
 			'title' => (string) ($task->title ?? ''),
 			'description' => (string) ($task->description ?? ''),
+			'dependency_ids' => array_values(array_unique($dependencyIds)),
 		];
 	}
 }
@@ -136,12 +155,62 @@ foreach ($columns as $column) {
 			cursor: grabbing;
 		}
 
+		.admin-todo-task--locked {
+			background: #f1f3f5;
+			border-color: #dee2e6;
+			border-left-color: #adb5bd;
+			color: #6c757d;
+			cursor: pointer;
+			box-shadow: none;
+		}
+
+		.admin-todo-task--locked:hover {
+			transform: none;
+			box-shadow: none;
+		}
+
+		.admin-todo-task--locked[draggable="false"] {
+			cursor: pointer;
+		}
+
+		.admin-todo-task__head {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.45rem;
+		}
+
+		.admin-todo-task__lock {
+			flex: 0 0 auto;
+			width: 0.95rem;
+			height: 0.95rem;
+			margin-top: 0.12rem;
+			color: #6c757d;
+		}
+
+		.admin-todo-task__lock svg {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+
 		.admin-todo-task__title {
 			margin: 0;
 			font-size: 0.95rem;
 			font-weight: 600;
 			color: #212529;
 			word-break: break-word;
+		}
+
+		.admin-todo-task--locked .admin-todo-task__title {
+			color: #6c757d;
+			font-weight: 500;
+		}
+
+		.admin-todo-task__hint {
+			margin: 0.35rem 0 0;
+			color: #868e96;
+			font-size: 0.78rem;
+			line-height: 1.35;
 		}
 
 		.admin-todo-empty {
@@ -192,9 +261,15 @@ foreach ($columns as $column) {
 							<label class="form-label" for="todoTaskTitle">Название</label>
 							<input type="text" class="form-control" id="todoTaskTitle" maxlength="255" required>
 						</div>
-						<div class="mb-0">
+						<div class="mb-3">
 							<label class="form-label" for="todoTaskDescription">Описание</label>
 							<textarea class="form-control" id="todoTaskDescription" rows="6"></textarea>
+						</div>
+						<div class="mb-0">
+							<label class="form-label" for="todoTaskDependency">Зависит от задач</label>
+							<select class="form-select" id="todoTaskDependency" multiple size="6">
+							</select>
+							<div class="form-text">Можно выбрать несколько задач. Заблокированные задачи всегда остаются в «Планируется» и не перетаскиваются, пока зависимости не выполнены.</div>
 						</div>
 						<div class="alert alert-danger d-none mt-3 mb-0" id="todoTaskError"></div>
 					</div>
@@ -230,6 +305,7 @@ foreach ($columns as $column) {
 	const formEl = document.getElementById('todoTaskForm');
 	const titleInput = document.getElementById('todoTaskTitle');
 	const descriptionInput = document.getElementById('todoTaskDescription');
+	const dependencySelect = document.getElementById('todoTaskDependency');
 	const taskIdInput = document.getElementById('todoTaskId');
 	const columnIdInput = document.getElementById('todoTaskColumnId');
 	const modalTitle = document.getElementById('todoTaskModalTitle');
@@ -240,6 +316,8 @@ foreach ($columns as $column) {
 	let dragTaskId = 0;
 	let suppressClick = false;
 	let modalBackdrop = null;
+
+	const lockIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>';
 
 	const getModal = () => {
 		if (!modalEl || !window.bootstrap || !window.bootstrap.Modal) {
@@ -301,7 +379,128 @@ foreach ($columns as $column) {
 
 	const getColumn = (columnId) => state.columns.find((column) => Number(column.id) === Number(columnId)) || null;
 
+	const getTask = (taskId) => state.tasks.find((task) => Number(task.id) === Number(taskId)) || null;
+
 	const getTasksForColumn = (columnId) => state.tasks.filter((task) => Number(task.column_id) === Number(columnId));
+
+	const getDoneColumnId = () => {
+		const doneColumn = state.columns.find((column) => String(column.code) === 'done');
+		return doneColumn ? Number(doneColumn.id) : 0;
+	};
+
+	const getPlannedColumnId = () => {
+		const plannedColumn = state.columns.find((column) => String(column.code) === 'planned');
+		return plannedColumn ? Number(plannedColumn.id) : 0;
+	};
+
+	const isTaskDone = (task) => {
+		if (!task) {
+			return false;
+		}
+
+		const doneColumnId = getDoneColumnId();
+		return doneColumnId > 0 && Number(task.column_id) === doneColumnId;
+	};
+
+	const isTaskLocked = (task) => {
+		const dependencyIds = normalizeDependencyIds(task && task.dependency_ids);
+		if (dependencyIds.length === 0) {
+			return false;
+		}
+
+		return dependencyIds.some((dependencyId) => {
+			const parent = getTask(dependencyId);
+			return parent && !isTaskDone(parent);
+		});
+	};
+
+	const getBlockingParents = (task) => {
+		return normalizeDependencyIds(task && task.dependency_ids)
+			.map((dependencyId) => getTask(dependencyId))
+			.filter((parent) => parent && !isTaskDone(parent));
+	};
+
+	const normalizeDependencyIds = (value) => {
+		if (!Array.isArray(value)) {
+			const singleId = Number(value || 0);
+			return singleId > 0 ? [singleId] : [];
+		}
+
+		const result = [];
+		value.forEach((item) => {
+			const id = Number(item);
+			if (id > 0 && !result.includes(id)) {
+				result.push(id);
+			}
+		});
+		return result;
+	};
+
+	const removeDependencyFromState = (parentId) => {
+		const id = Number(parentId);
+		if (id <= 0) {
+			return;
+		}
+
+		state.tasks = state.tasks.map((task) => {
+			const dependencyIds = normalizeDependencyIds(task.dependency_ids).filter((dependencyId) => dependencyId !== id);
+			return {
+				...task,
+				dependency_ids: dependencyIds,
+			};
+		});
+	};
+
+	const ensureLockedTasksInPlanned = () => {
+		const plannedColumnId = getPlannedColumnId();
+		if (plannedColumnId <= 0) {
+			return false;
+		}
+
+		let changed = false;
+		state.tasks = state.tasks.map((task) => {
+			if (!isTaskLocked(task) || Number(task.column_id) === plannedColumnId) {
+				return task;
+			}
+
+			changed = true;
+			return {
+				...task,
+				column_id: plannedColumnId,
+			};
+		});
+
+		return changed;
+	};
+
+	const fillDependencyOptions = (currentTaskId, selectedDependencyIds) => {
+		const currentId = Number(currentTaskId || 0);
+		const selectedIds = new Set(normalizeDependencyIds(selectedDependencyIds));
+		const options = [];
+
+		state.tasks.forEach((task) => {
+			const taskId = Number(task.id);
+			if (taskId <= 0 || taskId === currentId) {
+				return;
+			}
+
+			const doneLabel = isTaskDone(task) ? ' (готово)' : '';
+			options.push(
+				'<option value="' + taskId + '"' + (selectedIds.has(taskId) ? ' selected' : '') + '>'
+				+ escapeHtml(task.title || ('Задача #' + taskId))
+				+ doneLabel
+				+ '</option>'
+			);
+		});
+
+		dependencySelect.innerHTML = options.length
+			? options.join('')
+			: '<option value="" disabled>Пока нет других задач</option>';
+	};
+
+	const getSelectedDependencyIds = () => Array.from(dependencySelect.selectedOptions)
+		.map((option) => Number(option.value))
+		.filter((id) => id > 0);
 
 	const showError = (message) => {
 		errorEl.textContent = message || 'Ошибка.';
@@ -346,6 +545,7 @@ foreach ($columns as $column) {
 		columnIdInput.value = String(columnId);
 		titleInput.value = '';
 		descriptionInput.value = '';
+		fillDependencyOptions(0, []);
 		modalTitle.textContent = 'Новая задача';
 		deleteBtn.classList.add('d-none');
 		showModal();
@@ -353,7 +553,7 @@ foreach ($columns as $column) {
 	};
 
 	const openEditModal = (taskId) => {
-		const task = state.tasks.find((item) => Number(item.id) === Number(taskId));
+		const task = getTask(taskId);
 		if (!task) {
 			return;
 		}
@@ -363,7 +563,8 @@ foreach ($columns as $column) {
 		columnIdInput.value = String(task.column_id);
 		titleInput.value = task.title || '';
 		descriptionInput.value = task.description || '';
-		modalTitle.textContent = 'Задача';
+		fillDependencyOptions(task.id, task.dependency_ids || []);
+		modalTitle.textContent = isTaskLocked(task) ? 'Задача (ожидает зависимости)' : 'Задача';
 		deleteBtn.classList.remove('d-none');
 		showModal();
 		window.setTimeout(() => titleInput.focus(), 150);
@@ -403,16 +604,31 @@ foreach ($columns as $column) {
 		boardEl.innerHTML = state.columns.map((column) => {
 			const tasks = getTasksForColumn(column.id);
 			const tasksHtml = tasks.length
-				? tasks.map((task) => `
+				? tasks.map((task) => {
+					const locked = isTaskLocked(task);
+					const blockingParents = locked ? getBlockingParents(task) : [];
+					const lockHtml = locked
+						? '<span class="admin-todo-task__lock" title="Ожидает выполнения других задач">' + lockIconSvg + '</span>'
+						: '';
+					const hintHtml = blockingParents.length
+						? '<p class="admin-todo-task__hint">Ждёт: ' + escapeHtml(blockingParents.map((parent) => parent.title || ('#' + parent.id)).join(', ')) + '</p>'
+						: '';
+
+					return `
 					<article
-						class="admin-todo-task"
-						draggable="true"
+						class="admin-todo-task${locked ? ' admin-todo-task--locked' : ''}"
+						draggable="${locked ? 'false' : 'true'}"
 						data-task-id="${Number(task.id)}"
 						style="--todo-color: ${escapeHtml(column.color)}"
 					>
-						<p class="admin-todo-task__title">${escapeHtml(task.title)}</p>
+						<div class="admin-todo-task__head">
+							${lockHtml}
+							<p class="admin-todo-task__title">${escapeHtml(task.title)}</p>
+						</div>
+						${hintHtml}
 					</article>
-				`).join('')
+				`;
+				}).join('')
 				: '<p class="admin-todo-empty">Пока нет задач</p>';
 
 			return `
@@ -451,20 +667,15 @@ foreach ($columns as $column) {
 	};
 
 	const persistBoardOrder = async () => {
-		const columnOrders = state.columns.map((column) => {
-			const listEl = boardEl.querySelector('[data-column-list="' + column.id + '"]');
-			return {
-				columnId: Number(column.id),
-				orderedIds: listEl ? collectOrderedIds(listEl) : [],
-			};
-		});
-
 		syncBoardFromDom();
+		ensureLockedTasksInPlanned();
+		render();
 
-		for (const columnOrder of columnOrders) {
+		for (const column of state.columns) {
+			const orderedIds = getTasksForColumn(column.id).map((task) => Number(task.id)).filter((id) => id > 0);
 			await postForm('/admin/development/todo/tasks/reorder/', {
-				column_id: columnOrder.columnId,
-				ordered_ids: columnOrder.orderedIds,
+				column_id: Number(column.id),
+				ordered_ids: orderedIds,
 			});
 		}
 	};
@@ -506,6 +717,12 @@ foreach ($columns as $column) {
 			});
 
 			taskEl.addEventListener('dragstart', (event) => {
+				const task = getTask(Number(taskEl.dataset.taskId));
+				if (!task || isTaskLocked(task) || taskEl.getAttribute('draggable') === 'false') {
+					event.preventDefault();
+					return;
+				}
+
 				dragTaskId = Number(taskEl.dataset.taskId);
 				suppressClick = true;
 				taskEl.classList.add('is-dragging');
@@ -586,13 +803,24 @@ foreach ($columns as $column) {
 		clearError();
 
 		const taskId = Number(taskIdInput.value || 0);
-		const columnId = Number(columnIdInput.value || 0);
+		const plannedColumnId = getPlannedColumnId();
+		let columnId = Number(columnIdInput.value || 0);
 		const title = titleInput.value.trim();
 		const description = descriptionInput.value.trim();
+		const dependencyIds = getSelectedDependencyIds();
+		const willBeLocked = dependencyIds.some((dependencyId) => {
+			const parent = getTask(dependencyId);
+			return parent && !isTaskDone(parent);
+		});
 
 		if (!title) {
 			showError('Введите название задачи.');
 			return;
+		}
+
+		if (willBeLocked && plannedColumnId > 0) {
+			columnId = plannedColumnId;
+			columnIdInput.value = String(plannedColumnId);
 		}
 
 		try {
@@ -600,6 +828,7 @@ foreach ($columns as $column) {
 				const result = await postForm('/admin/development/todo/tasks/' + taskId + '/update/', {
 					title,
 					description,
+					dependency_ids: dependencyIds,
 				});
 				const index = state.tasks.findIndex((task) => Number(task.id) === taskId);
 				if (index >= 0) {
@@ -610,12 +839,14 @@ foreach ($columns as $column) {
 					column_id: columnId,
 					title,
 					description,
+					dependency_ids: dependencyIds,
 				});
 				if (result.task) {
 					state.tasks.push(result.task);
 				}
 			}
 
+			ensureLockedTasksInPlanned();
 			hideModal();
 			render();
 		} catch (error) {
@@ -637,6 +868,7 @@ foreach ($columns as $column) {
 
 		try {
 			await postForm('/admin/development/todo/tasks/' + taskId + '/delete/', {});
+			removeDependencyFromState(taskId);
 			state.tasks = state.tasks.filter((task) => Number(task.id) !== taskId);
 			hideModal();
 			render();
@@ -645,6 +877,7 @@ foreach ($columns as $column) {
 		}
 	});
 
+	ensureLockedTasksInPlanned();
 	render();
 })();
 </script>

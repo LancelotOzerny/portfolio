@@ -38,7 +38,7 @@
 	function handleModalClick(event) {
 		const modal = event.currentTarget;
 
-		if (event.target === modal || event.target.closest('[data-component-edit-close]')) {
+		if (event.target.closest('[data-component-edit-close]')) {
 			closeModal(modal);
 			return;
 		}

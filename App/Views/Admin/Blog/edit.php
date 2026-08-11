@@ -45,6 +45,9 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 				<li class="nav-item" role="presentation">
 					<button class="nav-link" id="tab-detail-link" data-bs-toggle="tab" data-bs-target="#tab-detail" type="button" role="tab">Detail</button>
 				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="tab-seo-link" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab">SEO</button>
+				</li>
 			</ul>
 		</div>
 
@@ -152,6 +155,16 @@ $formAction = $isCreate ? '/admin/content/blog/rubrics/create/' : '/admin/conten
 							<textarea name="detail_text" rows="10" class="form-control font-monospace" spellcheck="false"><?= htmlspecialchars($detailText) ?></textarea>
 						</div>
 					</div>
+				</div>
+
+				<div class="tab-pane fade" id="tab-seo" role="tabpanel" aria-labelledby="tab-seo-link">
+					<?php
+					$seoForm = is_array($data['seoForm'] ?? null) ? $data['seoForm'] : [];
+					$previewTitle = $title;
+					$previewDescription = $description;
+					$previewImage = $imagePath;
+					include __DIR__ . '/_seo-tab.php';
+					?>
 				</div>
 			</div>
 		</div>

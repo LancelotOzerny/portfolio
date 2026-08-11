@@ -6,6 +6,7 @@ use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Blog\ArticleRatingService;
 use App\Services\Blog\ArticleViewCounter;
 use App\Services\Blog\BlogDateFormatter;
+use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
 use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
@@ -13,7 +14,6 @@ use App\Services\Seo\SeoValidator;
 use App\Services\Security\CsrfService;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
-use Models\SeoMetaModel;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
 use Modules\Main\Template;
@@ -48,7 +48,10 @@ class BlogController extends BaseController
 				(string) $topicId,
 				[
 					'title' => $topicData['name'] ?? 'Тема не найдена',
-					'description' => $topicData['description'] ?? 'Тестовая тема блога.',
+					'description' => $topicData['preview_text'] ?? ($topicData['description'] ?? 'Тестовая тема блога.'),
+					'og_title' => $topicData['name'] ?? '',
+					'og_description' => $topicData['preview_text'] ?? ($topicData['description'] ?? ''),
+					'og_image' => $topicData['image'] ?? ($topicData['preview_image'] ?? ''),
 					'robots_index' => true,
 				],
 				$path
@@ -67,7 +70,7 @@ class BlogController extends BaseController
 
 		$editMode = $this->isEditMode();
 		$seoForm = ($editMode && $topicId > 0)
-			? $this->getSeoFormData('blog_topic', (string) $topicId)
+			? (new BlogSeoService())->getFormData(BlogSeoService::TYPE_TOPIC, (string) $topicId)
 			: ['title' => '', 'description' => '', 'keywords' => ''];
 
 		Template::getInstance()->showHeader();
@@ -118,6 +121,9 @@ class BlogController extends BaseController
 				[
 					'title' => $articleData['title'] ?? 'Статья не найдена',
 					'description' => $articleData['preview'] ?? 'Тестовая статья блога.',
+					'og_title' => $articleData['title'] ?? '',
+					'og_description' => $articleData['preview'] ?? '',
+					'og_image' => $articleData['preview_image_path'] ?? '',
 					'robots_index' => $isArticleEnabled,
 				],
 				$path
@@ -145,7 +151,7 @@ class BlogController extends BaseController
 
 		$editMode = $this->isEditMode();
 		$seoForm = ($editMode && $articleId > 0)
-			? $this->getSeoFormData('blog_article', (string) $articleId)
+			? (new BlogSeoService())->getFormData(BlogSeoService::TYPE_ARTICLE, (string) $articleId)
 			: ['title' => '', 'description' => '', 'keywords' => ''];
 
 		Template::getInstance()->showHeader();
@@ -430,7 +436,11 @@ class BlogController extends BaseController
 
 		try {
 			$fields = (new SeoValidator())->validateBlogSeoForm($_POST);
-			$this->saveEntitySeo('blog_topic', (string) ((int) $dbTopic->id), $fields);
+			(new BlogSeoService())->saveFromPublicFields(
+				BlogSeoService::TYPE_TOPIC,
+				(string) ((int) $dbTopic->id),
+				$fields
+			);
 		} catch (Throwable $e) {
 			$message = trim($e->getMessage());
 			$this->redirectToTopic($topic, $message !== '' ? $message : 'Не удалось сохранить SEO.');
@@ -518,7 +528,11 @@ class BlogController extends BaseController
 
 		try {
 			$fields = (new SeoValidator())->validateBlogSeoForm($_POST);
-			$this->saveEntitySeo('blog_article', (string) ((int) $dbArticle->id), $fields);
+			(new BlogSeoService())->saveFromPublicFields(
+				BlogSeoService::TYPE_ARTICLE,
+				(string) ((int) $dbArticle->id),
+				$fields
+			);
 		} catch (Throwable $e) {
 			$message = trim($e->getMessage());
 			$this->redirectToArticle($topic, $article, $message !== '' ? $message : 'Не удалось сохранить SEO.');
@@ -621,6 +635,8 @@ class BlogController extends BaseController
 				'name' => (string) ($topic->title ?? 'Без названия'),
 				'slug' => $codeService->resolvePublicSegment((string) ($topic->code ?? ''), $topicId),
 				'code' => (string) ($topic->code ?? ''),
+				'preview_text' => (string) ($topic->preview_text ?? ''),
+				'image' => (string) ($topic->image_path ?? ''),
 				'description' => trim((string) ($topic->detail_text ?? '')) !== ''
 					? (string) ($topic->detail_text ?? '')
 					: (string) ($topic->preview_text ?? ''),
@@ -689,6 +705,7 @@ class BlogController extends BaseController
 				'image' => trim((string) ($article->preview_image_path ?? '')) !== ''
 					? (string) ($article->preview_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',
+				'preview_image_path' => (string) ($article->preview_image_path ?? ''),
 				'date' => $dateFormatter->format((string) ($article->created_at ?? '')),
 				'rating' => (float) ($ratingSummary['average'] ?? 0),
 				'rating_count' => (int) ($ratingSummary['count'] ?? 0),
@@ -755,55 +772,6 @@ class BlogController extends BaseController
 			return $model->findByCode($slug);
 		} catch (Throwable) {
 			return null;
-		}
-	}
-
-	/**
-	 * @return array{title: string, description: string, keywords: string}
-	 */
-	private function getSeoFormData(string $type, string $key): array
-	{
-		try {
-			$record = (new SeoMetaModel())->findByTarget($type, $key);
-		} catch (Throwable) {
-			$record = null;
-		}
-
-		return [
-			'title' => (string) ($record->title ?? ''),
-			'description' => (string) ($record->description ?? ''),
-			'keywords' => (string) ($record->keywords ?? ''),
-		];
-	}
-
-	/**
-	 * @param array{title: ?string, description: ?string, keywords: ?string} $fields
-	 */
-	private function saveEntitySeo(string $type, string $key, array $fields): void
-	{
-		$model = new SeoMetaModel();
-		$existing = null;
-
-		try {
-			$existing = $model->findByTarget($type, $key);
-		} catch (Throwable) {
-			$existing = null;
-		}
-
-		$payload = [
-			'title' => $fields['title'],
-			'description' => $fields['description'],
-			'keywords' => $fields['keywords'],
-			'canonical_url' => $existing->canonical_url ?? null,
-			'robots_index' => (int) ($existing->robots_index ?? 1),
-			'robots_follow' => (int) ($existing->robots_follow ?? 1),
-			'og_title' => $existing->og_title ?? null,
-			'og_description' => $existing->og_description ?? null,
-			'og_image' => $existing->og_image ?? null,
-		];
-
-		if (!$model->saveByTarget($type, $key, $payload)) {
-			throw new \RuntimeException('Не удалось сохранить SEO.');
 		}
 	}
 

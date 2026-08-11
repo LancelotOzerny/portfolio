@@ -63,8 +63,8 @@ class SeoService
 			$description = $this->pickNonEmpty($description, (string) ($db->description ?? ''));
 			$keywords = $this->pickNonEmpty($keywords, (string) ($db->keywords ?? ''));
 			$canonical = trim((string) ($db->canonical_url ?? ''));
-			$ogTitle = trim((string) ($db->og_title ?? ''));
-			$ogDescription = trim((string) ($db->og_description ?? ''));
+			$ogTitle = $this->pickNonEmpty($ogTitle, (string) ($db->og_title ?? ''));
+			$ogDescription = $this->pickNonEmpty($ogDescription, (string) ($db->og_description ?? ''));
 			$ogImage = $this->pickNonEmpty($ogImage, $this->normalizeNullableString($db->og_image ?? null));
 			$index = (int) ($db->robots_index ?? 1) === 1;
 			$follow = (int) ($db->robots_follow ?? 1) === 1;

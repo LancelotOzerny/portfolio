@@ -2,6 +2,7 @@
 
 namespace Controllers\Admin;
 
+use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
 use Models\BlogArticleCommentsModel;
 use Models\BlogArticlesModel;
@@ -131,6 +132,7 @@ class BlogController extends BaseController
 			'article' => null,
 			'topics' => $topics,
 			'selectedTopicIds' => $this->resolvePreselectedTopicIds($topics),
+			'seoForm' => $this->emptySeoForm(),
 			'saveSuccess' => false,
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
@@ -182,6 +184,8 @@ class BlogController extends BaseController
 			if (!$model->replaceTopicIds($articleId, $normalized['topic_ids'])) {
 				throw new \RuntimeException('Не удалось сохранить рубрики статьи.');
 			}
+
+			$this->saveBlogSeo(BlogSeoService::TYPE_ARTICLE, (string) $articleId);
 		} catch (Throwable $e) {
 			$message = trim($e->getMessage());
 			if ($message === '') {
@@ -224,6 +228,7 @@ class BlogController extends BaseController
 			'article' => $article,
 			'topics' => $this->loadTopics(),
 			'selectedTopicIds' => $selectedTopicIds,
+			'seoForm' => (new BlogSeoService())->getFormData(BlogSeoService::TYPE_ARTICLE, (string) $id),
 			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
@@ -281,6 +286,8 @@ class BlogController extends BaseController
 				throw new \RuntimeException('Не удалось сохранить рубрики статьи.');
 			}
 
+			$this->saveBlogSeo(BlogSeoService::TYPE_ARTICLE, (string) $id);
+
 			header('Location: /admin/content/blog/articles/' . $id . '/?saved=1');
 			return;
 		} catch (Throwable $e) {
@@ -324,6 +331,7 @@ class BlogController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('edit', [
 			'topic' => null,
+			'seoForm' => $this->emptySeoForm(),
 			'saveSuccess' => false,
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
@@ -391,6 +399,8 @@ class BlogController extends BaseController
 				$detailImagePath,
 				isset($_POST['enabled']) ? 1 : 0
 			);
+
+			$this->saveBlogSeo(BlogSeoService::TYPE_TOPIC, (string) $topicId);
 		} catch (Throwable $e) {
 			$message = trim($e->getMessage());
 			if ($message === '') {
@@ -425,6 +435,7 @@ class BlogController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('edit', [
 			'topic' => $topic,
+			'seoForm' => (new BlogSeoService())->getFormData(BlogSeoService::TYPE_TOPIC, (string) $id),
 			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
@@ -489,6 +500,8 @@ class BlogController extends BaseController
 			if (!$model->updateEditorData($id, $title, $code, $description, $imagePath, $detailText, $detailImagePath, $enabled)) {
 				throw new \RuntimeException('Не удалось сохранить изменения.');
 			}
+
+			$this->saveBlogSeo(BlogSeoService::TYPE_TOPIC, (string) $id);
 
 			header('Location: /admin/content/blog/rubrics/' . $id . '/?saved=1');
 			return;
@@ -769,6 +782,25 @@ class BlogController extends BaseController
 		}
 
 		return strtolower(trim($mime));
+	}
+
+	/**
+	 * @return array{title: string, description: string, keywords: string, robots_index: bool, robots_follow: bool}
+	 */
+	private function emptySeoForm(): array
+	{
+		return [
+			'title' => '',
+			'description' => '',
+			'keywords' => '',
+			'robots_index' => true,
+			'robots_follow' => true,
+		];
+	}
+
+	private function saveBlogSeo(string $type, string $key): void
+	{
+		(new BlogSeoService())->saveFromAdminPost($type, $key, $_POST);
 	}
 
 	private function ensureAdmin(): bool

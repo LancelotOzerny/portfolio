@@ -4,10 +4,23 @@ namespace Models;
 
 use Modules\DBWork\QueryBuilder;
 use Modules\Main\BaseModel;
+use Throwable;
 
 class BlogArticleCommentsModel extends BaseModel
 {
 	protected string $table = 'blog_article_comments';
+
+	/**
+	 * @return list<object>
+	 */
+	public function findAllForAdmin(): array
+	{
+		try {
+			return $this->findAllForAdminViaRelations();
+		} catch (Throwable) {
+			return $this->findAllForAdminLegacy();
+		}
+	}
 
 	public function findByArticleId(int $articleId): array
 	{
@@ -210,5 +223,51 @@ class BlogArticleCommentsModel extends BaseModel
 		]);
 
 		return $this->execInsertQuery($insert) > 0;
+	}
+
+	/**
+	 * @return list<object>
+	 */
+	private function findAllForAdminViaRelations(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw(
+				'blog_article_comments.id,
+				blog_article_comments.updated_by_name,
+				blog_article_comments.comment_text,
+				blog_article_comments.article_id,
+				MIN(blog_articles.code) AS article_code,
+				MIN(blog_topics.id) AS topic_id,
+				MIN(blog_topics.code) AS topic_code'
+			)
+			->join('blog_articles', 'blog_article_comments.article_id', 'blog_articles.id', 'LEFT')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'LEFT')
+			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'LEFT')
+			->groupBy('blog_article_comments.id')
+			->orderBy('blog_article_comments.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
+	/**
+	 * @return list<object>
+	 */
+	private function findAllForAdminLegacy(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->selectRaw(
+				'blog_article_comments.id,
+				blog_article_comments.updated_by_name,
+				blog_article_comments.comment_text,
+				blog_article_comments.article_id,
+				blog_articles.code AS article_code,
+				blog_topics.id AS topic_id,
+				blog_topics.code AS topic_code'
+			)
+			->join('blog_articles', 'blog_article_comments.article_id', 'blog_articles.id', 'LEFT')
+			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'LEFT')
+			->orderBy('blog_article_comments.id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
 	}
 }

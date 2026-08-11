@@ -3,6 +3,7 @@
 namespace Controllers\Admin;
 
 use App\Services\Blog\SymbolicCodeService;
+use Models\BlogArticleCommentsModel;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Modules\Main\Auth;
@@ -60,6 +61,58 @@ class BlogController extends BaseController
 			'articles' => $articles,
 			'error' => $error,
 			'flash' => is_array($flash) ? $flash : null,
+		]);
+		Template::getInstance()->showFooter();
+	}
+
+	public function comments(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$comments = [];
+		$error = '';
+		$codeService = new SymbolicCodeService();
+
+		try {
+			$rows = (new BlogArticleCommentsModel())->findAllForAdmin();
+			foreach ($rows as $row) {
+				$commentId = (int) ($row->id ?? 0);
+				$articleId = (int) ($row->article_id ?? 0);
+				$topicId = (int) ($row->topic_id ?? 0);
+				$author = trim((string) ($row->updated_by_name ?? ''));
+				$articleUrl = '';
+
+				if ($articleId > 0 && $topicId > 0) {
+					$topicSegment = $codeService->resolvePublicSegment(
+						(string) ($row->topic_code ?? ''),
+						$topicId
+					);
+					$articleSegment = $codeService->resolvePublicSegment(
+						(string) ($row->article_code ?? ''),
+						$articleId
+					);
+					$articleUrl = '/blog/' . $topicSegment . '/' . $articleSegment . '/';
+				}
+
+				$comments[] = [
+					'id' => $commentId,
+					'author' => $author !== '' ? $author : 'Аноним',
+					'text' => (string) ($row->comment_text ?? ''),
+					'article_id' => $articleId,
+					'article_url' => $articleUrl,
+				];
+			}
+		} catch (Throwable $exception) {
+			$error = $exception->getMessage();
+		}
+
+		Template::getInstance()->setParam('title', 'Комментарии блога');
+		Template::getInstance()->showHeader();
+		$this->render('comments', [
+			'comments' => $comments,
+			'error' => $error,
 		]);
 		Template::getInstance()->showFooter();
 	}

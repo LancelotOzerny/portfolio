@@ -13,6 +13,7 @@ $projectsListActive = str_starts_with($currentPath, '/admin/projects/') ? ' is-a
 $blogActive = str_starts_with($currentPath, '/admin/content/blog/') ? ' is-active' : '';
 $blogRubricsActive = str_starts_with($currentPath, '/admin/content/blog/rubrics/') || $currentPath === '/admin/content/blog/' ? ' is-active' : '';
 $blogArticlesActive = str_starts_with($currentPath, '/admin/content/blog/articles/') ? ' is-active' : '';
+$blogCommentsActive = str_starts_with($currentPath, '/admin/content/blog/comments/') ? ' is-active' : '';
 $tagsActive = str_starts_with($currentPath, '/admin/content/tags/') ? ' is-active' : '';
 $galleryActive = str_starts_with($currentPath, '/admin/content/gallery/') ? ' is-active' : '';
 $usersActive = str_starts_with($currentPath, '/admin/users/') ? ' is-active' : '';
@@ -279,6 +280,7 @@ $backupListActive = str_starts_with($currentPath, '/admin/settings/backup/list/'
 							<div class="admin-sideout__flyout">
 								<a class="admin-sideout__flyout-link<?= $blogRubricsActive ?>" href="/admin/content/blog/rubrics/">Рубрики</a>
 								<a class="admin-sideout__flyout-link<?= $blogArticlesActive ?>" href="/admin/content/blog/articles/">Статьи</a>
+								<a class="admin-sideout__flyout-link<?= $blogCommentsActive ?>" href="/admin/content/blog/comments/">Комментарии</a>
 							</div>
 						</div>
 						<a class="admin-sideout__flyout-link<?= $galleryActive ?>" href="/admin/content/gallery/">Галерея</a>

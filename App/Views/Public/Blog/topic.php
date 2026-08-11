@@ -56,7 +56,14 @@ $detailImagePath = trim((string) ($topic['detail_image_path'] ?? ''));
 	<div class="site-container">
 		<div class="blog-articles blog-articles_cards">
 			<?php if ($isEditMode): ?>
-				<a class="blog-article-card blog-article-card_add" href="/admin/content/blog/articles/create/">
+				<?php
+				$createArticleUrl = '/admin/content/blog/articles/create/';
+				$currentTopicId = (int) ($topic['id'] ?? 0);
+				if ($currentTopicId > 0) {
+					$createArticleUrl .= '?topic_id=' . $currentTopicId;
+				}
+				?>
+				<a class="blog-article-card blog-article-card_add" href="<?= htmlspecialchars($createArticleUrl) ?>">
 					<span class="blog-add-card__plus" aria-hidden="true">+</span>
 					<span class="blog-add-card__text">Добавить статью</span>
 				</a>

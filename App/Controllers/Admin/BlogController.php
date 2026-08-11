@@ -70,12 +70,14 @@ class BlogController extends BaseController
 			return;
 		}
 
+		$topics = $this->loadTopics();
+
 		Template::getInstance()->setParam('title', 'Создание статьи блога');
 		Template::getInstance()->showHeader();
 		$this->render('article-edit', [
 			'article' => null,
-			'topics' => $this->loadTopics(),
-			'selectedTopicIds' => [],
+			'topics' => $topics,
+			'selectedTopicIds' => $this->resolvePreselectedTopicIds($topics),
 			'saveSuccess' => false,
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
 		]);
@@ -661,6 +663,26 @@ class BlogController extends BaseController
 		} catch (Throwable) {
 			return [];
 		}
+	}
+
+	/**
+	 * @param array<int, object> $topics
+	 * @return list<int>
+	 */
+	private function resolvePreselectedTopicIds(array $topics): array
+	{
+		$topicId = (int) ($_GET['topic_id'] ?? 0);
+		if ($topicId <= 0) {
+			return [];
+		}
+
+		foreach ($topics as $topic) {
+			if ((int) ($topic->id ?? 0) === $topicId) {
+				return [$topicId];
+			}
+		}
+
+		return [];
 	}
 
 	private function detectImageMimeType(string $filePath): string

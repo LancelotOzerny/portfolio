@@ -2,6 +2,9 @@
 
 namespace Modules\Main;
 
+use App\Events\Page\PageBuildEndEvent;
+use App\Events\Page\PageBuildStartEvent;
+use Modules\Main\Event\EventDispatcher;
 use Modules\Main\ViewData;
 
 class App
@@ -34,7 +37,11 @@ class App
 
 	public function start() : void
 	{
-		$match = Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+		$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+		$uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+		$path = parse_url($uri, PHP_URL_PATH) ?: '/';
+
+		$match = Router::getInstance()->dispatch($method, $uri);
 
 		if (!$match)
 		{
@@ -45,6 +52,14 @@ class App
 		[$controllerClass, $action, $paramsAssoc] = $match;
 		$controller = new $controllerClass();
 		$params = array_values($paramsAssoc);
+
+		EventDispatcher::getInstance()->dispatch(new PageBuildStartEvent(
+			$method,
+			$path,
+			$controllerClass,
+			$action,
+			$paramsAssoc
+		));
 
 		ob_start();
 		call_user_func_array([$controller, $action], $params);
@@ -59,7 +74,17 @@ class App
 		$html = str_replace('</body>', $jsLines . '</body>', $html);
 		$html = str_replace('</head>', $cssLines . '</head>', $html);
 
-		echo $html;
+		$endEvent = new PageBuildEndEvent(
+			$method,
+			$path,
+			$controllerClass,
+			$action,
+			$paramsAssoc,
+			$html
+		);
+		EventDispatcher::getInstance()->dispatch($endEvent);
+
+		echo $endEvent->getHtml();
 	}
 
 

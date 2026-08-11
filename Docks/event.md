@@ -231,8 +231,64 @@ EventDispatcher::getInstance()->listen(
 );
 ```
 
+### `App\Events\Page\PageBuildStartEvent`
+
+Начало формирования страницы.
+
+**Когда вызывается:** в `App::start()` после роутинга и создания контроллера, **до** вызова action.
+
+**Данные:**
+
+- `getMethod(): string` — HTTP-метод;
+- `getPath(): string` — path текущего URI;
+- `getControllerClass(): string` — класс контроллера;
+- `getAction(): string` — имя action;
+- `getParams(): array` — ассоциативные параметры маршрута.
+
+### Пример
+
+```php
+use App\Events\Page\PageBuildStartEvent;
+use Modules\Main\Event\EventDispatcher;
+
+EventDispatcher::getInstance()->listen(
+    PageBuildStartEvent::class,
+    function (PageBuildStartEvent $event): void {
+        // логирование, подготовка контекста и т.п.
+    }
+);
+```
+
+### `App\Events\Page\PageBuildEndEvent`
+
+Окончание формирования страницы.
+
+**Когда вызывается:** в `App::start()` после контроллера, подстановки `ViewData` и вставки CSS/JS, **до** `echo` HTML.
+
+**Данные:**
+
+- те же, что у `PageBuildStartEvent`;
+- `getHtml(): string` / `setHtml(string $html)` — итоговый HTML (можно изменить перед выводом).
+
+### Пример: правка HTML перед ответом
+
+```php
+use App\Events\Page\PageBuildEndEvent;
+use Modules\Main\Event\EventDispatcher;
+
+EventDispatcher::getInstance()->listen(
+    PageBuildEndEvent::class,
+    function (PageBuildEndEvent $event): void {
+        $html = $event->getHtml();
+        // $html = str_replace('...', '...', $html);
+        $event->setHtml($html);
+    }
+);
+```
+
 ## Замечания
 
-- Текущие события: `AdminMenuBuildEvent`, `AdminBarBuildEvent`.
+- Текущие события: `AdminMenuBuildEvent`, `AdminBarBuildEvent`, `PageBuildStartEvent`, `PageBuildEndEvent`.
 - Не меняйте разметку админ-меню в `header.php` — расширяйте через `AdminMenuBuildEvent`.
 - Не меняйте центр AdminBar напрямую в шаблоне компонента — расширяйте через `AdminBarBuildEvent`.
+- Общую логику «вокруг страницы» подключайте через `PageBuildStartEvent` / `PageBuildEndEvent`.

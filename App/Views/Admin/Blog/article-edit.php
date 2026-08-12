@@ -20,6 +20,7 @@ $author = (string) ($article->author ?? '');
 $saveSuccess = (bool) ($data['saveSuccess'] ?? false);
 $saveError = trim((string) ($data['saveError'] ?? ''));
 $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
+$commentsCount = (int) ($data['commentsCount'] ?? 0);
 $formAction = $isCreate ? '/admin/content/blog/articles/create/' : '/admin/content/blog/articles/' . $articleId . '/';
 $publicationService = new BlogArticlePublicationService();
 $scheduledDatetime = !$isCreate
@@ -32,9 +33,109 @@ $scheduleInputValue = $publicationService->formatForInput(
 if (empty($selectedTopicIds) && $topicId > 0) {
 	$selectedTopicIds = [$topicId];
 }
+
+$formatAdminDatetime = static function (?string $value): string {
+	$value = trim((string) $value);
+	if ($value === '') {
+		return '—';
+	}
+
+	$timestamp = strtotime($value);
+
+	return $timestamp === false ? $value : date('d.m.Y H:i:s', $timestamp);
+};
 ?>
 
 <section class="admin-blog-article-edit">
+	<style>
+		.admin-dashboard__section-title {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 1.25rem;
+			margin: 0 0 1.5rem;
+			font-size: 1.125rem;
+			font-weight: 600;
+			line-height: 1.2;
+			text-transform: uppercase;
+			letter-spacing: 0.12em;
+			color: #495057;
+		}
+
+		.admin-dashboard__section-title-line {
+			flex: 1 1 0;
+			max-width: 120px;
+			height: 1px;
+			background: linear-gradient(to right, transparent, #ced4da 20%, #ced4da 80%, transparent);
+		}
+
+		.admin-dashboard__section-title-text {
+			flex: 0 0 auto;
+			padding: 0.35rem 1rem;
+			border-top: 1px solid #dee2e6;
+			border-bottom: 1px solid #dee2e6;
+		}
+
+		.admin-blog-article-meta {
+			display: grid;
+			grid-template-columns: max-content max-content;
+			justify-content: center;
+			column-gap: 1rem;
+			row-gap: 0.35rem;
+			margin: 0 auto 2rem;
+			width: fit-content;
+		}
+
+		.admin-blog-article-meta__label {
+			text-align: right;
+			color: #212529;
+			white-space: nowrap;
+		}
+
+		.admin-blog-article-meta__value {
+			text-align: left;
+			color: #212529;
+			font-weight: 400;
+            display: flex;
+            align-items: center;
+		}
+
+		.admin-blog-rubrics-section {
+			margin-top: 0.5rem;
+		}
+
+		.admin-blog-rubrics-section .admin-dashboard__section-title {
+			margin-top: 2rem;
+		}
+
+		.admin-blog-topic-list {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			gap: 0.5rem;
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		.admin-blog-topic-option {
+			display: flex;
+			border: 1px solid #dee2e6;
+			border-radius: 0.375rem;
+			padding: 10px 15px;
+			line-height: 1.3;
+			text-align: center;
+            align-items: center;
+            justify-content: center;
+			cursor: pointer;
+			transition: background-color 0.15s ease, border-color 0.15s ease;
+			user-select: none;
+		}
+
+		.admin-blog-topic-option.is-selected {
+			border-color: var(--bs-success);
+			background-color: var(--bs-success-bg-subtle);
+		}
+	</style>
+
 	<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 		<div>
 			<h1 class="h3 mb-1"><?= $isCreate ? 'Создание статьи блога' : 'Редактирование статьи #' . $articleId ?></h1>
@@ -89,47 +190,25 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 				<div class="tab-pane fade show active" id="tab-main" role="tabpanel" aria-labelledby="tab-main-link">
 					<div class="row g-3">
 						<?php if (!$isCreate): ?>
-							<div class="col-12 col-md-3">
-								<label class="form-label">ID</label>
-								<input type="text" class="form-control" value="<?= $articleId ?>" readonly>
-							</div>
-							<div class="col-12 col-md-3">
-								<label class="form-label">Кол-во просмотров</label>
-								<input type="text" class="form-control" value="<?= (int) ($article->views_count ?? 0) ?>" readonly>
-							</div>
-							<div class="col-12 col-md-3">
-								<label class="form-label">created_at</label>
-								<input type="text" class="form-control" value="<?= htmlspecialchars((string) ($article->created_at ?? '')) ?>" readonly>
-							</div>
-							<div class="col-12 col-md-3">
-								<label class="form-label">updated_at</label>
-								<input type="text" class="form-control" value="<?= htmlspecialchars((string) ($article->updated_at ?? '')) ?>" readonly>
+							<div class="col-12">
+								<div class="admin-blog-article-meta">
+									<span class="admin-blog-article-meta__label">ID:</span>
+									<span class="admin-blog-article-meta__value"><?= $articleId ?></span>
+									<span class="admin-blog-article-meta__label">Создан:</span>
+									<span class="admin-blog-article-meta__value"><?= htmlspecialchars($formatAdminDatetime((string) ($article->created_at ?? ''))) ?></span>
+									<span class="admin-blog-article-meta__label">Изменен:</span>
+									<span class="admin-blog-article-meta__value"><?= htmlspecialchars($formatAdminDatetime((string) ($article->updated_at ?? ''))) ?></span>
+									<span class="admin-blog-article-meta__label">Кол-во просмотров:</span>
+									<span class="admin-blog-article-meta__value"><?= (int) ($article->views_count ?? 0) ?></span>
+									<span class="admin-blog-article-meta__label">Кол-во комментариев:</span>
+									<span class="admin-blog-article-meta__value"><?= $commentsCount ?></span>
+									<span class="admin-blog-article-meta__label">Активность:</span>
+									<span class="admin-blog-article-meta__value">
+										<input class="form-check-input mt-0" type="checkbox" id="enabled" name="enabled" <?= $isEnabled ? 'checked' : '' ?>>
+									</span>
+								</div>
 							</div>
 						<?php endif; ?>
-
-						<div class="col-12">
-							<label class="form-label">Рубрики</label>
-							<?php if (empty($topics)): ?>
-								<div class="alert alert-warning mb-0">Рубрики не найдены.</div>
-							<?php else: ?>
-								<div class="row g-2">
-									<?php foreach ($topics as $topic): ?>
-										<?php
-										$currentTopicId = (int) ($topic->id ?? 0);
-										$currentTopicTitle = (string) ($topic->title ?? 'Без названия');
-										$isChecked = in_array($currentTopicId, $selectedTopicIds, true);
-										?>
-										<div class="col-12 col-sm-6 col-xl-4">
-											<label class="form-check border rounded px-3 py-2 h-100 d-flex align-items-center gap-2">
-												<input class="form-check-input mt-0" type="checkbox" name="topic_ids[]" value="<?= $currentTopicId ?>" <?= $isChecked ? 'checked' : '' ?>>
-												<span><?= htmlspecialchars($currentTopicTitle) ?></span>
-											</label>
-										</div>
-									<?php endforeach; ?>
-								</div>
-								<div class="form-text">Первая выбранная рубрика будет сохранена как основная.</div>
-							<?php endif; ?>
-						</div>
 
 						<div class="col-12">
 							<label class="form-label">Название статьи</label>
@@ -157,11 +236,39 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 							<input type="text" name="author" class="form-control" value="<?= htmlspecialchars($author) ?>" maxlength="255">
 						</div>
 
-						<div class="col-12">
-							<div class="form-check form-switch">
-								<input class="form-check-input" type="checkbox" id="enabled" name="enabled" <?= $isEnabled ? 'checked' : '' ?>>
-								<label class="form-check-label" for="enabled">Активная статья</label>
+						<?php if ($isCreate): ?>
+							<div class="col-12">
+								<div class="form-check form-switch">
+									<input class="form-check-input" type="checkbox" id="enabled" name="enabled" <?= $isEnabled ? 'checked' : '' ?>>
+									<label class="form-check-label" for="enabled">Активная статья</label>
+								</div>
 							</div>
+						<?php endif; ?>
+
+						<div class="col-12 admin-blog-rubrics-section">
+							<h3 class="admin-dashboard__section-title">
+								<span class="admin-dashboard__section-title-line" aria-hidden="true"></span>
+								<span class="admin-dashboard__section-title-text">Рубрики</span>
+								<span class="admin-dashboard__section-title-line" aria-hidden="true"></span>
+							</h3>
+							<?php if (empty($topics)): ?>
+								<div class="alert alert-warning mb-0">Рубрики не найдены.</div>
+							<?php else: ?>
+								<div class="admin-blog-topic-list">
+									<?php foreach ($topics as $topic): ?>
+										<?php
+										$currentTopicId = (int) ($topic->id ?? 0);
+										$currentTopicTitle = (string) ($topic->title ?? 'Без названия');
+										$isChecked = in_array($currentTopicId, $selectedTopicIds, true);
+										?>
+										<label class="admin-blog-topic-option<?= $isChecked ? ' is-selected' : '' ?>">
+											<input class="visually-hidden" type="checkbox" name="topic_ids[]" value="<?= $currentTopicId ?>" <?= $isChecked ? 'checked' : '' ?>>
+											<span><?= htmlspecialchars($currentTopicTitle) ?></span>
+										</label>
+									<?php endforeach; ?>
+								</div>
+								<div class="form-text text-center mt-2">Первая выбранная рубрика будет сохранена как основная.</div>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -330,6 +437,17 @@ document.addEventListener('DOMContentLoaded', () => {
 			codeInput.value = toSymbolicCode(codeInput.value);
 		});
 	}
+
+	document.querySelectorAll('.admin-blog-topic-option input[type="checkbox"]').forEach((checkbox) => {
+		checkbox.addEventListener('change', () => {
+			const option = checkbox.closest('.admin-blog-topic-option');
+			if (!option) {
+				return;
+			}
+
+			option.classList.toggle('is-selected', checkbox.checked);
+		});
+	});
 
 	document.querySelectorAll('.blog-article-image-trigger').forEach((button) => {
 		button.addEventListener('click', () => {

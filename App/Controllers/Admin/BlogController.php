@@ -240,6 +240,7 @@ class BlogController extends BaseController
 			'flash' => is_array($flash) ? $flash : null,
 			'publicationDatetime' => $publicationService->getPublicationDatetime($article),
 			'scheduledDatetime' => $publicationService->getScheduledDatetime($article),
+			'commentsCount' => (new BlogArticleCommentsModel())->countByArticleId($id),
 		]);
 		Template::getInstance()->showFooter();
 	}

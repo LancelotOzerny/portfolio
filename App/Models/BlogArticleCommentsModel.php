@@ -37,6 +37,28 @@ class BlogArticleCommentsModel extends BaseModel
 		return $this->execQuery($qb) ?? [];
 	}
 
+	public function countByArticleId(int $articleId): int
+	{
+		if ($articleId <= 0) {
+			return 0;
+		}
+
+		try {
+			$qb = (new QueryBuilder($this->table))
+				->count()
+				->where('article_id', '=', $articleId);
+
+			$result = $this->execQuery($qb, true);
+			if (!is_object($result)) {
+				return 0;
+			}
+
+			return (int) ($result->total ?? 0);
+		} catch (Throwable) {
+			return 0;
+		}
+	}
+
 	public function createComment(
 		int $articleId,
 		string $authorName,

@@ -1,6 +1,7 @@
 <?php
 /* @var array $data */
 
+use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogDateFormatter;
 
 $articles = $data['articles'] ?? [];
@@ -8,6 +9,7 @@ $error = trim((string) ($data['error'] ?? ''));
 $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 $defaultImage = '/Templates/Inner/img/no-image.webp';
 $dateFormatter = new BlogDateFormatter();
+$publicationService = new BlogArticlePublicationService();
 ?>
 
 <section class="admin-blog-articles">
@@ -56,6 +58,11 @@ $dateFormatter = new BlogDateFormatter();
 				$shortPreviewText = strlen($previewText) > 220 ? substr($previewText, 0, 220) . '...' : $previewText;
 				$previewImagePath = trim((string) ($article->preview_image_path ?? ''));
 				$isEnabled = (int) ($article->enabled ?? 1) === 1;
+				$publicationDatetime = $publicationService->getPublicationDatetime($article);
+				$scheduledDatetime = $publicationService->getScheduledDatetime($article);
+				$scheduleInputValue = $publicationService->formatForInput(
+					$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 hour'))
+				);
 				?>
 				<div class="col-12">
 					<article class="card border-0 shadow-sm h-100 admin-blog-article-card">
@@ -96,9 +103,26 @@ $dateFormatter = new BlogDateFormatter();
 										</div>
 										<div>Создана: <?= htmlspecialchars($dateFormatter->format((string) ($article->created_at ?? '')) ?: '-') ?></div>
 										<div>Изменена: <?= htmlspecialchars($dateFormatter->format((string) ($article->updated_at ?? '')) ?: '-') ?></div>
+										<div>Опубликована: <?= htmlspecialchars($publicationDatetime !== null ? ($dateFormatter->format($publicationDatetime) ?: $publicationDatetime) : 'Нет') ?></div>
+										<?php if ($scheduledDatetime !== null): ?>
+											<div>Запланирована: <?= htmlspecialchars($dateFormatter->format($scheduledDatetime) ?: $scheduledDatetime) ?></div>
+										<?php endif; ?>
 									</div>
 
-									<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mt-auto mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
+									<div class="d-flex flex-wrap gap-2 mt-auto mb-2">
+										<form action="/admin/content/blog/articles/<?= $articleId ?>/publish/" method="post" onsubmit="return confirm('Опубликовать статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
+											<input type="hidden" name="back" value="/admin/content/blog/articles/">
+											<button type="submit" class="btn btn-success btn-sm">Опубликовать</button>
+										</form>
+										<button
+											type="button"
+											class="btn btn-outline-primary btn-sm"
+											data-bs-toggle="modal"
+											data-bs-target="#blog-schedule-modal-<?= $articleId ?>"
+										>Опубликовать потом</button>
+									</div>
+
+									<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
 										<button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
 									</form>
 								</div>
@@ -108,5 +132,45 @@ $dateFormatter = new BlogDateFormatter();
 				</div>
 			<?php endforeach; ?>
 		</div>
+
+		<?php foreach ($articles as $article): ?>
+			<?php
+			$articleId = (int) ($article->id ?? 0);
+			$title = (string) ($article->title ?? 'Без названия');
+			$scheduledDatetime = $publicationService->getScheduledDatetime($article);
+			$scheduleInputValue = $publicationService->formatForInput(
+				$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 hour'))
+			);
+			?>
+			<div class="modal fade" id="blog-schedule-modal-<?= $articleId ?>" tabindex="-1" aria-labelledby="blog-schedule-modal-label-<?= $articleId ?>" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<form action="/admin/content/blog/articles/<?= $articleId ?>/schedule/" method="post">
+							<input type="hidden" name="back" value="/admin/content/blog/articles/">
+							<div class="modal-header">
+								<h2 class="modal-title h5" id="blog-schedule-modal-label-<?= $articleId ?>">Опубликовать потом</h2>
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+							</div>
+							<div class="modal-body">
+								<p class="text-secondary"><?= htmlspecialchars($title) ?></p>
+								<label class="form-label" for="blog-schedule-at-<?= $articleId ?>">Время публикации</label>
+								<input
+									type="datetime-local"
+									class="form-control"
+									id="blog-schedule-at-<?= $articleId ?>"
+									name="published_at"
+									value="<?= htmlspecialchars($scheduleInputValue) ?>"
+									required
+								>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+								<button type="submit" class="btn btn-primary">Запланировать</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		<?php endforeach; ?>
 	<?php endif; ?>
 </section>

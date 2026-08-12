@@ -5,6 +5,7 @@ use App\Services\Blog\ArticleCommentService;
 use App\Services\Blog\ArticleContentSanitizer;
 use App\Services\Blog\ArticleRatingService;
 use App\Services\Blog\ArticleViewCounter;
+use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogDateFormatter;
 use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
@@ -154,6 +155,9 @@ class BlogController extends BaseController
 			? (new BlogSeoService())->getFormData(BlogSeoService::TYPE_ARTICLE, (string) $articleId)
 			: ['title' => '', 'description' => '', 'keywords' => ''];
 
+		$flash = $_SESSION['admin_blog_flash'] ?? null;
+		unset($_SESSION['admin_blog_flash']);
+
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
 			'topic' => $topicData,
@@ -166,6 +170,7 @@ class BlogController extends BaseController
 			'csrf_token' => (new CsrfService())->getToken(),
 			'save_success' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'save_error' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+			'flash' => is_array($flash) ? $flash : null,
 			'seo_form' => $seoForm,
 		]);
 		Template::getInstance()->showFooter();
@@ -663,6 +668,7 @@ class BlogController extends BaseController
 	{
 		$result = [];
 		$dateFormatter = new BlogDateFormatter();
+		$publicationService = new BlogArticlePublicationService();
 		$codeService = new SymbolicCodeService();
 		$articleIds = [];
 
@@ -706,7 +712,7 @@ class BlogController extends BaseController
 					? (string) ($article->preview_image_path ?? '')
 					: '/Templates/Inner/img/no-image.webp',
 				'preview_image_path' => (string) ($article->preview_image_path ?? ''),
-				'date' => $dateFormatter->format((string) ($article->created_at ?? '')),
+				'date' => $dateFormatter->format((string) ($publicationService->getPublicationDatetime($article) ?? '')),
 				'rating' => (float) ($ratingSummary['average'] ?? 0),
 				'rating_count' => (int) ($ratingSummary['count'] ?? 0),
 				'views_count' => (int) ($article->views_count ?? 0),

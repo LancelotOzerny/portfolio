@@ -25,45 +25,87 @@ final class BlogAdminBarListener
 			return;
 		}
 
-		if (!$this->canEditCurrentBlogPage($path)) {
+		if (preg_match('#^/blog/([^/]+)/([^/]+)/$#', $path, $matches) === 1) {
+			$article = $this->resolveArticle($matches[2]);
+			if ($article === null) {
+				return;
+			}
+
+			$articleId = (int) ($article->id ?? 0);
+			if ($articleId <= 0) {
+				return;
+			}
+
+			$event->addGroup(new AdminBarGroup(
+				id: 'blog',
+				label: 'Блог',
+				actions: [
+					new AdminBarAction(
+						id: 'blog.basic',
+						label: 'Базовая информация',
+						attributes: [
+							'data-blog-settings-open' => 'basic',
+							'type' => 'button',
+						],
+					),
+					new AdminBarAction(
+						id: 'blog.seo',
+						label: 'SEO',
+						attributes: [
+							'data-blog-settings-open' => 'seo',
+							'type' => 'button',
+						],
+					),
+					new AdminBarAction(
+						id: 'blog.publish',
+						label: 'Опубликовать',
+						attributes: [
+							'data-blog-publish' => (string) $articleId,
+							'type' => 'button',
+						],
+					),
+					new AdminBarAction(
+						id: 'blog.schedule',
+						label: 'Опубликовать потом',
+						attributes: [
+							'data-blog-schedule-open' => (string) $articleId,
+							'type' => 'button',
+						],
+					),
+				],
+			));
+
 			return;
 		}
 
-		$event->addGroup(new AdminBarGroup(
-			id: 'blog',
-			label: 'Блог',
-			actions: [
-				new AdminBarAction(
-					id: 'blog.basic',
-					label: 'Базовая информация',
-					attributes: [
-						'data-blog-settings-open' => 'basic',
-						'type' => 'button',
-					],
-				),
-				new AdminBarAction(
-					id: 'blog.seo',
-					label: 'SEO',
-					attributes: [
-						'data-blog-settings-open' => 'seo',
-						'type' => 'button',
-					],
-				),
-			],
-		));
-	}
-
-	private function canEditCurrentBlogPage(string $path): bool
-	{
-		if (preg_match('#^/blog/([^/]+)/([^/]+)/$#', $path, $matches) === 1) {
-			return $this->resolveArticle($matches[2]) !== null;
-		}
-
 		if (preg_match('#^/blog/([^/]+)/$#', $path, $matches) === 1) {
-			return $this->resolveTopic($matches[1]) !== null;
-		}
+			if ($this->resolveTopic($matches[1]) === null) {
+				return;
+			}
 
-		return false;
+			$event->addGroup(new AdminBarGroup(
+				id: 'blog',
+				label: 'Блог',
+				actions: [
+					new AdminBarAction(
+						id: 'blog.basic',
+						label: 'Базовая информация',
+						attributes: [
+							'data-blog-settings-open' => 'basic',
+							'type' => 'button',
+						],
+					),
+					new AdminBarAction(
+						id: 'blog.seo',
+						label: 'SEO',
+						attributes: [
+							'data-blog-settings-open' => 'seo',
+							'type' => 'button',
+						],
+					),
+				],
+			));
+		}
 	}
 
 	private function resolveTopic(string $slug): ?object

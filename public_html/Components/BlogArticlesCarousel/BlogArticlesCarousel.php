@@ -2,6 +2,7 @@
 
 namespace Components\BlogArticlesCarousel;
 
+use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogDateFormatter;
 use App\Services\Blog\SymbolicCodeService;
 use Models\BlogArticlesModel;
@@ -23,6 +24,7 @@ class BlogArticlesCarousel extends BaseComponent
 		}
 
 		$dateFormatter = new BlogDateFormatter();
+		$publicationService = new BlogArticlePublicationService();
 		$codeService = new SymbolicCodeService();
 		$mappedItems = [];
 
@@ -43,7 +45,7 @@ class BlogArticlesCarousel extends BaseComponent
 				'title' => (string) ($item->title ?? 'Без названия'),
 				'preview' => (string) ($item->preview_text ?? ''),
 				'image' => $previewImage !== '' ? $previewImage : '/Templates/Inner/img/no-image.webp',
-				'date' => $dateFormatter->format((string) ($item->created_at ?? '')),
+				'date' => $dateFormatter->format((string) ($publicationService->getPublicationDatetime($item) ?? '')),
 				'topic_title' => (string) ($item->topic_title ?? ''),
 				'url' => '/blog/' . rawurlencode($topicSegment) . '/' . rawurlencode($articleSegment) . '/',
 			];

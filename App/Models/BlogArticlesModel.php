@@ -68,6 +68,60 @@ class BlogArticlesModel extends BaseModel
 		return $this->execWriteQuery($qb);
 	}
 
+	public function publishNow(int $id): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update([
+				'enabled' => 1,
+				'published_at' => date('Y-m-d H:i:s'),
+			])
+			->where('id', '=', $id);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	public function schedulePublication(int $id, string $publishedAt): bool
+	{
+		$publishedAt = trim($publishedAt);
+		if ($publishedAt === '') {
+			return false;
+		}
+
+		$qb = (new QueryBuilder($this->table))
+			->update([
+				'enabled' => 0,
+				'published_at' => $publishedAt,
+			])
+			->where('id', '=', $id);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	public function activateScheduled(int $id): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update(['enabled' => 1])
+			->where('id', '=', $id)
+			->where('enabled', '=', 0);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	/**
+	 * @return list<object>
+	 */
+	public function findDueForPublication(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->select(['id'])
+			->where('enabled', '=', 0)
+			->whereNotNull('published_at')
+			->where('published_at', '<=', date('Y-m-d H:i:s'))
+			->orderBy('published_at', 'ASC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
 	public function findByCode(string $code): ?object
 	{
 		$code = trim($code);
@@ -539,6 +593,7 @@ class BlogArticlesModel extends BaseModel
 			->where('blog_articles.enabled', '=', 1)
 			->where('blog_topics.enabled', '=', 1)
 			->groupBy('blog_articles.id')
+			->orderBy('blog_articles.published_at', 'DESC')
 			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
@@ -556,6 +611,7 @@ class BlogArticlesModel extends BaseModel
 			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER')
 			->where('blog_articles.enabled', '=', 1)
 			->where('blog_topics.enabled', '=', 1)
+			->orderBy('blog_articles.published_at', 'DESC')
 			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 

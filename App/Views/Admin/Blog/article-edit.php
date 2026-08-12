@@ -17,6 +17,7 @@ $detailImagePath = trim((string) ($article->detail_image_path ?? ''));
 $author = (string) ($article->author ?? '');
 $saveSuccess = (bool) ($data['saveSuccess'] ?? false);
 $saveError = trim((string) ($data['saveError'] ?? ''));
+$flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 $formAction = $isCreate ? '/admin/content/blog/articles/create/' : '/admin/content/blog/articles/' . $articleId . '/';
 
 if (empty($selectedTopicIds) && $topicId > 0) {
@@ -32,6 +33,12 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 		</div>
 		<a href="/admin/content/blog/articles/" class="btn btn-outline-secondary">К списку статей</a>
 	</div>
+
+	<?php if ($flash !== null): ?>
+		<div class="alert <?= !empty($flash['success']) ? 'alert-success' : 'alert-danger' ?>">
+			<?= htmlspecialchars((string) ($flash['message'] ?? '')) ?>
+		</div>
+	<?php endif; ?>
 
 	<?php if ($saveSuccess): ?>
 		<div class="alert alert-success">Изменения сохранены.</div>
@@ -60,6 +67,11 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 				<li class="nav-item" role="presentation">
 					<button class="nav-link" id="tab-seo-link" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab">SEO</button>
 				</li>
+				<?php if (!$isCreate): ?>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link" id="tab-publication-link" data-bs-toggle="tab" data-bs-target="#tab-publication" type="button" role="tab">Публикация</button>
+					</li>
+				<?php endif; ?>
 			</ul>
 		</div>
 
@@ -213,6 +225,12 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 					include __DIR__ . '/_seo-tab.php';
 					?>
 				</div>
+
+				<?php if (!$isCreate): ?>
+					<div class="tab-pane fade" id="tab-publication" role="tabpanel" aria-labelledby="tab-publication-link">
+						<?php include __DIR__ . '/_publication-tab.php'; ?>
+					</div>
+				<?php endif; ?>
 			</div>
 		</div>
 

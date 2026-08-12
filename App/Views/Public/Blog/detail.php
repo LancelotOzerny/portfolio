@@ -8,6 +8,7 @@ $editMode = (bool) ($data['edit_mode'] ?? false);
 $csrfToken = (string) ($data['csrf_token'] ?? '');
 $saveSuccess = (bool) ($data['save_success'] ?? false);
 $saveError = trim((string) ($data['save_error'] ?? ''));
+$flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 $rating = is_array($data['rating'] ?? null) ? $data['rating'] : [];
 $ratingAverage = (float) ($rating['average'] ?? 0);
 $ratingCount = (int) ($rating['count'] ?? 0);
@@ -102,11 +103,33 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 	$basicTitleLabel = 'Название статьи';
 	$basicDescriptionLabel = 'Описание';
 	include __DIR__ . '/_settings-modals.php';
+
+	$publicationService = new \App\Services\Blog\BlogArticlePublicationService();
+	$dbArticle = null;
+	try {
+		$dbArticle = (new \Models\BlogArticlesModel())->findById((int) ($article['id'] ?? 0));
+	} catch (\Throwable) {
+	}
+	if ($dbArticle !== null) {
+		$articleId = (int) ($dbArticle->id ?? 0);
+		$scheduledDatetime = $publicationService->getScheduledDatetime($dbArticle);
+		$scheduleInputValue = $publicationService->formatForInput(
+			$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 hour'))
+		);
+		$backUrl = '/blog/' . rawurlencode((string) $topic['slug']) . '/' . rawurlencode((string) $article['slug']) . '/';
+		include __DIR__ . '/_publication-modal.php';
+	}
 	?>
 <?php endif; ?>
 
 <section class="light-page-section blog-page blog-detail">
 	<div class="site-container">
+		<?php if ($flash !== null): ?>
+			<div class="blog-editor-alert <?= !empty($flash['success']) ? 'blog-editor-alert_success' : 'blog-editor-alert_error' ?>">
+				<?= htmlspecialchars((string) ($flash['message'] ?? '')) ?>
+			</div>
+		<?php endif; ?>
+
 		<?php if ($saveSuccess): ?>
 			<div class="blog-editor-alert blog-editor-alert_success">Изменения сохранены.</div>
 		<?php endif; ?>

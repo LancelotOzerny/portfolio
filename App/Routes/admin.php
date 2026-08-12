@@ -19,6 +19,8 @@ $router->post('/admin/content/blog/articles/create/', \Controllers\Admin\BlogCon
 $router->get('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleEdit');
 $router->post('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleUpdate');
 $router->post('/admin/content/blog/articles/{id}/delete/', \Controllers\Admin\BlogController::class, 'articleDelete');
+$router->post('/admin/content/blog/articles/{id}/publish/', \Controllers\Admin\BlogController::class, 'articlePublish');
+$router->post('/admin/content/blog/articles/{id}/schedule/', \Controllers\Admin\BlogController::class, 'articleSchedule');
 $router->get('/admin/content/blog/comments/', \Controllers\Admin\BlogController::class, 'comments');
 $router->get('/admin/content/tags/', \Controllers\Admin\TagsController::class, 'index');
 $router->post('/admin/content/tags/create/', \Controllers\Admin\TagsController::class, 'create');

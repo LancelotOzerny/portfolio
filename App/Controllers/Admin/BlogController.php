@@ -2,6 +2,7 @@
 
 namespace Controllers\Admin;
 
+use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
 use Models\BlogArticleCommentsModel;
@@ -216,12 +217,17 @@ class BlogController extends BaseController
 			return;
 		}
 
+		$flash = $_SESSION[self::FLASH_KEY] ?? null;
+		unset($_SESSION[self::FLASH_KEY]);
+
 		Template::getInstance()->setParam('title', 'Редактирование статьи блога ' . $id);
 		try {
 			$selectedTopicIds = (new BlogArticlesModel())->findTopicIdsByArticleId($id);
 		} catch (Throwable) {
 			$selectedTopicIds = [];
 		}
+
+		$publicationService = new BlogArticlePublicationService();
 
 		Template::getInstance()->showHeader();
 		$this->render('article-edit', [
@@ -231,6 +237,9 @@ class BlogController extends BaseController
 			'seoForm' => (new BlogSeoService())->getFormData(BlogSeoService::TYPE_ARTICLE, (string) $id),
 			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'saveError' => isset($_GET['error']) ? (string) $_GET['error'] : '',
+			'flash' => is_array($flash) ? $flash : null,
+			'publicationDatetime' => $publicationService->getPublicationDatetime($article),
+			'scheduledDatetime' => $publicationService->getScheduledDatetime($article),
 		]);
 		Template::getInstance()->showFooter();
 	}
@@ -319,6 +328,72 @@ class BlogController extends BaseController
 		}
 
 		header('Location: /admin/content/blog/articles/');
+	}
+
+	public function articlePublish(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$redirect = $this->resolvePublicationRedirect($id);
+
+		try {
+			$article = (new BlogArticlesModel())->findById($id);
+		} catch (Throwable) {
+			$article = null;
+		}
+
+		if ($article === null) {
+			$this->setFlash(false, 'Статья не найдена.');
+			header('Location: ' . $redirect);
+			return;
+		}
+
+		if ((new BlogArticlePublicationService())->publishNow($id)) {
+			$this->setFlash(true, 'Статья опубликована.');
+		} else {
+			$this->setFlash(false, 'Не удалось опубликовать статью.');
+		}
+
+		header('Location: ' . $redirect);
+	}
+
+	public function articleSchedule(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$redirect = $this->resolvePublicationRedirect($id);
+		$publishedAt = trim((string) ($_POST['published_at'] ?? ''));
+
+		if ($publishedAt === '') {
+			$this->setFlash(false, 'Укажите время публикации.');
+			header('Location: ' . $redirect);
+			return;
+		}
+
+		try {
+			$article = (new BlogArticlesModel())->findById($id);
+		} catch (Throwable) {
+			$article = null;
+		}
+
+		if ($article === null) {
+			$this->setFlash(false, 'Статья не найдена.');
+			header('Location: ' . $redirect);
+			return;
+		}
+
+		$service = new BlogArticlePublicationService();
+		if ($service->schedule($id, $publishedAt)) {
+			$this->setFlash(true, 'Время публикации сохранено.');
+		} else {
+			$this->setFlash(false, 'Не удалось сохранить время публикации.');
+		}
+
+		header('Location: ' . $redirect);
 	}
 
 	public function create(): void
@@ -820,5 +895,19 @@ class BlogController extends BaseController
 			'success' => $success,
 			'message' => $message,
 		];
+	}
+
+	private function resolvePublicationRedirect(int $articleId): string
+	{
+		$back = trim((string) ($_POST['back'] ?? ''));
+		if ($back !== '' && str_starts_with($back, '/')) {
+			return $back;
+		}
+
+		if ($articleId > 0) {
+			return '/admin/content/blog/articles/' . $articleId . '/';
+		}
+
+		return '/admin/content/blog/articles/';
 	}
 }

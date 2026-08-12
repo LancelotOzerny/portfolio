@@ -39,12 +39,40 @@ foreach ($columns as $column) {
 			}
 		}
 
+		$subtasks = [];
+		if (!empty($task->subtasks)) {
+			$decodedSubtasks = json_decode((string) $task->subtasks, true);
+			if (is_array($decodedSubtasks)) {
+				foreach ($decodedSubtasks as $subtask) {
+					if (!is_array($subtask)) {
+						continue;
+					}
+
+					$title = trim((string) ($subtask['title'] ?? ''));
+					if ($title === '') {
+						continue;
+					}
+
+					$subtasks[] = [
+						'id' => (int) ($subtask['id'] ?? 0),
+						'title' => $title,
+						'important' => !empty($subtask['important']),
+						'urgent' => !empty($subtask['urgent']),
+						'done' => !empty($subtask['done']),
+					];
+				}
+			}
+		}
+
 		$boardPayload['tasks'][] = [
 			'id' => (int) ($task->id ?? 0),
 			'column_id' => $columnId,
 			'title' => (string) ($task->title ?? ''),
 			'description' => (string) ($task->description ?? ''),
 			'dependency_ids' => array_values(array_unique($dependencyIds)),
+			'important' => !empty($task->is_important),
+			'urgent' => !empty($task->is_urgent),
+			'subtasks' => $subtasks,
 		];
 	}
 }
@@ -213,6 +241,88 @@ foreach ($columns as $column) {
 			line-height: 1.35;
 		}
 
+		.admin-todo-task__meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.3rem;
+			margin-top: 0.45rem;
+		}
+
+		.admin-todo-task__badge {
+			display: inline-block;
+			padding: 0.1rem 0.4rem;
+			border-radius: 0.3rem;
+			font-size: 0.7rem;
+			font-weight: 600;
+			line-height: 1.3;
+			border: 1px solid transparent;
+		}
+
+		.admin-todo-task__badge--important {
+			background: #e7f1ff;
+			color: #0d6efd;
+			border-color: #b6d4fe;
+		}
+
+		.admin-todo-task__badge--urgent {
+			background: #fff3cd;
+			color: #997404;
+			border-color: #ffe69c;
+		}
+
+		.admin-todo-task__subtasks {
+			margin: 0.45rem 0 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-direction: column;
+			gap: 0.25rem;
+		}
+
+		.admin-todo-task__subtask {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.35rem;
+			font-size: 0.78rem;
+			color: #495057;
+			line-height: 1.3;
+		}
+
+		.admin-todo-task__subtask--done {
+			color: #868e96;
+			text-decoration: line-through;
+		}
+
+		.admin-todo-task__subtask-marks {
+			display: inline-flex;
+			gap: 0.2rem;
+			flex-shrink: 0;
+		}
+
+		.admin-todo-task__subtask-mark {
+			width: 0.55rem;
+			height: 0.55rem;
+			border-radius: 999px;
+			margin-top: 0.28rem;
+			background: #ced4da;
+		}
+
+		.admin-todo-task__subtask-mark--important {
+			background: #0d6efd;
+		}
+
+		.admin-todo-task__subtask-mark--urgent {
+			background: #ffc107;
+		}
+
+		.admin-todo-subtask-row {
+			border: 1px solid #e9ecef;
+			border-radius: 0.5rem;
+			padding: 0.75rem;
+			margin-bottom: 0.65rem;
+			background: #f8f9fa;
+		}
+
 		.admin-todo-empty {
 			margin: 0;
 			padding: 1rem;
@@ -247,7 +357,7 @@ foreach ($columns as $column) {
 	<?php endif; ?>
 
 	<div class="modal fade" id="todoTaskModal" tabindex="-1" aria-labelledby="todoTaskModalTitle" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
 			<div class="modal-content">
 				<form id="todoTaskForm">
 					<div class="modal-header">
@@ -257,20 +367,56 @@ foreach ($columns as $column) {
 					<div class="modal-body">
 						<input type="hidden" id="todoTaskId" value="">
 						<input type="hidden" id="todoTaskColumnId" value="">
-						<div class="mb-3">
-							<label class="form-label" for="todoTaskTitle">Название</label>
-							<input type="text" class="form-control" id="todoTaskTitle" maxlength="255" required>
+
+						<ul class="nav nav-tabs mb-3" id="todoTaskTabs" role="tablist">
+							<li class="nav-item" role="presentation">
+								<button class="nav-link active" id="todo-tab-main-link" data-bs-toggle="tab" data-bs-target="#todo-tab-main" type="button" role="tab" aria-controls="todo-tab-main" aria-selected="true">Основное</button>
+							</li>
+							<li class="nav-item" role="presentation">
+								<button class="nav-link" id="todo-tab-subtasks-link" data-bs-toggle="tab" data-bs-target="#todo-tab-subtasks" type="button" role="tab" aria-controls="todo-tab-subtasks" aria-selected="false">Подзадачи</button>
+							</li>
+							<li class="nav-item" role="presentation">
+								<button class="nav-link" id="todo-tab-deps-link" data-bs-toggle="tab" data-bs-target="#todo-tab-deps" type="button" role="tab" aria-controls="todo-tab-deps" aria-selected="false">Зависимости</button>
+							</li>
+						</ul>
+
+						<div class="tab-content" id="todoTaskTabsContent">
+							<div class="tab-pane fade show active" id="todo-tab-main" role="tabpanel" aria-labelledby="todo-tab-main-link" tabindex="0">
+								<div class="mb-3">
+									<label class="form-label" for="todoTaskTitle">Название</label>
+									<input type="text" class="form-control" id="todoTaskTitle" maxlength="255" required>
+								</div>
+								<div class="mb-3">
+									<label class="form-label" for="todoTaskDescription">Описание</label>
+									<textarea class="form-control" id="todoTaskDescription" rows="8"></textarea>
+								</div>
+								<div class="d-flex flex-wrap gap-3">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="todoTaskImportant" value="1">
+										<label class="form-check-label" for="todoTaskImportant">Важно</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="todoTaskUrgent" value="1">
+										<label class="form-check-label" for="todoTaskUrgent">Срочно</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="tab-pane fade" id="todo-tab-subtasks" role="tabpanel" aria-labelledby="todo-tab-subtasks-link" tabindex="0">
+								<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+									<label class="form-label mb-0">Подзадачи</label>
+									<button type="button" class="btn btn-outline-secondary btn-sm" id="todoSubtaskAdd">Добавить</button>
+								</div>
+								<div id="todoSubtasksList"></div>
+							</div>
+
+							<div class="tab-pane fade" id="todo-tab-deps" role="tabpanel" aria-labelledby="todo-tab-deps-link" tabindex="0">
+								<label class="form-label" for="todoTaskDependency">Зависит от задач</label>
+								<select class="form-select" id="todoTaskDependency" multiple size="12">
+								</select>
+							</div>
 						</div>
-						<div class="mb-3">
-							<label class="form-label" for="todoTaskDescription">Описание</label>
-							<textarea class="form-control" id="todoTaskDescription" rows="6"></textarea>
-						</div>
-						<div class="mb-0">
-							<label class="form-label" for="todoTaskDependency">Зависит от задач</label>
-							<select class="form-select" id="todoTaskDependency" multiple size="6">
-							</select>
-							<div class="form-text">Можно выбрать несколько задач. Заблокированные задачи всегда остаются в «Планируется» и не перетаскиваются, пока зависимости не выполнены.</div>
-						</div>
+
 						<div class="alert alert-danger d-none mt-3 mb-0" id="todoTaskError"></div>
 					</div>
 					<div class="modal-footer justify-content-between">
@@ -298,13 +444,23 @@ foreach ($columns as $column) {
 	const initial = <?= json_encode($boardPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 	const state = {
 		columns: Array.isArray(initial.columns) ? initial.columns : [],
-		tasks: Array.isArray(initial.tasks) ? initial.tasks : [],
+		tasks: (Array.isArray(initial.tasks) ? initial.tasks : []).map((task) => ({
+			...task,
+			important: !!task.important,
+			urgent: !!task.urgent,
+			subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+			dependency_ids: Array.isArray(task.dependency_ids) ? task.dependency_ids : [],
+		})),
 	};
 
 	const modalEl = document.getElementById('todoTaskModal');
 	const formEl = document.getElementById('todoTaskForm');
 	const titleInput = document.getElementById('todoTaskTitle');
 	const descriptionInput = document.getElementById('todoTaskDescription');
+	const importantInput = document.getElementById('todoTaskImportant');
+	const urgentInput = document.getElementById('todoTaskUrgent');
+	const subtasksListEl = document.getElementById('todoSubtasksList');
+	const subtaskAddBtn = document.getElementById('todoSubtaskAdd');
 	const dependencySelect = document.getElementById('todoTaskDependency');
 	const taskIdInput = document.getElementById('todoTaskId');
 	const columnIdInput = document.getElementById('todoTaskColumnId');
@@ -351,6 +507,30 @@ foreach ($columns as $column) {
 		}
 	};
 
+	const activateMainTab = () => {
+		const mainTabLink = document.getElementById('todo-tab-main-link');
+		if (!mainTabLink) {
+			return;
+		}
+
+		if (window.bootstrap && window.bootstrap.Tab) {
+			window.bootstrap.Tab.getOrCreateInstance(mainTabLink).show();
+			return;
+		}
+
+		modalEl.querySelectorAll('#todoTaskTabs .nav-link').forEach((link) => {
+			const isActive = link === mainTabLink;
+			link.classList.toggle('active', isActive);
+			link.setAttribute('aria-selected', isActive ? 'true' : 'false');
+		});
+
+		modalEl.querySelectorAll('#todoTaskTabsContent .tab-pane').forEach((pane) => {
+			const isActive = pane.id === 'todo-tab-main';
+			pane.classList.toggle('show', isActive);
+			pane.classList.toggle('active', isActive);
+		});
+	};
+
 	const hideModal = () => {
 		const instance = getModal();
 		if (instance) {
@@ -381,7 +561,67 @@ foreach ($columns as $column) {
 
 	const getTask = (taskId) => state.tasks.find((task) => Number(task.id) === Number(taskId)) || null;
 
-	const getTasksForColumn = (columnId) => state.tasks.filter((task) => Number(task.column_id) === Number(columnId));
+	const priorityRank = (item) => {
+		const important = !!(item && item.important);
+		const urgent = !!(item && item.urgent);
+		if (important && urgent) {
+			return 0;
+		}
+		if (urgent) {
+			return 1;
+		}
+		if (important) {
+			return 2;
+		}
+		return 3;
+	};
+
+	const sortByPriority = (items) => [...items].sort((a, b) => {
+		const rankCompare = priorityRank(a) - priorityRank(b);
+		if (rankCompare !== 0) {
+			return rankCompare;
+		}
+		return Number(a.id || 0) - Number(b.id || 0);
+	});
+
+	const normalizeSubtasks = (value) => {
+		if (!Array.isArray(value)) {
+			return [];
+		}
+
+		const result = [];
+		value.forEach((item, index) => {
+			if (!item || typeof item !== 'object') {
+				return;
+			}
+
+			const title = String(item.title || '').trim();
+			if (!title) {
+				return;
+			}
+
+			result.push({
+				id: Number(item.id || index + 1),
+				title,
+				important: !!item.important,
+				urgent: !!item.urgent,
+				done: !!item.done,
+			});
+		});
+
+		return sortByPriority(result);
+	};
+
+	const getTasksForColumn = (columnId) => {
+		const tasks = state.tasks.filter((task) => Number(task.column_id) === Number(columnId));
+		return [...tasks].sort((a, b) => {
+			const rankCompare = priorityRank(a) - priorityRank(b);
+			if (rankCompare !== 0) {
+				return rankCompare;
+			}
+			return state.tasks.indexOf(a) - state.tasks.indexOf(b);
+		});
+	};
 
 	const getDoneColumnId = () => {
 		const doneColumn = state.columns.find((column) => String(column.code) === 'done');
@@ -515,7 +755,15 @@ foreach ($columns as $column) {
 		body.append('_csrf', csrfToken);
 		Object.entries(payload).forEach(([key, value]) => {
 			if (Array.isArray(value)) {
+				if (key === 'subtasks') {
+					body.append(key, JSON.stringify(value));
+					return;
+				}
 				value.forEach((item) => body.append(key + '[]', String(item)));
+				return;
+			}
+			if (typeof value === 'boolean') {
+				body.append(key, value ? '1' : '0');
 				return;
 			}
 			body.append(key, String(value));
@@ -537,12 +785,78 @@ foreach ($columns as $column) {
 		return data.data || {};
 	};
 
+	const createSubtaskRow = (subtask = {}) => {
+		const row = document.createElement('div');
+		row.className = 'admin-todo-subtask-row';
+		row.dataset.subtaskRow = '1';
+		row.innerHTML = `
+			<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+				<strong class="small mb-0">Подзадача</strong>
+				<button type="button" class="btn btn-outline-danger btn-sm" data-remove-subtask>Удалить</button>
+			</div>
+			<div class="mb-2">
+				<input type="text" class="form-control form-control-sm" data-subtask-title maxlength="255" placeholder="Название" value="${escapeHtml(subtask.title || '')}">
+			</div>
+			<div class="d-flex flex-wrap gap-3">
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" data-subtask-important ${subtask.important ? 'checked' : ''}>
+					<label class="form-check-label">Важно</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" data-subtask-urgent ${subtask.urgent ? 'checked' : ''}>
+					<label class="form-check-label">Срочно</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" data-subtask-done ${subtask.done ? 'checked' : ''}>
+					<label class="form-check-label">Готово</label>
+				</div>
+			</div>
+		`;
+
+		row.querySelector('[data-remove-subtask]').addEventListener('click', () => {
+			row.remove();
+		});
+
+		return row;
+	};
+
+	const renderSubtasksForm = (subtasks) => {
+		subtasksListEl.innerHTML = '';
+		normalizeSubtasks(subtasks).forEach((subtask) => {
+			subtasksListEl.appendChild(createSubtaskRow(subtask));
+		});
+	};
+
+	const collectSubtasksFromForm = () => {
+		const result = [];
+		subtasksListEl.querySelectorAll('[data-subtask-row]').forEach((row, index) => {
+			const title = String(row.querySelector('[data-subtask-title]')?.value || '').trim();
+			if (!title) {
+				return;
+			}
+
+			result.push({
+				id: index + 1,
+				title,
+				important: !!row.querySelector('[data-subtask-important]')?.checked,
+				urgent: !!row.querySelector('[data-subtask-urgent]')?.checked,
+				done: !!row.querySelector('[data-subtask-done]')?.checked,
+			});
+		});
+
+		return normalizeSubtasks(result);
+	};
+
 	const openCreateModal = (columnId) => {
 		clearError();
+		activateMainTab();
 		taskIdInput.value = '';
 		columnIdInput.value = String(columnId);
 		titleInput.value = '';
 		descriptionInput.value = '';
+		importantInput.checked = false;
+		urgentInput.checked = false;
+		renderSubtasksForm([]);
 		fillDependencyOptions(0, []);
 		modalTitle.textContent = 'Новая задача';
 		deleteBtn.classList.add('d-none');
@@ -557,10 +871,14 @@ foreach ($columns as $column) {
 		}
 
 		clearError();
+		activateMainTab();
 		taskIdInput.value = String(task.id);
 		columnIdInput.value = String(task.column_id);
 		titleInput.value = task.title || '';
 		descriptionInput.value = task.description || '';
+		importantInput.checked = !!task.important;
+		urgentInput.checked = !!task.urgent;
+		renderSubtasksForm(task.subtasks || []);
 		fillDependencyOptions(task.id, task.dependency_ids || []);
 		modalTitle.textContent = isTaskLocked(task) ? 'Задача (ожидает зависимости)' : 'Задача';
 		deleteBtn.classList.remove('d-none');
@@ -612,6 +930,33 @@ foreach ($columns as $column) {
 						? '<p class="admin-todo-task__hint">Ждёт: ' + escapeHtml(blockingParents.map((parent) => parent.title || ('#' + parent.id)).join(', ')) + '</p>'
 						: '';
 
+					const badges = [];
+					if (task.important) {
+						badges.push('<span class="admin-todo-task__badge admin-todo-task__badge--important">Важно</span>');
+					}
+					if (task.urgent) {
+						badges.push('<span class="admin-todo-task__badge admin-todo-task__badge--urgent">Срочно</span>');
+					}
+					const badgesHtml = badges.length
+						? '<div class="admin-todo-task__meta">' + badges.join('') + '</div>'
+						: '';
+
+					const subtasks = normalizeSubtasks(task.subtasks);
+					const subtasksHtml = subtasks.length
+						? '<ul class="admin-todo-task__subtasks">' + subtasks.map((subtask) => {
+							const marks = `
+								<span class="admin-todo-task__subtask-marks">
+									<span class="admin-todo-task__subtask-mark${subtask.important ? ' admin-todo-task__subtask-mark--important' : ''}" title="Важно"></span>
+									<span class="admin-todo-task__subtask-mark${subtask.urgent ? ' admin-todo-task__subtask-mark--urgent' : ''}" title="Срочно"></span>
+								</span>
+							`;
+							return '<li class="admin-todo-task__subtask' + (subtask.done ? ' admin-todo-task__subtask--done' : '') + '">'
+								+ marks
+								+ '<span>' + escapeHtml(subtask.title) + '</span>'
+								+ '</li>';
+						}).join('') + '</ul>'
+						: '';
+
 					return `
 					<article
 						class="admin-todo-task${locked ? ' admin-todo-task--locked' : ''}"
@@ -623,6 +968,8 @@ foreach ($columns as $column) {
 							${lockHtml}
 							<p class="admin-todo-task__title">${escapeHtml(task.title)}</p>
 						</div>
+						${badgesHtml}
+						${subtasksHtml}
 						${hintHtml}
 					</article>
 				`;
@@ -805,6 +1152,9 @@ foreach ($columns as $column) {
 		let columnId = Number(columnIdInput.value || 0);
 		const title = titleInput.value.trim();
 		const description = descriptionInput.value.trim();
+		const important = !!importantInput.checked;
+		const urgent = !!urgentInput.checked;
+		const subtasks = collectSubtasksFromForm();
 		const dependencyIds = getSelectedDependencyIds();
 		const willBeLocked = dependencyIds.some((dependencyId) => {
 			const parent = getTask(dependencyId);
@@ -826,6 +1176,9 @@ foreach ($columns as $column) {
 				const result = await postForm('/admin/development/todo/tasks/' + taskId + '/update/', {
 					title,
 					description,
+					important,
+					urgent,
+					subtasks,
 					dependency_ids: dependencyIds,
 				});
 				const index = state.tasks.findIndex((task) => Number(task.id) === taskId);
@@ -837,6 +1190,9 @@ foreach ($columns as $column) {
 					column_id: columnId,
 					title,
 					description,
+					important,
+					urgent,
+					subtasks,
 					dependency_ids: dependencyIds,
 				});
 				if (result.task) {
@@ -850,6 +1206,10 @@ foreach ($columns as $column) {
 		} catch (error) {
 			showError(error.message || 'Не удалось сохранить задачу.');
 		}
+	});
+
+	subtaskAddBtn.addEventListener('click', () => {
+		subtasksListEl.appendChild(createSubtaskRow());
 	});
 
 	deleteBtn.addEventListener('click', async () => {

@@ -3,6 +3,7 @@
 namespace Controllers\Admin;
 
 use App\Services\Cron\CronScheduleMatcher;
+use App\Services\Cron\CronTaskPriority;
 use App\Services\Cron\CronTaskStorage;
 use Modules\Main\Auth;
 use Modules\Main\BaseController;
@@ -31,6 +32,7 @@ class CronController extends BaseController
 		$this->render('index', [
 			'tasks' => $tasks,
 			'matcher' => $matcher,
+			'priority' => CronTaskPriority::class,
 			'cronPath' => $this->getCronPath(),
 			'saved' => isset($_GET['saved']) && $_GET['saved'] === '1',
 			'deleted' => isset($_GET['deleted']) && $_GET['deleted'] === '1',
@@ -120,17 +122,22 @@ class CronController extends BaseController
 		$name = trim((string) ($input['name'] ?? ''));
 		$class = trim((string) ($input['class'] ?? ''));
 		$method = trim((string) ($input['method'] ?? ''));
+		$subtasks = $this->parseSubtasks($input['subtasks'] ?? []);
 
 		if ($name === '') {
 			throw new \InvalidArgumentException('Укажите название задачи.');
 		}
 
-		if ($class === '') {
-			throw new \InvalidArgumentException('Укажите класс задачи.');
-		}
-
-		if ($method === '' || !preg_match('/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/', $method)) {
-			throw new \InvalidArgumentException('Укажите корректное имя public-метода.');
+		if ($subtasks === []) {
+			$this->assertExecutableTask($class, $method, 'задачи');
+		} else {
+			foreach ($subtasks as $index => $subtask) {
+				$this->assertExecutableTask(
+					(string) ($subtask['class'] ?? ''),
+					(string) ($subtask['method'] ?? ''),
+					'подзадачи #' . ($index + 1)
+				);
+			}
 		}
 
 		$schedule = [
@@ -154,9 +161,56 @@ class CronController extends BaseController
 			'class' => $class,
 			'method' => $method,
 			'params' => trim((string) ($input['params'] ?? '')),
+			'important' => !empty($input['important']),
+			'urgent' => !empty($input['urgent']),
 			'schedule' => $schedule,
 			'enabled' => !empty($input['enabled']),
+			'subtasks' => $subtasks,
 		];
+	}
+
+	private function parseSubtasks(mixed $raw): array
+	{
+		if (!is_array($raw)) {
+			return [];
+		}
+
+		$subtasks = [];
+		foreach ($raw as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+
+			$name = trim((string) ($row['name'] ?? ''));
+			if ($name === '') {
+				continue;
+			}
+
+			$subtasks[] = [
+				'id' => (int) ($row['id'] ?? 0),
+				'name' => $name,
+				'description' => trim((string) ($row['description'] ?? '')),
+				'class' => trim((string) ($row['class'] ?? '')),
+				'method' => trim((string) ($row['method'] ?? '')),
+				'params' => trim((string) ($row['params'] ?? '')),
+				'important' => !empty($row['important']),
+				'urgent' => !empty($row['urgent']),
+				'enabled' => !empty($row['enabled']),
+			];
+		}
+
+		return $subtasks;
+	}
+
+	private function assertExecutableTask(string $class, string $method, string $context): void
+	{
+		if ($class === '') {
+			throw new \InvalidArgumentException('Укажите класс ' . $context . '.');
+		}
+
+		if ($method === '' || !preg_match('/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/', $method)) {
+			throw new \InvalidArgumentException('Укажите корректное имя public-метода ' . $context . '.');
+		}
 	}
 
 	private function isValidScheduleField(string $value): bool

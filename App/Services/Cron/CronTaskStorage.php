@@ -16,9 +16,17 @@ final class CronTaskStorage
 	{
 		$tasks = self::readAll();
 
-		usort($tasks, static fn(array $a, array $b): int => ($a['id'] ?? 0) <=> ($b['id'] ?? 0));
+		foreach ($tasks as &$task) {
+			$task['subtasks'] = CronTaskPriority::sort(
+				array_values(array_filter(
+					is_array($task['subtasks'] ?? null) ? $task['subtasks'] : [],
+					'is_array'
+				))
+			);
+		}
+		unset($task);
 
-		return $tasks;
+		return CronTaskPriority::sort($tasks);
 	}
 
 	public function findById(int $id): ?array
@@ -83,6 +91,26 @@ final class CronTaskStorage
 
 	private function normalizeTask(array $task): array
 	{
+		$subtasks = [];
+		foreach (is_array($task['subtasks'] ?? null) ? $task['subtasks'] : [] as $index => $subtask) {
+			if (!is_array($subtask)) {
+				continue;
+			}
+
+			$name = trim((string) ($subtask['name'] ?? ''));
+			if ($name === '') {
+				continue;
+			}
+
+			$subtasks[] = $this->normalizeSubtask($subtask, $index + 1);
+		}
+
+		$subtasks = CronTaskPriority::sort($subtasks);
+		foreach ($subtasks as $index => &$subtask) {
+			$subtask['id'] = $index + 1;
+		}
+		unset($subtask);
+
 		return [
 			'id' => (int) ($task['id'] ?? 0),
 			'name' => trim((string) ($task['name'] ?? '')),
@@ -90,6 +118,8 @@ final class CronTaskStorage
 			'class' => trim((string) ($task['class'] ?? '')),
 			'method' => trim((string) ($task['method'] ?? '')),
 			'params' => trim((string) ($task['params'] ?? '')),
+			'important' => !empty($task['important']),
+			'urgent' => !empty($task['urgent']),
 			'schedule' => [
 				'minute' => trim((string) ($task['schedule']['minute'] ?? '*')) ?: '*',
 				'hour' => trim((string) ($task['schedule']['hour'] ?? '*')) ?: '*',
@@ -98,6 +128,22 @@ final class CronTaskStorage
 				'weekday' => trim((string) ($task['schedule']['weekday'] ?? '*')) ?: '*',
 			],
 			'enabled' => !empty($task['enabled']),
+			'subtasks' => $subtasks,
+		];
+	}
+
+	private function normalizeSubtask(array $subtask, int $fallbackId): array
+	{
+		return [
+			'id' => (int) ($subtask['id'] ?? $fallbackId),
+			'name' => trim((string) ($subtask['name'] ?? '')),
+			'description' => trim((string) ($subtask['description'] ?? '')),
+			'class' => trim((string) ($subtask['class'] ?? '')),
+			'method' => trim((string) ($subtask['method'] ?? '')),
+			'params' => trim((string) ($subtask['params'] ?? '')),
+			'important' => !empty($subtask['important']),
+			'urgent' => !empty($subtask['urgent']),
+			'enabled' => !isset($subtask['enabled']) || !empty($subtask['enabled']),
 		];
 	}
 

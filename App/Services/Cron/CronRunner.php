@@ -13,7 +13,7 @@ final class CronRunner
 		$time ??= new DateTimeImmutable('now');
 		$matcher = new CronScheduleMatcher();
 		$storage = new CronTaskStorage();
-		$executed = 0;
+		$queue = [];
 
 		foreach ($storage->getAll() as $task) {
 			if (empty($task['enabled'])) {
@@ -25,7 +25,26 @@ final class CronRunner
 				continue;
 			}
 
-			$this->executeTask($task);
+			$subtasks = is_array($task['subtasks'] ?? null) ? $task['subtasks'] : [];
+			if ($subtasks !== []) {
+				foreach ($subtasks as $subtask) {
+					if (empty($subtask['enabled'])) {
+						continue;
+					}
+
+					$queue[] = $this->buildRunnableItem($task, $subtask, true);
+				}
+				continue;
+			}
+
+			$queue[] = $this->buildRunnableItem($task, $task, false);
+		}
+
+		$queue = CronTaskPriority::sort($queue);
+		$executed = 0;
+
+		foreach ($queue as $item) {
+			$this->executeTask($item);
 			$executed++;
 		}
 
@@ -34,21 +53,37 @@ final class CronRunner
 		return 0;
 	}
 
+	private function buildRunnableItem(array $parent, array $task, bool $isSubtask): array
+	{
+		return [
+			'id' => (int) ($parent['id'] ?? 0),
+			'subtask_id' => $isSubtask ? (int) ($task['id'] ?? 0) : 0,
+			'name' => trim((string) ($task['name'] ?? '')),
+			'class' => trim((string) ($task['class'] ?? '')),
+			'method' => trim((string) ($task['method'] ?? '')),
+			'params' => trim((string) ($task['params'] ?? '')),
+			'important' => !empty($task['important']),
+			'urgent' => !empty($task['urgent']),
+		];
+	}
+
 	private function executeTask(array $task): void
 	{
 		$class = trim((string) ($task['class'] ?? ''));
 		$method = trim((string) ($task['method'] ?? ''));
 		$name = trim((string) ($task['name'] ?? ''));
 		$id = (int) ($task['id'] ?? 0);
+		$subtaskId = (int) ($task['subtask_id'] ?? 0);
+		$label = $subtaskId > 0 ? sprintf('task:%d.%d', $id, $subtaskId) : sprintf('task:%d', $id);
 
 		if ($class === '' || $method === '') {
-			$this->log(sprintf('[task:%d] Пропуск "%s": не указан класс или метод.', $id, $name));
+			$this->log(sprintf('[%s] Пропуск "%s": не указан класс или метод.', $label, $name));
 
 			return;
 		}
 
 		if (!class_exists($class)) {
-			$this->log(sprintf('[task:%d] Класс не найден: %s', $id, $class));
+			$this->log(sprintf('[%s] Класс не найден: %s', $label, $class));
 
 			return;
 		}
@@ -56,20 +91,20 @@ final class CronRunner
 		try {
 			$instance = new $class();
 		} catch (Throwable $exception) {
-			$this->log(sprintf('[task:%d] Не удалось создать класс %s: %s', $id, $class, $exception->getMessage()));
+			$this->log(sprintf('[%s] Не удалось создать класс %s: %s', $label, $class, $exception->getMessage()));
 
 			return;
 		}
 
 		if (!method_exists($instance, $method)) {
-			$this->log(sprintf('[task:%d] Метод не найден: %s::%s', $id, $class, $method));
+			$this->log(sprintf('[%s] Метод не найден: %s::%s', $label, $class, $method));
 
 			return;
 		}
 
 		$reflection = new \ReflectionMethod($instance, $method);
 		if (!$reflection->isPublic()) {
-			$this->log(sprintf('[task:%d] Метод не public: %s::%s', $id, $class, $method));
+			$this->log(sprintf('[%s] Метод не public: %s::%s', $label, $class, $method));
 
 			return;
 		}
@@ -78,11 +113,11 @@ final class CronRunner
 
 		try {
 			$reflection->invokeArgs($instance, $params);
-			$this->log(sprintf('[task:%d] Выполнена задача "%s" (%s::%s)', $id, $name, $class, $method));
+			$this->log(sprintf('[%s] Выполнена задача "%s" (%s::%s)', $label, $name, $class, $method));
 		} catch (Throwable $exception) {
 			$this->log(sprintf(
-				'[task:%d] Ошибка "%s" (%s::%s): %s',
-				$id,
+				'[%s] Ошибка "%s" (%s::%s): %s',
+				$label,
 				$name,
 				$class,
 				$method,

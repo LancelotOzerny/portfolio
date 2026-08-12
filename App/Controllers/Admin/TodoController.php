@@ -74,6 +74,9 @@ class TodoController extends BaseController
 			$title = trim((string) ($_POST['title'] ?? ''));
 			$description = trim((string) ($_POST['description'] ?? ''));
 			$dependencyIds = $this->parseDependencyIds($_POST['dependency_ids'] ?? ($_POST['dependency_id'] ?? null));
+			$important = $this->parseBool($_POST['important'] ?? 0);
+			$urgent = $this->parseBool($_POST['urgent'] ?? 0);
+			$subtasks = $this->parseSubtasks($_POST['subtasks'] ?? null);
 
 			if ($columnId <= 0) {
 				throw new \InvalidArgumentException('Колонка не выбрана.');
@@ -99,7 +102,15 @@ class TodoController extends BaseController
 				$columnId = $this->requirePlannedColumnId();
 			}
 
-			$taskId = $model->createTask($columnId, $title, $description, $dependencyIds);
+			$taskId = $model->createTask(
+				$columnId,
+				$title,
+				$description,
+				$dependencyIds,
+				$important,
+				$urgent,
+				$subtasks
+			);
 			if ($taskId <= 0) {
 				throw new \RuntimeException('Не удалось создать задачу.');
 			}
@@ -121,6 +132,9 @@ class TodoController extends BaseController
 			$title = trim((string) ($_POST['title'] ?? ''));
 			$description = trim((string) ($_POST['description'] ?? ''));
 			$dependencyIds = $this->parseDependencyIds($_POST['dependency_ids'] ?? ($_POST['dependency_id'] ?? null));
+			$important = $this->parseBool($_POST['important'] ?? 0);
+			$urgent = $this->parseBool($_POST['urgent'] ?? 0);
+			$subtasks = $this->parseSubtasks($_POST['subtasks'] ?? null);
 
 			if ($title === '') {
 				throw new \InvalidArgumentException('Введите название задачи.');
@@ -142,7 +156,16 @@ class TodoController extends BaseController
 				$columnId = $this->requirePlannedColumnId();
 			}
 
-			if (!$model->updateTask($id, $title, $description, $dependencyIds, $columnId)) {
+			if (!$model->updateTask(
+				$id,
+				$title,
+				$description,
+				$dependencyIds,
+				$columnId,
+				$important,
+				$urgent,
+				$subtasks
+			)) {
 				throw new \RuntimeException('Не удалось сохранить задачу.');
 			}
 
@@ -284,6 +307,9 @@ class TodoController extends BaseController
 			'title' => (string) ($task->title ?? ''),
 			'description' => (string) ($task->description ?? ''),
 			'dependency_ids' => $dependencyIds,
+			'important' => $model->isImportant($task),
+			'urgent' => $model->isUrgent($task),
+			'subtasks' => $model->decodeSubtasks($task->subtasks ?? null),
 			'sort_order' => (int) ($task->sort_order ?? 0),
 		];
 	}
@@ -310,6 +336,57 @@ class TodoController extends BaseController
 		}
 
 		return array_values($result);
+	}
+
+	private function parseBool(mixed $value): bool
+	{
+		if (is_bool($value)) {
+			return $value;
+		}
+
+		if (is_int($value) || is_float($value)) {
+			return ((int) $value) === 1;
+		}
+
+		$value = strtolower(trim((string) $value));
+
+		return in_array($value, ['1', 'true', 'yes', 'on'], true);
+	}
+
+	/**
+	 * @return list<array<string, mixed>>
+	 */
+	private function parseSubtasks(mixed $value): array
+	{
+		if ($value === null || $value === '') {
+			return [];
+		}
+
+		if (is_string($value)) {
+			$decoded = json_decode($value, true);
+			$value = is_array($decoded) ? $decoded : [];
+		}
+
+		if (!is_array($value)) {
+			return [];
+		}
+
+		$result = [];
+		foreach ($value as $item) {
+			if (!is_array($item)) {
+				continue;
+			}
+
+			$result[] = [
+				'id' => (int) ($item['id'] ?? 0),
+				'title' => trim((string) ($item['title'] ?? '')),
+				'important' => $this->parseBool($item['important'] ?? 0),
+				'urgent' => $this->parseBool($item['urgent'] ?? 0),
+				'done' => $this->parseBool($item['done'] ?? 0),
+			];
+		}
+
+		return $result;
 	}
 
 	/**

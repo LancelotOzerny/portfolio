@@ -164,10 +164,12 @@ class BlogArticlesModel extends BaseModel
 	public function findAllWithTopic(): array
 	{
 		try {
-			return $this->findAllWithTopicRelations();
+			$articles = $this->findAllWithTopicRelations();
 		} catch (Throwable) {
-			return $this->findAllWithTopicLegacy();
+			$articles = $this->findAllWithTopicLegacy();
 		}
+
+		return $this->sortForDisplay($articles);
 	}
 
 	public function findActiveByTopicId(int $topicId): array
@@ -195,11 +197,7 @@ class BlogArticlesModel extends BaseModel
 			}
 		}
 
-		usort($articles, static function (object $left, object $right): int {
-			return (int) ($right->id ?? 0) <=> (int) ($left->id ?? 0);
-		});
-
-		return $articles;
+		return $this->sortForDisplay($articles);
 	}
 
 	public function findLatestActive(int $limit): array
@@ -519,6 +517,8 @@ class BlogArticlesModel extends BaseModel
 			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'LEFT')
 			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'LEFT')
 			->groupBy('blog_articles.id')
+			->orderBy('blog_articles.enabled', 'ASC')
+			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
@@ -529,6 +529,8 @@ class BlogArticlesModel extends BaseModel
 		$qb = (new QueryBuilder($this->table))
 			->selectRaw('blog_articles.*, blog_topics.title AS topic_title')
 			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'LEFT')
+			->orderBy('blog_articles.enabled', 'ASC')
+			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
@@ -546,6 +548,8 @@ class BlogArticlesModel extends BaseModel
 		}
 
 		$qb->groupBy('blog_articles.id')
+			->orderBy('blog_articles.enabled', 'ASC')
+			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
@@ -561,7 +565,9 @@ class BlogArticlesModel extends BaseModel
 			$qb->where('enabled', '=', 1);
 		}
 
-		$qb->orderBy('blog_articles.id', 'DESC');
+		$qb->orderBy('blog_articles.enabled', 'ASC')
+			->orderBy('blog_articles.created_at', 'DESC')
+			->orderBy('blog_articles.id', 'DESC');
 
 		return $this->execQuery($qb) ?? [];
 	}
@@ -593,7 +599,6 @@ class BlogArticlesModel extends BaseModel
 			->where('blog_articles.enabled', '=', 1)
 			->where('blog_topics.enabled', '=', 1)
 			->groupBy('blog_articles.id')
-			->orderBy('blog_articles.published_at', 'DESC')
 			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
@@ -611,7 +616,6 @@ class BlogArticlesModel extends BaseModel
 			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER')
 			->where('blog_articles.enabled', '=', 1)
 			->where('blog_topics.enabled', '=', 1)
-			->orderBy('blog_articles.published_at', 'DESC')
 			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
@@ -674,5 +678,54 @@ class BlogArticlesModel extends BaseModel
 		}
 
 		$qb->where('blog_article_views.created_at', '>=', $sinceDatetime);
+	}
+
+	/**
+	 * @param list<object> $articles
+	 * @return list<object>
+	 */
+	private function sortForDisplay(array $articles): array
+	{
+		usort($articles, static function (object $left, object $right): int {
+			return self::compareForDisplay($left, $right);
+		});
+
+		return $articles;
+	}
+
+	private static function isUnpublished(object $article): bool
+	{
+		return (int) ($article->enabled ?? 0) !== 1;
+	}
+
+	private static function compareForDisplay(object $left, object $right): int
+	{
+		$leftUnpublished = self::isUnpublished($left);
+		$rightUnpublished = self::isUnpublished($right);
+
+		if ($leftUnpublished !== $rightUnpublished) {
+			return $leftUnpublished ? -1 : 1;
+		}
+
+		$leftCreated = self::resolveTimestamp($left->created_at ?? null);
+		$rightCreated = self::resolveTimestamp($right->created_at ?? null);
+
+		if ($leftCreated !== $rightCreated) {
+			return $rightCreated <=> $leftCreated;
+		}
+
+		return (int) ($right->id ?? 0) <=> (int) ($left->id ?? 0);
+	}
+
+	private static function resolveTimestamp(mixed $value): int
+	{
+		$value = trim((string) $value);
+		if ($value === '') {
+			return 0;
+		}
+
+		$timestamp = strtotime($value);
+
+		return $timestamp === false ? 0 : $timestamp;
 	}
 }

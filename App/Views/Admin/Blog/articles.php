@@ -22,6 +22,15 @@ $publicationService = new BlogArticlePublicationService();
 			transform: translateY(-3px);
 			box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12) !important;
 		}
+
+		.admin-blog-article-card__delete-btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 31px;
+			height: 31px;
+			padding: 0;
+		}
 	</style>
 
 	<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -58,6 +67,7 @@ $publicationService = new BlogArticlePublicationService();
 				$shortPreviewText = strlen($previewText) > 220 ? substr($previewText, 0, 220) . '...' : $previewText;
 				$previewImagePath = trim((string) ($article->preview_image_path ?? ''));
 				$isEnabled = (int) ($article->enabled ?? 1) === 1;
+				$isPublished = $publicationService->isPublished($article);
 				$publicationDatetime = $publicationService->getPublicationDatetime($article);
 				$scheduledDatetime = $publicationService->getScheduledDatetime($article);
 				$scheduleInputValue = $publicationService->formatForInput(
@@ -109,22 +119,36 @@ $publicationService = new BlogArticlePublicationService();
 										<?php endif; ?>
 									</div>
 
-									<div class="d-flex flex-wrap gap-2 mt-auto mb-2">
-										<form action="/admin/content/blog/articles/<?= $articleId ?>/publish/" method="post" onsubmit="return confirm('Опубликовать статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
-											<input type="hidden" name="back" value="/admin/content/blog/articles/">
-											<button type="submit" class="btn btn-success btn-sm">Опубликовать</button>
+									<div class="d-flex flex-wrap align-items-center gap-2 mt-auto mb-0">
+										<?php if (!$isPublished): ?>
+											<form action="/admin/content/blog/articles/<?= $articleId ?>/publish/" method="post" class="mb-0" onsubmit="return confirm('Опубликовать статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
+												<input type="hidden" name="back" value="/admin/content/blog/articles/">
+												<button type="submit" class="btn btn-success btn-sm">Опубликовать</button>
+											</form>
+											<button
+												type="button"
+												class="btn btn-outline-primary btn-sm"
+												data-bs-toggle="modal"
+												data-bs-target="#blog-schedule-modal-<?= $articleId ?>"
+											>Опубликовать потом</button>
+										<?php endif; ?>
+										<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
+											<button
+												type="submit"
+												class="btn btn-outline-danger btn-sm admin-blog-article-card__delete-btn"
+												title="Удалить"
+												aria-label="Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»"
+											>
+												<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+													<path d="M4 7h16"/>
+													<path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+													<path d="M10 11v6"/>
+													<path d="M14 11v6"/>
+													<path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>
+												</svg>
+											</button>
 										</form>
-										<button
-											type="button"
-											class="btn btn-outline-primary btn-sm"
-											data-bs-toggle="modal"
-											data-bs-target="#blog-schedule-modal-<?= $articleId ?>"
-										>Опубликовать потом</button>
 									</div>
-
-									<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
-										<button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
-									</form>
 								</div>
 							</div>
 						</div>
@@ -135,6 +159,10 @@ $publicationService = new BlogArticlePublicationService();
 
 		<?php foreach ($articles as $article): ?>
 			<?php
+			if ($publicationService->isPublished($article)) {
+				continue;
+			}
+
 			$articleId = (int) ($article->id ?? 0);
 			$title = (string) ($article->title ?? 'Без названия');
 			$scheduledDatetime = $publicationService->getScheduledDatetime($article);

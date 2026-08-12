@@ -110,7 +110,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 		$dbArticle = (new \Models\BlogArticlesModel())->findById((int) ($article['id'] ?? 0));
 	} catch (\Throwable) {
 	}
-	if ($dbArticle !== null) {
+	if ($dbArticle !== null && !$publicationService->isPublished($dbArticle)) {
 		$articleId = (int) ($dbArticle->id ?? 0);
 		$scheduledDatetime = $publicationService->getScheduledDatetime($dbArticle);
 		$scheduleInputValue = $publicationService->formatForInput(

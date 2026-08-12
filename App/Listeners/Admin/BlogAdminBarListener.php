@@ -5,6 +5,7 @@ namespace App\Listeners\Admin;
 use App\Events\Admin\AdminBarBuildEvent;
 use App\Services\Admin\Bar\AdminBarAction;
 use App\Services\Admin\Bar\AdminBarGroup;
+use App\Services\Blog\BlogArticlePublicationService;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
 use Throwable;
@@ -36,43 +37,48 @@ final class BlogAdminBarListener
 				return;
 			}
 
+			$actions = [
+				new AdminBarAction(
+					id: 'blog.basic',
+					label: 'Базовая информация',
+					attributes: [
+						'data-blog-settings-open' => 'basic',
+						'type' => 'button',
+					],
+				),
+				new AdminBarAction(
+					id: 'blog.seo',
+					label: 'SEO',
+					attributes: [
+						'data-blog-settings-open' => 'seo',
+						'type' => 'button',
+					],
+				),
+			];
+
+			if (!(new BlogArticlePublicationService())->isPublished($article)) {
+				$actions[] = new AdminBarAction(
+					id: 'blog.publish',
+					label: 'Опубликовать',
+					attributes: [
+						'data-blog-publish' => (string) $articleId,
+						'type' => 'button',
+					],
+				);
+				$actions[] = new AdminBarAction(
+					id: 'blog.schedule',
+					label: 'Опубликовать потом',
+					attributes: [
+						'data-blog-schedule-open' => (string) $articleId,
+						'type' => 'button',
+					],
+				);
+			}
+
 			$event->addGroup(new AdminBarGroup(
 				id: 'blog',
 				label: 'Блог',
-				actions: [
-					new AdminBarAction(
-						id: 'blog.basic',
-						label: 'Базовая информация',
-						attributes: [
-							'data-blog-settings-open' => 'basic',
-							'type' => 'button',
-						],
-					),
-					new AdminBarAction(
-						id: 'blog.seo',
-						label: 'SEO',
-						attributes: [
-							'data-blog-settings-open' => 'seo',
-							'type' => 'button',
-						],
-					),
-					new AdminBarAction(
-						id: 'blog.publish',
-						label: 'Опубликовать',
-						attributes: [
-							'data-blog-publish' => (string) $articleId,
-							'type' => 'button',
-						],
-					),
-					new AdminBarAction(
-						id: 'blog.schedule',
-						label: 'Опубликовать потом',
-						attributes: [
-							'data-blog-schedule-open' => (string) $articleId,
-							'type' => 'button',
-						],
-					),
-				],
+				actions: $actions,
 			));
 
 			return;

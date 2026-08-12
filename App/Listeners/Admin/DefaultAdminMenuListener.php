@@ -163,6 +163,12 @@ final class DefaultAdminMenuListener
 					matchPrefixes: ['/admin/settings/templates/'],
 				),
 				new AdminMenuItem(
+					id: 'settings.cron',
+					label: 'Cron задачи',
+					href: '/admin/settings/cron/',
+					matchPrefixes: ['/admin/settings/cron/'],
+				),
+				new AdminMenuItem(
 					id: 'settings.backup',
 					label: 'Резервное копирование',
 					href: '/admin/settings/backup/',

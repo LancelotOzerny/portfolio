@@ -50,6 +50,11 @@ $router->get('/admin/development/repository/', \Controllers\Admin\RepositoryCont
 $router->post('/admin/development/repository/update/', \Controllers\Admin\RepositoryController::class, 'update');
 $router->post('/admin/development/repository/save/', \Controllers\Admin\RepositoryController::class, 'save');
 $router->get('/admin/settings/', \Controllers\Admin\SettingsController::class, 'index');
+$router->get('/admin/settings/cron/', \Controllers\Admin\CronController::class, 'index');
+$router->post('/admin/settings/cron/create/', \Controllers\Admin\CronController::class, 'create');
+$router->get('/admin/settings/cron/{id}/', \Controllers\Admin\CronController::class, 'edit');
+$router->post('/admin/settings/cron/{id}/', \Controllers\Admin\CronController::class, 'update');
+$router->post('/admin/settings/cron/{id}/delete/', \Controllers\Admin\CronController::class, 'delete');
 $router->get('/admin/settings/templates/', \Controllers\Admin\TemplatesController::class, 'index');
 $router->get('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'create');
 $router->post('/admin/settings/templates/create/', \Controllers\Admin\TemplatesController::class, 'store');

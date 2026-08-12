@@ -41,4 +41,19 @@ class BlogDateFormatter
 
 		return $day . ' ' . $month . ' ' . $year;
 	}
+
+	public function formatWithTime(?string $value): string
+	{
+		$date = $this->format($value);
+		if ($date === '') {
+			return '';
+		}
+
+		$timestamp = strtotime((string) $value);
+		if ($timestamp === false) {
+			return $date;
+		}
+
+		return $date . ' ' . date('H:i', $timestamp);
+	}
 }

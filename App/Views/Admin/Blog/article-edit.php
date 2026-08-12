@@ -1,6 +1,8 @@
 <?php
 /* @var array $data */
 
+use App\Services\Blog\BlogArticlePublicationService;
+
 $article = $data['article'] ?? null;
 $topics = $data['topics'] ?? [];
 $selectedTopicIds = $data['selectedTopicIds'] ?? [];
@@ -19,6 +21,13 @@ $saveSuccess = (bool) ($data['saveSuccess'] ?? false);
 $saveError = trim((string) ($data['saveError'] ?? ''));
 $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 $formAction = $isCreate ? '/admin/content/blog/articles/create/' : '/admin/content/blog/articles/' . $articleId . '/';
+$publicationService = new BlogArticlePublicationService();
+$scheduledDatetime = !$isCreate
+	? ($data['scheduledDatetime'] ?? $publicationService->getScheduledDatetime($article))
+	: null;
+$scheduleInputValue = $publicationService->formatForInput(
+	$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 day'))
+);
 
 if (empty($selectedTopicIds) && $topicId > 0) {
 	$selectedTopicIds = [$topicId];
@@ -238,6 +247,39 @@ if (empty($selectedTopicIds) && $topicId > 0) {
 			<button type="submit" class="btn btn-primary"><?= $isCreate ? 'Создать' : 'Сохранить' ?></button>
 		</div>
 	</form>
+
+	<?php if (!$isCreate): ?>
+		<form id="blog-article-publish-form" action="/admin/content/blog/articles/<?= $articleId ?>/publish/" method="post" class="d-none"></form>
+
+		<div class="modal fade" id="blog-article-schedule-modal" tabindex="-1" aria-labelledby="blog-article-schedule-modal-label" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<form action="/admin/content/blog/articles/<?= $articleId ?>/schedule/" method="post">
+						<input type="hidden" name="back" value="<?= htmlspecialchars($formAction) ?>">
+						<div class="modal-header">
+							<h2 class="modal-title h5" id="blog-article-schedule-modal-label">Отложить публикацию</h2>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+						</div>
+						<div class="modal-body">
+							<label class="form-label" for="blog-article-schedule-at">Дата и время публикации</label>
+							<input
+								type="datetime-local"
+								class="form-control"
+								id="blog-article-schedule-at"
+								name="published_at"
+								value="<?= htmlspecialchars($scheduleInputValue) ?>"
+								required
+							>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+							<button type="submit" class="btn btn-primary">Запланировать</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	<?php endif; ?>
 </section>
 
 <script>

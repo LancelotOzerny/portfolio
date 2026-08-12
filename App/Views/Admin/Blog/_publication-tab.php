@@ -10,51 +10,46 @@ $publicationService = new BlogArticlePublicationService();
 $dateFormatter = new BlogDateFormatter();
 $publicationDatetime = $data['publicationDatetime'] ?? $publicationService->getPublicationDatetime($article);
 $scheduledDatetime = $data['scheduledDatetime'] ?? $publicationService->getScheduledDatetime($article);
+$isPublished = $publicationService->isPublished($article);
 $scheduleInputValue = $publicationService->formatForInput(
-	$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 hour'))
+	$scheduledDatetime !== null ? $scheduledDatetime : date('Y-m-d H:i:s', strtotime('+1 day'))
 );
-$publicationLabel = $publicationDatetime !== null
-	? ($dateFormatter->format($publicationDatetime) ?: $publicationDatetime)
-	: 'Нет';
+
+$publicationHeading = 'Время публикации';
+if (!$isPublished && $scheduledDatetime !== null) {
+	$scheduledLabel = $dateFormatter->formatWithTime($scheduledDatetime) ?: $scheduledDatetime;
+	$publicationHeading .= ' (отложено на: ' . $scheduledLabel . ')';
+}
 ?>
 
 <div class="row g-3">
 	<div class="col-12">
-		<label class="form-label">Время публикации</label>
-		<input type="text" class="form-control" value="<?= htmlspecialchars($publicationLabel) ?>" readonly>
+		<h2 class="h5 mb-2"><?= htmlspecialchars($publicationHeading) ?></h2>
+		<?php if ($isPublished && $publicationDatetime !== null): ?>
+			<p class="text-secondary mb-0">
+				Опубликована: <?= htmlspecialchars($dateFormatter->formatWithTime($publicationDatetime) ?: $publicationDatetime) ?>
+			</p>
+		<?php elseif (!$isPublished): ?>
+			<p class="text-secondary mb-0">Статья ещё не опубликована.</p>
+		<?php endif; ?>
 	</div>
 
-	<?php if ($scheduledDatetime !== null): ?>
+	<?php if (!$isPublished): ?>
 		<div class="col-12">
-			<div class="alert alert-info mb-0">
-				Запланирована публикация: <?= htmlspecialchars($dateFormatter->format($scheduledDatetime) ?: $scheduledDatetime) ?>
+			<div class="d-flex flex-wrap gap-2">
+				<button
+					type="submit"
+					form="blog-article-publish-form"
+					class="btn btn-success"
+					onclick="return confirm('Опубликовать статью сейчас?');"
+				>Опубликовать</button>
+				<button
+					type="button"
+					class="btn btn-outline-primary"
+					data-bs-toggle="modal"
+					data-bs-target="#blog-article-schedule-modal"
+				>Отложить публикацию</button>
 			</div>
 		</div>
 	<?php endif; ?>
-
-	<div class="col-12">
-		<h2 class="h6 mb-2">Опубликовать потом</h2>
-		<form action="/admin/content/blog/articles/<?= $articleId ?>/schedule/" method="post" class="row g-2 align-items-end">
-			<div class="col-12 col-md-6">
-				<label class="form-label" for="blog-article-schedule-at">Время публикации</label>
-				<input
-					type="datetime-local"
-					class="form-control"
-					id="blog-article-schedule-at"
-					name="published_at"
-					value="<?= htmlspecialchars($scheduleInputValue) ?>"
-					required
-				>
-			</div>
-			<div class="col-12 col-md-auto">
-				<button type="submit" class="btn btn-outline-primary">Запланировать</button>
-			</div>
-		</form>
-	</div>
-
-	<div class="col-12">
-		<form action="/admin/content/blog/articles/<?= $articleId ?>/publish/" method="post" onsubmit="return confirm('Опубликовать статью сейчас?');">
-			<button type="submit" class="btn btn-success">Опубликовать</button>
-		</form>
-	</div>
 </div>

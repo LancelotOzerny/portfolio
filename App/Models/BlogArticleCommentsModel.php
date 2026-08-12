@@ -66,6 +66,29 @@ class BlogArticleCommentsModel extends BaseModel
 		return $this->execInsertQuery((new QueryBuilder($this->table))->insert($data));
 	}
 
+	public function countSince(string $sinceDatetime): int
+	{
+		$sinceDatetime = trim($sinceDatetime);
+		if ($sinceDatetime === '') {
+			return 0;
+		}
+
+		try {
+			$qb = (new QueryBuilder($this->table))
+				->count()
+				->where('created_at', '>=', $sinceDatetime);
+
+			$result = $this->execQuery($qb, true);
+			if (!is_object($result)) {
+				return 0;
+			}
+
+			return (int) ($result->total ?? 0);
+		} catch (Throwable) {
+			return 0;
+		}
+	}
+
 	public function belongsToArticle(int $commentId, int $articleId): bool
 	{
 		if ($commentId <= 0 || $articleId <= 0) {

@@ -2,8 +2,8 @@
 
 namespace Controllers\Admin;
 
+use Models\BlogArticleCommentsModel;
 use Models\BlogArticlesModel;
-use Models\BlogTopicsModel;
 use Models\ProjectsModel;
 use Models\UsersModel;
 use Modules\Main\BaseController;
@@ -29,16 +29,10 @@ class HomeController extends BaseController
 		$data = [
 			'projectsCount' => (new ProjectsModel())->countAll(),
 			'usersCount' => (new UsersModel())->countAll(),
-			'rubricsCount' => (new BlogTopicsModel())->countAll(),
 			'articlesCount' => $articlesModel->countAll(),
 			'blogViewsWeekCount' => $articlesModel->countViewsSince($weekSince),
 			'blogViewsMonthCount' => $articlesModel->countViewsSince($monthSince),
-			'topArticlesWeek' => $articlesModel->findTopViewedArticles($weekSince, 5),
-			'topArticlesMonth' => $articlesModel->findTopViewedArticles($monthSince, 5),
-			'topArticlesAllTime' => $articlesModel->findTopViewedArticles(null, 5),
-			'topRubricWeek' => $articlesModel->findTopViewedTopic($weekSince),
-			'topRubricMonth' => $articlesModel->findTopViewedTopic($monthSince),
-			'topRubricAllTime' => $articlesModel->findTopViewedTopic(null),
+			'blogCommentsMonthCount' => (new BlogArticleCommentsModel())->countSince($monthSince),
 		];
 
         Template::getInstance()->showHeader();

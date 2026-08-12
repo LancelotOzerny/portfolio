@@ -5,6 +5,7 @@ $router = Router::getInstance();
 
 $router->get('/admin/login/', \Controllers\Admin\AuthController::class, 'login');
 $router->get('/admin/', \Controllers\Admin\HomeController::class, 'index');
+$router->get('/admin/statistics/blog/', \Controllers\Admin\StatisticsController::class, 'blog');
 $router->get('/admin/projects/', \Controllers\Admin\ProjectsController::class, 'index');
 $router->get('/admin/content/blog/', \Controllers\Admin\BlogController::class, 'index');
 $router->get('/admin/content/blog/rubrics/', \Controllers\Admin\BlogController::class, 'rubrics');

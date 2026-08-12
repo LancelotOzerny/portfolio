@@ -21,6 +21,22 @@ final class DefaultAdminMenuListener
 		));
 
 		$event->addItem(new AdminMenuItem(
+			id: 'statistics',
+			label: 'Статистика',
+			href: '/admin/statistics/blog/',
+			icon: 'Ст',
+			matchPrefixes: ['/admin/statistics/'],
+			children: [
+				new AdminMenuItem(
+					id: 'statistics.blog',
+					label: 'Блог',
+					href: '/admin/statistics/blog/',
+					matchPrefixes: ['/admin/statistics/blog/'],
+				),
+			],
+		));
+
+		$event->addItem(new AdminMenuItem(
 			id: 'content',
 			label: 'Контент',
 			href: '/admin/projects/',

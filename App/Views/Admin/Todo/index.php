@@ -345,7 +345,12 @@ foreach ($columns as $column) {
 			<h1 class="h4 mb-1">To Do List</h1>
 			<p class="text-secondary mb-0">Задачи разработки по колонкам.</p>
 		</div>
-		<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
+		<div class="d-flex flex-wrap gap-2">
+			<?php if ($error === '' && $columns !== []): ?>
+				<button type="button" class="btn btn-outline-danger btn-sm" id="todoClearDone">Очистить</button>
+			<?php endif; ?>
+			<a href="/admin/" class="btn btn-outline-secondary btn-sm">Назад в админку</a>
+		</div>
 	</div>
 
 	<?php if ($error !== ''): ?>
@@ -1210,6 +1215,28 @@ foreach ($columns as $column) {
 
 	subtaskAddBtn.addEventListener('click', () => {
 		subtasksListEl.appendChild(createSubtaskRow());
+	});
+
+	const clearDoneBtn = document.getElementById('todoClearDone');
+	clearDoneBtn?.addEventListener('click', async () => {
+		const doneColumnId = getDoneColumnId();
+		const doneTasks = doneColumnId > 0 ? getTasksForColumn(doneColumnId) : [];
+		if (doneTasks.length === 0) {
+			return;
+		}
+
+		if (!window.confirm('Удалить все задачи в колонке «Готово» (' + doneTasks.length + ')?')) {
+			return;
+		}
+
+		try {
+			await postForm('/admin/development/todo/tasks/clear-done/', {});
+			doneTasks.forEach((task) => removeDependencyFromState(task.id));
+			state.tasks = state.tasks.filter((task) => Number(task.column_id) !== doneColumnId);
+			render();
+		} catch (error) {
+			window.alert(error.message || 'Не удалось очистить задачи.');
+		}
 	});
 
 	deleteBtn.addEventListener('click', async () => {

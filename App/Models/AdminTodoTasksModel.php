@@ -177,6 +177,32 @@ class AdminTodoTasksModel extends BaseModel
 		return $this->execWriteQuery($qb);
 	}
 
+	public function deleteByColumnId(int $columnId): int
+	{
+		$this->ensureSchema();
+
+		if ($columnId <= 0) {
+			return 0;
+		}
+
+		$taskIds = [];
+		foreach ($this->findByColumnId($columnId) as $task) {
+			$taskId = (int) ($task->id ?? 0);
+			if ($taskId > 0) {
+				$taskIds[] = $taskId;
+			}
+		}
+
+		$deleted = 0;
+		foreach ($taskIds as $taskId) {
+			if ($this->deleteById($taskId)) {
+				$deleted++;
+			}
+		}
+
+		return $deleted;
+	}
+
 	public function reorder(int $columnId, array $orderedIds): bool
 	{
 		$this->ensureSchema();

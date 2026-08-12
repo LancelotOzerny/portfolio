@@ -45,6 +45,7 @@ $router->post('/admin/development/todo/tasks/create/', \Controllers\Admin\TodoCo
 $router->post('/admin/development/todo/tasks/reorder/', \Controllers\Admin\TodoController::class, 'reorderTasks');
 $router->post('/admin/development/todo/tasks/{id}/update/', \Controllers\Admin\TodoController::class, 'updateTask');
 $router->post('/admin/development/todo/tasks/{id}/delete/', \Controllers\Admin\TodoController::class, 'deleteTask');
+$router->post('/admin/development/todo/tasks/clear-done/', \Controllers\Admin\TodoController::class, 'clearDoneTasks');
 $router->post('/admin/development/todo/columns/{id}/color/', \Controllers\Admin\TodoController::class, 'updateColumnColor');
 $router->get('/admin/development/repository/', \Controllers\Admin\RepositoryController::class, 'index');
 $router->post('/admin/development/repository/update/', \Controllers\Admin\RepositoryController::class, 'update');

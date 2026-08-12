@@ -200,6 +200,24 @@ class TodoController extends BaseController
 		});
 	}
 
+	public function clearDoneTasks(): void
+	{
+		$this->handleJsonRequest(function (): array {
+			$columnsModel = new AdminTodoColumnsModel();
+			$doneColumnId = $this->findColumnIdByCode($columnsModel, 'done');
+			if ($doneColumnId <= 0) {
+				throw new \RuntimeException('Колонка «Готово» не найдена.');
+			}
+
+			$deletedCount = (new AdminTodoTasksModel())->deleteByColumnId($doneColumnId);
+
+			return [
+				'deleted_count' => $deletedCount,
+				'column_id' => $doneColumnId,
+			];
+		});
+	}
+
 	public function reorderTasks(): void
 	{
 		$this->handleJsonRequest(function (): array {

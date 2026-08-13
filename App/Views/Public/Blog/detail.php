@@ -765,6 +765,301 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 		SubscriptTool.title = 'Нижняя сноска';
 		SubscriptTool.icon = 'x₂';
 
+		const createWrapMark = () => {
+			const mark = document.createElement('span');
+			mark.className = 'blog-wrap';
+			mark.contentEditable = 'false';
+			mark.appendChild(document.createElement('wbr'));
+			return mark;
+		};
+
+		const insertMarksAfterSign = (root, sign) => {
+			if (!root || !sign) {
+				return;
+			}
+
+			const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+				acceptNode: (node) => {
+					const parent = node.parentElement;
+					if (parent && parent.closest('.blog-wrap, .blog-nowrap')) {
+						return NodeFilter.FILTER_REJECT;
+					}
+
+					return NodeFilter.FILTER_ACCEPT;
+				}
+			});
+			const nodes = [];
+			while (walker.nextNode()) {
+				nodes.push(walker.currentNode);
+			}
+
+			nodes.forEach((node) => {
+				const text = node.nodeValue || '';
+				if (!text.includes(sign)) {
+					return;
+				}
+
+				const fragment = document.createDocumentFragment();
+				let cursor = 0;
+				let changed = false;
+
+				while (cursor < text.length) {
+					const index = text.indexOf(sign, cursor);
+					if (index === -1) {
+						fragment.appendChild(document.createTextNode(text.slice(cursor)));
+						break;
+					}
+
+					const afterSign = index + sign.length;
+					fragment.appendChild(document.createTextNode(text.slice(cursor, afterSign)));
+					cursor = afterSign;
+
+					const isEnd = afterSign === text.length;
+					const next = node.nextSibling;
+					const alreadyWrapped = isEnd && next instanceof Element && next.classList.contains('blog-wrap');
+					if (!alreadyWrapped) {
+						fragment.appendChild(createWrapMark());
+						changed = true;
+					}
+				}
+
+				if (changed && node.parentNode) {
+					node.parentNode.replaceChild(fragment, node);
+				}
+			});
+		};
+
+		class WrapMarkTool {
+			static get isInline() {
+				return true;
+			}
+
+			static get sanitize() {
+				return {
+					wbr: true,
+					span: {
+						class: true
+					}
+				};
+			}
+
+			constructor({ api }) {
+				this.api = api;
+				this.button = null;
+			}
+
+			render() {
+				this.button = document.createElement('button');
+				this.button.type = 'button';
+				this.button.classList.add(this.api.styles.inlineToolButton);
+				this.button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M4 12h7M4 17h10"/><path d="M16 14l3 3 3-3M19 7v10"/></svg>';
+				this.button.title = 'Перенос за знак';
+				return this.button;
+			}
+
+			surround(range) {
+				if (!range) {
+					return;
+				}
+
+				if (range.collapsed) {
+					const mark = createWrapMark();
+					range.insertNode(mark);
+					range.setStartAfter(mark);
+					range.collapse(true);
+					const selection = window.getSelection();
+					selection.removeAllRanges();
+					selection.addRange(range);
+					return;
+				}
+
+				const selectedText = range.toString();
+				if (selectedText.length === 1) {
+					const fragment = document.createDocumentFragment();
+					fragment.appendChild(range.extractContents());
+					fragment.appendChild(createWrapMark());
+					range.insertNode(fragment);
+					return;
+				}
+
+				const sign = window.prompt('Введите знак, после которого разрешить перенос', '/');
+				if (!sign) {
+					return;
+				}
+
+				const container = document.createElement('div');
+				container.appendChild(range.extractContents());
+				insertMarksAfterSign(container, sign);
+				range.insertNode(container);
+				container.replaceWith(...container.childNodes);
+			}
+
+			checkState(selection) {
+				if (!this.button) {
+					return;
+				}
+
+				const parent = selection.anchorNode && selection.anchorNode.parentElement
+					? selection.anchorNode.parentElement
+					: null;
+				const active = Boolean(parent && parent.closest('.blog-wrap'));
+				this.button.classList.toggle(this.api.styles.inlineToolButtonActive, active);
+			}
+		}
+
+		class PinTextTool {
+			static get isInline() {
+				return true;
+			}
+
+			static get sanitize() {
+				return {
+					span: {
+						class: true
+					}
+				};
+			}
+
+			constructor({ api }) {
+				this.api = api;
+				this.button = null;
+			}
+
+			render() {
+				this.button = document.createElement('button');
+				this.button.type = 'button';
+				this.button.classList.add(this.api.styles.inlineToolButton);
+				this.button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5"/><path d="M8 3h8l-1 7h3l-6 7-6-7h3z"/></svg>';
+				this.button.title = 'Закрепить без переноса';
+				return this.button;
+			}
+
+			surround(range) {
+				if (!range || range.collapsed) {
+					return;
+				}
+
+				const parent = range.commonAncestorContainer instanceof Element
+					? range.commonAncestorContainer
+					: range.commonAncestorContainer.parentElement;
+				const existing = parent && parent.closest ? parent.closest('span.blog-nowrap') : null;
+				if (existing) {
+					existing.replaceWith(...existing.childNodes);
+					return;
+				}
+
+				const wrapper = document.createElement('span');
+				wrapper.className = 'blog-nowrap';
+				wrapper.appendChild(range.extractContents());
+				range.insertNode(wrapper);
+				this.api.selection.expandToTag(wrapper);
+			}
+
+			checkState(selection) {
+				if (!this.button) {
+					return;
+				}
+
+				const parent = selection.anchorNode && selection.anchorNode.parentElement
+					? selection.anchorNode.parentElement
+					: null;
+				const active = Boolean(parent && parent.closest('span.blog-nowrap'));
+				this.button.classList.toggle(this.api.styles.inlineToolButtonActive, active);
+			}
+		}
+
+		class CopyBlockTune {
+			static get isTune() {
+				return true;
+			}
+
+			constructor({ api, block }) {
+				this.api = api;
+				this.block = block;
+			}
+
+			render() {
+				return {
+					icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+					label: 'Копировать',
+					title: 'Копировать',
+					closeOnActivate: true,
+					onActivate: () => {
+						this.duplicate();
+					}
+				};
+			}
+
+			async duplicate() {
+				const saved = await this.block.save();
+				const data = JSON.parse(JSON.stringify((saved && saved.data) || {}));
+				this.api.blocks.insert(this.block.name, data);
+			}
+		}
+
+		class BlogList extends List {
+			static get sanitize() {
+				const base = List.sanitize && typeof List.sanitize === 'object' ? List.sanitize : {};
+				return {
+					style: base.style || {},
+					items: Object.assign({ br: true, wbr: true, span: true }, base.items || {})
+				};
+			}
+
+			backspace(event) {
+				let current = null;
+				try {
+					current = this.currentItem;
+				} catch (error) {
+					super.backspace(event);
+					return;
+				}
+
+				if (!current || !this.isEmptyItem(current)) {
+					super.backspace(event);
+					return;
+				}
+
+				const items = this._elements.wrapper.querySelectorAll(':scope > .' + this.CSS.item);
+				if (items.length < 2) {
+					super.backspace(event);
+					return;
+				}
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				const previous = current.previousElementSibling;
+				const next = current.nextElementSibling;
+				current.remove();
+
+				const target = previous || next;
+				if (target) {
+					this.placeCaret(target, !previous);
+				}
+			}
+
+			isEmptyItem(item) {
+				const clone = item.cloneNode(true);
+				clone.querySelectorAll('.blog-wrap, wbr').forEach((node) => node.remove());
+				const text = String(clone.textContent || '').replace(/\u00a0/g, ' ').replace(/\u200B/g, '').trim();
+				const html = String(clone.innerHTML || '')
+					.replace(/<br\b[^>]*>/gi, '')
+					.replace(/&nbsp;/gi, '')
+					.trim();
+				return text === '' && html === '';
+			}
+
+			placeCaret(item, atStart) {
+				const range = document.createRange();
+				range.selectNodeContents(item);
+				range.collapse(Boolean(atStart));
+				const selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+		}
+
 		class InlineColorTool {
 			static get isInline() {
 				return true;
@@ -1036,36 +1331,49 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 
 			renderSettings() {
 				const wrapper = document.createElement('div');
+				const buttons = document.createElement('div');
+				buttons.className = 'blog-editor-table-settings';
 
-				const createButton = (label, onClick) => {
+				const icons = {
+					addRow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="13" height="14" rx="1.5"/><path d="M3 12h13M9.5 5v14"/><path d="M19.5 6v6M16.5 9h6"/></svg>',
+					removeRow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="13" height="14" rx="1.5"/><path d="M3 12h13M9.5 5v14"/><path d="M16.5 9h6"/></svg>',
+					addColumn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="14" height="13" rx="1.5"/><path d="M3 9.5h14M10 3v13"/><path d="M10 20h6M13 17v6"/></svg>',
+					removeColumn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="14" height="13" rx="1.5"/><path d="M3 9.5h14M10 3v13"/><path d="M10 20h6"/></svg>'
+				};
+
+				const createButton = (title, icon, onClick) => {
 					const button = document.createElement('div');
 					button.className = this.api.styles.settingsButton;
-					button.textContent = label;
+					button.innerHTML = icon;
+					button.title = title;
+					button.setAttribute('aria-label', title);
 					button.addEventListener('click', () => {
 						this.readFromDom();
 						onClick();
 						this.draw();
 					});
-					wrapper.appendChild(button);
+					buttons.appendChild(button);
 				};
 
-				createButton('+ строка', () => {
+				createButton('Добавить строку', icons.addRow, () => {
 					const columns = this.data.rows[0] ? this.data.rows[0].length : 1;
 					this.data.rows.push(Array.from({ length: columns }, () => ''));
 				});
-				createButton('− строка', () => {
+				createButton('Убрать строку', icons.removeRow, () => {
 					if (this.data.rows.length > 1) {
 						this.data.rows.pop();
 					}
 				});
-				createButton('+ столбец', () => {
+				createButton('Добавить столбец', icons.addColumn, () => {
 					this.data.rows.forEach((row) => row.push(''));
 				});
-				createButton('− столбец', () => {
+				createButton('Убрать столбец', icons.removeColumn, () => {
 					if ((this.data.rows[0] || []).length > 1) {
 						this.data.rows.forEach((row) => row.pop());
 					}
 				});
+
+				wrapper.appendChild(buttons);
 
 				const headButton = document.createElement('div');
 				headButton.className = this.api.styles.settingsButton + (this.data.withHead ? ' ' + this.api.styles.settingsButtonActive : '');
@@ -1217,7 +1525,8 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 		const sanitizeInlineHtml = (html) => {
 			const template = document.createElement('template');
 			template.innerHTML = String(html || '');
-			const allowedTags = new Set(['A', 'B', 'BR', 'CODE', 'I', 'MARK', 'S', 'SPAN', 'STRONG', 'SUB', 'SUP', 'U', 'EM']);
+			const allowedTags = new Set(['A', 'B', 'BR', 'CODE', 'I', 'MARK', 'S', 'SPAN', 'STRONG', 'SUB', 'SUP', 'U', 'EM', 'WBR']);
+			const allowedSpanClasses = new Set(['blog-wrap', 'blog-nowrap']);
 
 			template.content.querySelectorAll('*').forEach((element) => {
 				if (!allowedTags.has(element.tagName)) {
@@ -1230,15 +1539,31 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 						return;
 					}
 
+					if (element.tagName === 'SPAN' && attribute.name === 'class') {
+						const className = Array.from(element.classList)
+							.filter((name) => allowedSpanClasses.has(name))
+							.join(' ');
+						if (className) {
+							element.setAttribute('class', className);
+						} else {
+							element.removeAttribute('class');
+						}
+						return;
+					}
+
 					if (element.tagName === 'SPAN' && attribute.name === 'style') {
 						const color = element.style.color;
 						const backgroundColor = element.style.backgroundColor;
+						const whiteSpace = element.style.whiteSpace === 'nowrap' ? 'nowrap' : '';
 						element.removeAttribute('style');
 						if (color) {
 							element.style.color = color;
 						}
 						if (backgroundColor) {
 							element.style.backgroundColor = backgroundColor;
+						}
+						if (whiteSpace) {
+							element.style.whiteSpace = whiteSpace;
 						}
 						return;
 					}
@@ -1474,24 +1799,29 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			return `<p>${sanitizeInlineHtml(data.text)}</p>`;
 		}).filter(Boolean).join("\n");
 
+		const inlineTools = ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor', 'wrapMark', 'pinText'];
 		const editor = new EditorJS({
 			holder: editorRoot,
 			data: {
 				blocks: htmlToBlocks(initialHtml)
 			},
-			inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
+			tunes: ['copy'],
+			inlineToolbar: inlineTools,
 			tools: {
+				copy: CopyBlockTune,
+				wrapMark: WrapMarkTool,
+				pinText: PinTextTool,
 				header: {
 					class: Header,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
+					inlineToolbar: inlineTools,
 					config: {
 						levels: [2, 3, 4, 5, 6],
 						defaultLevel: 3
 					}
 				},
 				list: {
-					class: List,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor'],
+					class: BlogList,
+					inlineToolbar: inlineTools,
 					config: {
 						defaultStyle: 'unordered'
 					}
@@ -1518,7 +1848,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				},
 				quote: {
 					class: Quote,
-					inlineToolbar: ['bold', 'italic', 'link', 'underline', 'strike', 'superscript', 'subscript', 'textColor', 'markerColor']
+					inlineToolbar: inlineTools
 				},
 				table: TableBlockTool,
 				code: CodeTool,
@@ -1551,6 +1881,11 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 						prompt: 'Введите цвет выделения, например #fff3a3'
 					}
 				}
+			},
+			onReady: () => {
+				editorRoot.querySelectorAll('.blog-wrap').forEach((mark) => {
+					mark.contentEditable = 'false';
+				});
 			}
 		});
 

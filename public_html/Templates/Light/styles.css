@@ -1391,6 +1391,52 @@ body.light-page {
 	font-weight: 600;
 }
 
+.blog-editor-table-settings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.blog-editor-table-settings .cdx-settings-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+}
+
+.blog-editor-table-settings .cdx-settings-button svg {
+	display: block;
+	flex-shrink: 0;
+}
+
+.blog-nowrap {
+	white-space: nowrap;
+}
+
+.blog-detail-editor .blog-nowrap {
+	background: rgba(87, 71, 230, 0.08);
+	border-radius: 2px;
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+.blog-detail-editor .blog-wrap {
+	display: inline;
+	position: relative;
+}
+
+.blog-detail-editor .blog-wrap::after {
+	content: "";
+	display: inline-block;
+	width: 0;
+	height: 0.85em;
+	margin: 0 1px;
+	border-right: 1px dashed var(--ml-accent);
+	vertical-align: -0.1em;
+}
+
 .blog-detail-editor__actions {
 	display: flex;
 	flex-wrap: wrap;

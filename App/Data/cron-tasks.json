@@ -1,1 +1,21 @@
-[]
+[
+    {
+        "id": 1,
+        "name": "Публикация отложенных статей",
+        "description": "",
+        "class": "\\App\\Cron\\BlogArticlePublisher",
+        "method": "run",
+        "params": "",
+        "important": false,
+        "urgent": false,
+        "schedule": {
+            "minute": "*",
+            "hour": "*",
+            "day": "*",
+            "month": "*",
+            "weekday": "*"
+        },
+        "enabled": true,
+        "subtasks": []
+    }
+]

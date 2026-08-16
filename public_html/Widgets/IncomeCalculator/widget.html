@@ -1,0 +1,51 @@
+<div class="widget-income">
+	<form class="widget-income__form">
+		<label class="widget-income__field">
+			<span>Начальная сумма</span>
+			<input name="initial" type="number" min="0" step="0.01" required>
+		</label>
+		<label class="widget-income__field">
+			<span>Ежемесячная добавка</span>
+			<input name="monthly" type="number" min="0" step="0.01" required>
+		</label>
+		<label class="widget-income__field">
+			<span>Процент годовых</span>
+			<input name="percent" type="number" min="0" step="0.01" required>
+		</label>
+		<label class="widget-income__field">
+			<span>Количество месяцев</span>
+			<input name="months" type="number" min="1" max="360" step="1" required>
+		</label>
+		<fieldset class="widget-income__type">
+			<legend>Тип накоплений</legend>
+			<label>
+				<input type="radio" name="compound" value="monthly" checked>
+				<span>Ежемесячный</span>
+			</label>
+			<label>
+				<input type="radio" name="compound" value="daily">
+				<span>Ежедневный</span>
+			</label>
+		</fieldset>
+		<p class="widget-income__error" hidden></p>
+		<button class="widget-income__submit" type="submit">Посчитать</button>
+	</form>
+	<div class="widget-income__result" hidden>
+		<div class="widget-income__table-wrap">
+			<table class="widget-income__table">
+				<thead>
+					<tr>
+						<th>Месяц</th>
+						<th>Сумма на начало</th>
+						<th>Добавка по процентам</th>
+						<th>Добавка ежемесячная</th>
+						<th>Итоговая сумма</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+				<tfoot></tfoot>
+			</table>
+		</div>
+		<p class="widget-income__total"></p>
+	</div>
+</div>

@@ -1,0 +1,141 @@
+.widget-income {
+	--widget-income-row: 44px;
+	display: grid;
+	gap: 18px;
+	padding: 18px;
+	border: 1px solid var(--ml-line);
+	border-radius: 8px;
+	background: #fff;
+}
+
+.widget-income__form {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px 16px;
+}
+
+.widget-income__field {
+	display: grid;
+	gap: 6px;
+	color: var(--ml-ink);
+	font-size: 0.92rem;
+	font-weight: 600;
+}
+
+.widget-income__field input {
+	width: 100%;
+	min-height: 42px;
+	padding: 0 12px;
+	border: 1px solid var(--ml-line);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--ml-ink);
+	font: inherit;
+	font-weight: 400;
+}
+
+.widget-income__type {
+	grid-column: 1 / -1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.widget-income__type legend {
+	margin-bottom: 8px;
+	color: var(--ml-ink);
+	font-size: 0.92rem;
+	font-weight: 600;
+}
+
+.widget-income__type label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-right: 18px;
+	color: var(--ml-muted);
+	font-weight: 400;
+	cursor: pointer;
+}
+
+.widget-income__error {
+	grid-column: 1 / -1;
+	margin: 0;
+	color: #fa5374;
+	font-size: 0.92rem;
+}
+
+.widget-income__submit {
+	grid-column: 1 / -1;
+	justify-self: start;
+	min-height: 42px;
+	padding: 0 18px;
+	border: 1px solid var(--ml-ink);
+	border-radius: 8px;
+	background: var(--ml-ink);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.widget-income__table-wrap {
+	overflow: auto;
+	max-height: calc(var(--widget-income-row) * 12.5);
+}
+
+.widget-income__table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.widget-income__table th,
+.widget-income__table td {
+	box-sizing: border-box;
+	height: var(--widget-income-row);
+	padding: 0 12px;
+	border-right: 1px solid var(--ml-line);
+	border-bottom: 1px solid var(--ml-line);
+	background: #fff;
+	text-align: right;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.widget-income__table th:first-child,
+.widget-income__table td:first-child {
+	border-left: 1px solid var(--ml-line);
+	text-align: left;
+}
+
+.widget-income__table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	border-top: 1px solid var(--ml-line);
+	background: var(--ml-soft);
+	color: var(--ml-ink);
+	font-weight: 600;
+}
+
+.widget-income__table tfoot td {
+	position: sticky;
+	bottom: 0;
+	z-index: 2;
+	background: var(--ml-soft);
+	color: var(--ml-ink);
+	font-weight: 600;
+}
+
+.widget-income__total {
+	margin: 12px 0 0;
+	color: var(--ml-ink);
+	font-weight: 600;
+}
+
+@media (max-width: 720px) {
+	.widget-income__form {
+		grid-template-columns: 1fr;
+	}
+}

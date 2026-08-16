@@ -15,8 +15,10 @@ $router->get('/admin/content/blog/rubrics/{id}/', \Controllers\Admin\BlogControl
 $router->post('/admin/content/blog/rubrics/{id}/', \Controllers\Admin\BlogController::class, 'update');
 $router->post('/admin/content/blog/rubrics/{id}/delete/', \Controllers\Admin\BlogController::class, 'delete');
 $router->get('/admin/content/blog/articles/', \Controllers\Admin\BlogController::class, 'articles');
+$router->post('/admin/content/blog/articles/import/', \Controllers\Admin\BlogController::class, 'articleImport');
 $router->get('/admin/content/blog/articles/create/', \Controllers\Admin\BlogController::class, 'articleCreate');
 $router->post('/admin/content/blog/articles/create/', \Controllers\Admin\BlogController::class, 'articleStore');
+$router->get('/admin/content/blog/articles/{id}/export/', \Controllers\Admin\BlogController::class, 'articleExport');
 $router->get('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleEdit');
 $router->post('/admin/content/blog/articles/{id}/', \Controllers\Admin\BlogController::class, 'articleUpdate');
 $router->post('/admin/content/blog/articles/{id}/delete/', \Controllers\Admin\BlogController::class, 'articleDelete');

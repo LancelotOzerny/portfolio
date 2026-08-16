@@ -2,6 +2,7 @@
 
 namespace Controllers\Admin;
 
+use App\Services\Blog\ArticleTransferService;
 use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
@@ -329,6 +330,61 @@ class BlogController extends BaseController
 		}
 
 		header('Location: /admin/content/blog/articles/');
+	}
+
+	public function articleExport(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			$article = (new BlogArticlesModel())->findById($id);
+		} catch (Throwable) {
+			$article = null;
+		}
+
+		if ($article === null) {
+			$this->setFlash(false, 'Статья не найдена.');
+			header('Location: /admin/content/blog/articles/');
+			return;
+		}
+
+		try {
+			$transfer = new ArticleTransferService();
+			$payload = $transfer->exportJson($article);
+			$fileName = $transfer->exportFileName($article);
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->setFlash(false, $message !== '' ? $message : 'Не удалось экспортировать статью.');
+			header('Location: /admin/content/blog/articles/');
+			return;
+		}
+
+		header('Content-Type: application/json; charset=utf-8');
+		header('Content-Disposition: attachment; filename="' . $fileName . '"');
+		header('Cache-Control: no-store');
+		echo $payload;
+		exit;
+	}
+
+	public function articleImport(): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			$articleId = (new ArticleTransferService())->importFromUpload($_FILES['article_file'] ?? []);
+			$this->setFlash(true, 'Статья импортирована как скрытая и неопубликованная.');
+			header('Location: /admin/content/blog/articles/' . $articleId . '/');
+			return;
+		} catch (Throwable $e) {
+			$message = trim($e->getMessage());
+			$this->setFlash(false, $message !== '' ? $message : 'Не удалось импортировать статью.');
+			header('Location: /admin/content/blog/articles/');
+			return;
+		}
 	}
 
 	public function articlePublish(int $id): void

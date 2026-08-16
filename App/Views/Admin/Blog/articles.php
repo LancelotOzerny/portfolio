@@ -23,13 +23,19 @@ $publicationService = new BlogArticlePublicationService();
 			box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12) !important;
 		}
 
-		.admin-blog-article-card__delete-btn {
+		.admin-blog-icon-btn {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
+			width: 38px;
+			height: 38px;
+			padding: 0;
+			cursor: pointer;
+		}
+
+		.admin-blog-article-card__icon-btn {
 			width: 31px;
 			height: 31px;
-			padding: 0;
 		}
 	</style>
 
@@ -39,7 +45,39 @@ $publicationService = new BlogArticlePublicationService();
 			<p class="text-secondary mb-0">Список материалов блога.</p>
 		</div>
 		<div class="d-flex gap-2">
-			<a class="btn btn-primary" href="/admin/content/blog/articles/create/">Создать статью</a>
+			<form action="/admin/content/blog/articles/import/" method="post" enctype="multipart/form-data" class="mb-0">
+				<input
+					id="blog-article-import-file"
+					class="d-none"
+					type="file"
+					name="article_file"
+					accept="application/json,.json"
+					onchange="this.form.submit()"
+				>
+				<label
+					for="blog-article-import-file"
+					class="btn btn-outline-secondary admin-blog-icon-btn mb-0"
+					title="Импортировать статью"
+					aria-label="Импортировать статью"
+					role="button"
+				>
+					<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 21V9"/>
+						<path d="M7 14l5-5 5 5"/>
+						<path d="M5 3h14"/>
+					</svg>
+				</label>
+			</form>
+			<a
+				class="btn btn-primary admin-blog-icon-btn"
+				href="/admin/content/blog/articles/create/"
+				title="Создать статью"
+				aria-label="Создать статью"
+			>
+				<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+					<path d="M12 5v14M5 12h14"/>
+				</svg>
+			</a>
 			<a href="/admin/" class="btn btn-outline-secondary">Назад в админку</a>
 		</div>
 	</div>
@@ -125,17 +163,29 @@ $publicationService = new BlogArticlePublicationService();
 												<input type="hidden" name="back" value="/admin/content/blog/articles/">
 												<button type="submit" class="btn btn-success btn-sm">Опубликовать</button>
 											</form>
-											<button
-												type="button"
-												class="btn btn-outline-primary btn-sm"
-												data-bs-toggle="modal"
-												data-bs-target="#blog-schedule-modal-<?= $articleId ?>"
-											>Опубликовать потом</button>
+											<span class="d-inline-flex align-items-center gap-2">
+												<button
+													type="button"
+													class="btn btn-outline-primary btn-sm admin-blog-icon-btn admin-blog-article-card__icon-btn"
+													title="Опубликовать потом"
+													aria-label="Опубликовать потом статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»"
+													data-bs-toggle="modal"
+													data-bs-target="#blog-schedule-modal-<?= $articleId ?>"
+												>
+													<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+														<circle cx="12" cy="12" r="10"/>
+														<path d="M12 6v6l4 2"/>
+													</svg>
+												</button>
+												<?php if ($scheduledDatetime !== null): ?>
+													<span class="small text-secondary"><?= htmlspecialchars($dateFormatter->formatWithTime($scheduledDatetime) ?: $scheduledDatetime) ?></span>
+												<?php endif; ?>
+											</span>
 										<?php endif; ?>
 										<form action="/admin/content/blog/articles/<?= $articleId ?>/delete/" method="post" class="mb-0" onsubmit="return confirm('Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»?');">
 											<button
 												type="submit"
-												class="btn btn-outline-danger btn-sm admin-blog-article-card__delete-btn"
+												class="btn btn-outline-danger btn-sm admin-blog-icon-btn admin-blog-article-card__icon-btn"
 												title="Удалить"
 												aria-label="Удалить статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»"
 											>
@@ -148,6 +198,18 @@ $publicationService = new BlogArticlePublicationService();
 												</svg>
 											</button>
 										</form>
+										<a
+											href="/admin/content/blog/articles/<?= $articleId ?>/export/"
+											class="btn btn-outline-secondary btn-sm admin-blog-icon-btn admin-blog-article-card__icon-btn"
+											title="Экспортировать"
+											aria-label="Экспортировать статью «<?= htmlspecialchars($title, ENT_QUOTES) ?>»"
+										>
+											<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+												<path d="M12 3v12"/>
+												<path d="M7 10l5 5 5-5"/>
+												<path d="M5 21h14"/>
+											</svg>
+										</a>
 									</div>
 								</div>
 							</div>

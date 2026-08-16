@@ -12,7 +12,10 @@
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="/Templates/Light/styles.css">
 </head>
-<body class="light-page">
+<?php
+$bodyClass = preg_replace('/[^a-z0-9_-]/i', '', (string) ($this->getParam('body_class') ?? ''));
+?>
+<body class="light-page<?= $bodyClass !== '' ? ' ' . htmlspecialchars($bodyClass) : '' ?>">
 <?php
 (new \Components\AdminBar\AdminBar())->render();
 (new \Components\CookieBanner\CookieBanner([

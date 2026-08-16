@@ -39,9 +39,17 @@ class ArticleContentSanitizer
 		'th',
 		'thead',
 		'tr',
+		'caption',
 		'u',
 		'ul',
 		'wbr',
+	];
+
+	private const ALLOWED_CLASSES = [
+		'span' => ['blog-wrap', 'blog-nowrap'],
+		'table' => ['blog-table', 'blog-table_h-center', 'blog-table_v-middle'],
+		'td' => ['blog-table-cell_h-center', 'blog-table-cell_v-middle'],
+		'th' => ['blog-table-cell_h-center', 'blog-table-cell_v-middle'],
 	];
 
 	public function sanitize(string $html): string
@@ -116,7 +124,8 @@ class ArticleContentSanitizer
 			'img' => ['src', 'alt', 'title'],
 			'mark' => ['style'],
 			'span' => ['style', 'class'],
-			'td', 'th' => ['colspan', 'rowspan'],
+			'table' => ['class'],
+			'td', 'th' => ['colspan', 'rowspan', 'class'],
 			default => [],
 		};
 
@@ -138,8 +147,8 @@ class ArticleContentSanitizer
 			$this->sanitizeStyleAttribute($element);
 		}
 
-		if ($tagName === 'span') {
-			$this->sanitizeSpanClass($element);
+		if (isset(self::ALLOWED_CLASSES[$tagName])) {
+			$this->sanitizeAllowedClass($element, self::ALLOWED_CLASSES[$tagName]);
 		}
 
 		if ($tagName === 'td' || $tagName === 'th') {
@@ -181,7 +190,7 @@ class ArticleContentSanitizer
 		}
 	}
 
-	private function sanitizeSpanClass(DOMElement $element): void
+	private function sanitizeAllowedClass(DOMElement $element, array $allowedNames): void
 	{
 		$class = trim($element->getAttribute('class'));
 		if ($class === '') {
@@ -191,7 +200,7 @@ class ArticleContentSanitizer
 
 		$allowed = [];
 		foreach (preg_split('/\s+/', $class) ?: [] as $name) {
-			if (in_array($name, ['blog-wrap', 'blog-nowrap'], true)) {
+			if (in_array($name, $allowedNames, true)) {
 				$allowed[] = $name;
 			}
 		}
@@ -267,7 +276,7 @@ class ArticleContentSanitizer
 
 	private function sanitizeWithoutDom(string $html): string
 	{
-		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><thead><tbody><tr><th><td><sup><sub>');
+		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
 

@@ -16,6 +16,8 @@ class StatusController extends BaseController
 			'robots_index' => false,
 		]));
 		Template::getInstance()->setParam('title', 'Страница не существует');
+		Template::getInstance()->setParam('show_contact_cta', false);
+		Template::getInstance()->setParam('body_class', 'status-layout');
 
 		Template::getInstance()->showHeader();
 		$this->render('404');

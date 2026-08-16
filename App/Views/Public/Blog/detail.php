@@ -1262,10 +1262,28 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				};
 			}
 
-			constructor({ data, api }) {
+			static get icons() {
+				return {
+					plus: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+					removeRow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="13" height="14" rx="1.5"/><path d="M3 12h13M9.5 5v14"/><path d="M16.5 9h6"/></svg>',
+					removeColumn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="14" height="13" rx="1.5"/><path d="M3 9.5h14M10 3v13"/><path d="M10 20h6"/></svg>',
+					alignH: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M7 12h10M4 17h16"/></svg>',
+					alignV: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M8 9h8M8 15h8"/></svg>'
+				};
+			}
+
+			constructor({ data, api, block }) {
 				this.api = api;
+				this.block = block || null;
+				this.needsSizeDialog = !this.hasSavedRows(data);
+				this.sizeDialogOpened = false;
+				this.focusedCell = { row: 0, col: 0 };
 				this.data = this.normalizeData(data);
 				this.wrapper = null;
+			}
+
+			hasSavedRows(data) {
+				return Boolean(data && Array.isArray(data.rows) && data.rows.length > 0);
 			}
 
 			normalizeData(data) {
@@ -1276,17 +1294,16 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 						.filter((row) => row !== null && row.length > 0)
 					: [];
 
-				if (rows.length === 0) {
-					return {
-						withHead: true,
-						rows: [['', ''], ['', '']]
-					};
-				}
+				const normalizedRows = rows.length > 0 ? rows : this.createEmptyRows(2, 2);
+				const columnCount = Math.max(...normalizedRows.map((row) => row.length), 1);
 
-				const columnCount = Math.max(...rows.map((row) => row.length), 1);
 				return {
 					withHead: source.withHead !== false,
-					rows: rows.map((row) => {
+					caption: String(source.caption || ''),
+					alignH: source.alignH === 'center' ? 'center' : 'left',
+					alignV: source.alignV === 'middle' ? 'middle' : 'top',
+					cellAlign: this.normalizeCellAlign(source.cellAlign),
+					rows: normalizedRows.map((row) => {
 						const normalized = row.slice(0, columnCount);
 						while (normalized.length < columnCount) {
 							normalized.push('');
@@ -1296,11 +1313,152 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				};
 			}
 
+			normalizeCellAlign(source) {
+				if (!source || typeof source !== 'object' || Array.isArray(source)) {
+					return {};
+				}
+
+				const result = {};
+				Object.keys(source).forEach((key) => {
+					if (!/^\d+-\d+$/.test(key) || !source[key] || typeof source[key] !== 'object') {
+						return;
+					}
+
+					const align = {};
+					if (source[key].h === 'center') {
+						align.h = 'center';
+					}
+					if (source[key].v === 'middle') {
+						align.v = 'middle';
+					}
+					if (align.h || align.v) {
+						result[key] = align;
+					}
+				});
+
+				return result;
+			}
+
+			createEmptyRows(rowCount, columnCount) {
+				return Array.from({ length: rowCount }, () => Array.from({ length: columnCount }, () => ''));
+			}
+
 			render() {
 				this.wrapper = document.createElement('div');
 				this.wrapper.className = 'blog-editor-table-block';
-				this.draw();
+
+				if (this.needsSizeDialog) {
+					this.wrapper.innerHTML = '<p class="blog-editor-table-block__placeholder">Укажите размер таблицы</p>';
+					window.setTimeout(() => this.openSizeDialog(), 0);
+				} else {
+					this.draw();
+				}
+
 				return this.wrapper;
+			}
+
+			openSizeDialog() {
+				if (this.sizeDialogOpened || !this.needsSizeDialog) {
+					return;
+				}
+
+				this.sizeDialogOpened = true;
+
+				const overlay = document.createElement('div');
+				overlay.className = 'blog-settings-modal is-open blog-editor-table-dialog';
+				overlay.innerHTML = `
+					<div class="blog-settings-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="blog-editor-table-dialog-title">
+						<div class="blog-settings-modal__header">
+							<h2 class="blog-settings-modal__title" id="blog-editor-table-dialog-title">Новая таблица</h2>
+							<button class="blog-settings-modal__close" type="button" data-table-dialog-close aria-label="Закрыть">×</button>
+						</div>
+						<form class="blog-settings-modal__form">
+							<div class="blog-editor-table-dialog__sizes">
+								<div>
+									<label class="blog-settings-modal__label" for="blog-editor-table-rows">Строки</label>
+									<input class="blog-settings-modal__input" id="blog-editor-table-rows" name="rows" type="number" min="1" max="30" value="2" required>
+								</div>
+								<div>
+									<label class="blog-settings-modal__label" for="blog-editor-table-cols">Столбцы</label>
+									<input class="blog-settings-modal__input" id="blog-editor-table-cols" name="cols" type="number" min="1" max="20" value="2" required>
+								</div>
+							</div>
+							<div class="blog-settings-modal__actions">
+								<button class="blog-settings-modal__button blog-settings-modal__button_secondary" type="button" data-table-dialog-close>Отмена</button>
+								<button class="blog-settings-modal__button" type="submit">Создать</button>
+							</div>
+						</form>
+					</div>
+				`;
+
+				const form = overlay.querySelector('form');
+				const rowsInput = overlay.querySelector('#blog-editor-table-rows');
+				const closeDialog = (confirmed) => {
+					overlay.remove();
+					document.body.classList.remove('blog-settings-modal-open');
+					document.removeEventListener('keydown', onKeyDown);
+
+					if (confirmed) {
+						return;
+					}
+
+					this.deleteCurrentBlock();
+				};
+
+				const onKeyDown = (event) => {
+					if (event.key === 'Escape') {
+						event.preventDefault();
+						closeDialog(false);
+					}
+				};
+
+				overlay.addEventListener('click', (event) => {
+					if (event.target === overlay || event.target.closest('[data-table-dialog-close]')) {
+						closeDialog(false);
+					}
+				});
+
+				form.addEventListener('submit', (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+
+					const rowCount = this.clampSize(rowsInput.value, 1, 30, 2);
+					const columnCount = this.clampSize(overlay.querySelector('#blog-editor-table-cols').value, 1, 20, 2);
+					this.data.rows = this.createEmptyRows(rowCount, columnCount);
+					this.data.cellAlign = {};
+					this.needsSizeDialog = false;
+					this.draw();
+					closeDialog(true);
+				});
+
+				document.addEventListener('keydown', onKeyDown);
+				document.body.classList.add('blog-settings-modal-open');
+				document.body.appendChild(overlay);
+				rowsInput.focus();
+				rowsInput.select();
+			}
+
+			clampSize(value, min, max, fallback) {
+				const parsed = Number.parseInt(value, 10);
+				if (!Number.isFinite(parsed)) {
+					return fallback;
+				}
+
+				return Math.min(max, Math.max(min, parsed));
+			}
+
+			deleteCurrentBlock() {
+				try {
+					if (this.block && this.block.id) {
+						this.api.blocks.delete(this.block.id);
+						return;
+					}
+
+					this.api.blocks.delete();
+				} catch (error) {
+					this.needsSizeDialog = false;
+					this.draw();
+				}
 			}
 
 			draw() {
@@ -1310,70 +1468,235 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 
 				this.wrapper.innerHTML = '';
 
+				const captionInput = document.createElement('input');
+				captionInput.type = 'text';
+				captionInput.className = 'blog-editor-table-block__caption';
+				captionInput.placeholder = 'Заголовок таблицы (legend)';
+				captionInput.value = this.data.caption || '';
+				captionInput.addEventListener('input', () => {
+					this.data.caption = captionInput.value;
+				});
+				this.wrapper.appendChild(captionInput);
+
 				const table = document.createElement('table');
-				table.className = 'blog-editor-table-block__table';
+				table.className = 'blog-editor-table-block__table blog-table';
+				if (this.data.alignH === 'center') {
+					table.classList.add('blog-table_h-center');
+				}
+				if (this.data.alignV === 'middle') {
+					table.classList.add('blog-table_v-middle');
+				}
 
 				this.data.rows.forEach((row, rowIndex) => {
 					const tr = document.createElement('tr');
+					tr.dataset.tableRow = String(rowIndex);
+					this.appendInsertCell(tr, 'Добавить столбец слева', () => this.insertColumn(0));
+
 					row.forEach((cellHtml, cellIndex) => {
 						const cell = document.createElement(this.data.withHead && rowIndex === 0 ? 'th' : 'td');
 						cell.contentEditable = 'true';
 						cell.innerHTML = cellHtml;
 						cell.dataset.row = String(rowIndex);
 						cell.dataset.col = String(cellIndex);
+						this.applyCellAlignClass(cell, rowIndex, cellIndex);
+						cell.addEventListener('focus', () => {
+							this.focusedCell = { row: rowIndex, col: cellIndex };
+						});
 						tr.appendChild(cell);
 					});
+
+					this.appendInsertCell(tr, 'Добавить строку ниже', () => this.insertRow(rowIndex + 1));
 					table.appendChild(tr);
 				});
+
+				const insertColsRow = document.createElement('tr');
+				insertColsRow.className = 'blog-editor-table-block__insert-row';
+				this.appendInsertCell(insertColsRow, 'Добавить строку сверху', () => this.insertRow(0));
+				const columnCount = this.data.rows[0] ? this.data.rows[0].length : 0;
+				for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+					this.appendInsertCell(insertColsRow, 'Добавить столбец справа', () => this.insertColumn(columnIndex + 1));
+				}
+				const corner = document.createElement('td');
+				corner.className = 'blog-editor-table-block__insert';
+				insertColsRow.appendChild(corner);
+				table.appendChild(insertColsRow);
 
 				this.wrapper.appendChild(table);
 			}
 
+			applyCellAlignClass(cell, rowIndex, cellIndex) {
+				const align = this.data.cellAlign[rowIndex + '-' + cellIndex] || {};
+				if (align.h === 'center') {
+					cell.classList.add('blog-table-cell_h-center');
+				}
+				if (align.v === 'middle') {
+					cell.classList.add('blog-table-cell_v-middle');
+				}
+			}
+
+			appendInsertCell(tr, title, onClick) {
+				const cell = document.createElement('td');
+				cell.className = 'blog-editor-table-block__insert';
+				cell.contentEditable = 'false';
+
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'blog-editor-table-block__insert-button';
+				button.title = title;
+				button.setAttribute('aria-label', title);
+				button.innerHTML = TableBlockTool.icons.plus;
+				button.addEventListener('mousedown', (event) => event.preventDefault());
+				button.addEventListener('click', (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					this.readFromDom();
+					onClick();
+					this.draw();
+				});
+
+				cell.appendChild(button);
+				tr.appendChild(cell);
+			}
+
+			insertRow(index) {
+				const columns = this.data.rows[0] ? this.data.rows[0].length : 1;
+				this.data.rows.splice(index, 0, Array.from({ length: columns }, () => ''));
+				this.shiftCellAlign((row, col) => [row >= index ? row + 1 : row, col]);
+			}
+
+			insertColumn(index) {
+				this.data.rows.forEach((row) => {
+					row.splice(index, 0, '');
+				});
+				this.shiftCellAlign((row, col) => [row, col >= index ? col + 1 : col]);
+			}
+
+			removeRowAt(index) {
+				if (this.data.rows.length <= 1) {
+					return;
+				}
+
+				this.data.rows.splice(index, 1);
+				this.shiftCellAlign((row, col) => (row === index ? null : [row > index ? row - 1 : row, col]));
+				this.focusedCell.row = Math.min(this.focusedCell.row, this.data.rows.length - 1);
+			}
+
+			removeColumnAt(index) {
+				if ((this.data.rows[0] || []).length <= 1) {
+					return;
+				}
+
+				this.data.rows.forEach((row) => row.splice(index, 1));
+				this.shiftCellAlign((row, col) => (col === index ? null : [row, col > index ? col - 1 : col]));
+				this.focusedCell.col = Math.min(this.focusedCell.col, (this.data.rows[0] || []).length - 1);
+			}
+
+			shiftCellAlign(mapper) {
+				const next = {};
+				Object.keys(this.data.cellAlign || {}).forEach((key) => {
+					const parts = key.split('-').map(Number);
+					const mapped = mapper(parts[0], parts[1]);
+					if (!mapped) {
+						return;
+					}
+
+					next[mapped[0] + '-' + mapped[1]] = this.data.cellAlign[key];
+				});
+				this.data.cellAlign = next;
+			}
+
+			toggleTableAlign(axis) {
+				if (axis === 'h') {
+					this.data.alignH = this.data.alignH === 'center' ? 'left' : 'center';
+					return;
+				}
+
+				this.data.alignV = this.data.alignV === 'middle' ? 'top' : 'middle';
+			}
+
+			toggleCellAlign(axis) {
+				const key = this.focusedCell.row + '-' + this.focusedCell.col;
+				const current = Object.assign({}, this.data.cellAlign[key] || {});
+
+				if (axis === 'h') {
+					current.h = current.h === 'center' ? '' : 'center';
+				} else {
+					current.v = current.v === 'middle' ? '' : 'middle';
+				}
+
+				if (!current.h && !current.v) {
+					delete this.data.cellAlign[key];
+					return;
+				}
+
+				this.data.cellAlign[key] = current;
+			}
+
+			isCellAlignActive(axis) {
+				const align = this.data.cellAlign[this.focusedCell.row + '-' + this.focusedCell.col] || {};
+				return axis === 'h' ? align.h === 'center' : align.v === 'middle';
+			}
+
 			renderSettings() {
 				const wrapper = document.createElement('div');
-				const buttons = document.createElement('div');
-				buttons.className = 'blog-editor-table-settings';
+				const icons = TableBlockTool.icons;
 
-				const icons = {
-					addRow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="13" height="14" rx="1.5"/><path d="M3 12h13M9.5 5v14"/><path d="M19.5 6v6M16.5 9h6"/></svg>',
-					removeRow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="13" height="14" rx="1.5"/><path d="M3 12h13M9.5 5v14"/><path d="M16.5 9h6"/></svg>',
-					addColumn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="14" height="13" rx="1.5"/><path d="M3 9.5h14M10 3v13"/><path d="M10 20h6M13 17v6"/></svg>',
-					removeColumn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="14" height="13" rx="1.5"/><path d="M3 9.5h14M10 3v13"/><path d="M10 20h6"/></svg>'
+				const appendGroup = (label) => {
+					if (label) {
+						const title = document.createElement('div');
+						title.className = 'blog-editor-table-settings__label';
+						title.textContent = label;
+						wrapper.appendChild(title);
+					}
+
+					const group = document.createElement('div');
+					group.className = 'blog-editor-table-settings';
+					wrapper.appendChild(group);
+					return group;
 				};
 
-				const createButton = (title, icon, onClick) => {
+				const createButton = (group, title, icon, isActiveFn, onClick) => {
 					const button = document.createElement('div');
+					const refresh = () => {
+						button.classList.toggle(this.api.styles.settingsButtonActive, Boolean(isActiveFn && isActiveFn()));
+					};
 					button.className = this.api.styles.settingsButton;
 					button.innerHTML = icon;
 					button.title = title;
 					button.setAttribute('aria-label', title);
+					refresh();
 					button.addEventListener('click', () => {
 						this.readFromDom();
 						onClick();
 						this.draw();
+						refresh();
 					});
-					buttons.appendChild(button);
+					group.appendChild(button);
 				};
 
-				createButton('Добавить строку', icons.addRow, () => {
-					const columns = this.data.rows[0] ? this.data.rows[0].length : 1;
-					this.data.rows.push(Array.from({ length: columns }, () => ''));
+				const tableGroup = appendGroup('Таблица');
+				createButton(tableGroup, 'Центрировать таблицу по горизонтали', icons.alignH, () => this.data.alignH === 'center', () => {
+					this.toggleTableAlign('h');
 				});
-				createButton('Убрать строку', icons.removeRow, () => {
-					if (this.data.rows.length > 1) {
-						this.data.rows.pop();
-					}
-				});
-				createButton('Добавить столбец', icons.addColumn, () => {
-					this.data.rows.forEach((row) => row.push(''));
-				});
-				createButton('Убрать столбец', icons.removeColumn, () => {
-					if ((this.data.rows[0] || []).length > 1) {
-						this.data.rows.forEach((row) => row.pop());
-					}
+				createButton(tableGroup, 'Центрировать таблицу по вертикали', icons.alignV, () => this.data.alignV === 'middle', () => {
+					this.toggleTableAlign('v');
 				});
 
-				wrapper.appendChild(buttons);
+				const cellGroup = appendGroup('Ячейка');
+				createButton(cellGroup, 'Центрировать ячейку по горизонтали', icons.alignH, () => this.isCellAlignActive('h'), () => {
+					this.toggleCellAlign('h');
+				});
+				createButton(cellGroup, 'Центрировать ячейку по вертикали', icons.alignV, () => this.isCellAlignActive('v'), () => {
+					this.toggleCellAlign('v');
+				});
+
+				const sizeGroup = appendGroup('');
+				createButton(sizeGroup, 'Убрать строку', icons.removeRow, null, () => {
+					this.removeRowAt(this.focusedCell.row);
+				});
+				createButton(sizeGroup, 'Убрать столбец', icons.removeColumn, null, () => {
+					this.removeColumnAt(this.focusedCell.col);
+				});
 
 				const headButton = document.createElement('div');
 				headButton.className = this.api.styles.settingsButton + (this.data.withHead ? ' ' + this.api.styles.settingsButtonActive : '');
@@ -1394,10 +1717,19 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					return;
 				}
 
+				const captionInput = this.wrapper.querySelector('.blog-editor-table-block__caption');
+				if (captionInput) {
+					this.data.caption = captionInput.value;
+				}
+
 				const rows = [];
-				this.wrapper.querySelectorAll('tr').forEach((tr) => {
+				this.wrapper.querySelectorAll('tr[data-table-row]').forEach((tr) => {
 					const cells = [];
 					tr.querySelectorAll('th, td').forEach((cell) => {
+						if (cell.classList.contains('blog-editor-table-block__insert')) {
+							return;
+						}
+
 						cells.push(cell.innerHTML);
 					});
 					if (cells.length > 0) {
@@ -1414,6 +1746,10 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				this.readFromDom();
 				return {
 					withHead: this.data.withHead !== false,
+					caption: this.data.caption || '',
+					alignH: this.data.alignH === 'center' ? 'center' : 'left',
+					alignV: this.data.alignV === 'middle' ? 'middle' : 'top',
+					cellAlign: this.data.cellAlign || {},
 					rows: this.data.rows
 				};
 			}
@@ -1424,21 +1760,12 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					return;
 				}
 
-				const rows = [];
-				table.querySelectorAll('tr').forEach((tr) => {
-					const cells = [];
-					tr.querySelectorAll('th, td').forEach((cell) => {
-						cells.push(flattenBlockHtmlToInline(cell.innerHTML));
-					});
-					if (cells.length > 0) {
-						rows.push(cells);
-					}
-				});
-
-				this.data = this.normalizeData({
-					withHead: table.querySelector('th') !== null,
-					rows: rows
-				});
+				this.needsSizeDialog = false;
+				this.sizeDialogOpened = true;
+				this.data = this.normalizeData(parseTableElement(table));
+				if (this.wrapper) {
+					this.draw();
+				}
 			}
 		}
 
@@ -1484,6 +1811,45 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				.replace(/(?:<br\s*\/?>\s*)+$/gi, '')
 				.replace(/^(?:<br\s*\/?>\s*)+/gi, '')
 				.replace(/(?:<br\s*\/?>\s*){3,}/gi, '<br><br>');
+		};
+
+		const parseTableElement = (table) => {
+			const captionEl = table.querySelector('caption');
+			const rows = [];
+			const cellAlign = {};
+
+			table.querySelectorAll('tr').forEach((tr, rowIndex) => {
+				const cells = [];
+				tr.querySelectorAll('th, td').forEach((cell, cellIndex) => {
+					if (cell.classList.contains('blog-editor-table-block__insert')) {
+						return;
+					}
+
+					cells.push(flattenBlockHtmlToInline(cell.innerHTML));
+					const align = {};
+					if (cell.classList.contains('blog-table-cell_h-center')) {
+						align.h = 'center';
+					}
+					if (cell.classList.contains('blog-table-cell_v-middle')) {
+						align.v = 'middle';
+					}
+					if (align.h || align.v) {
+						cellAlign[rowIndex + '-' + cellIndex] = align;
+					}
+				});
+				if (cells.length > 0) {
+					rows.push(cells);
+				}
+			});
+
+			return {
+				withHead: table.querySelector('th') !== null,
+				caption: captionEl ? String(captionEl.textContent || '').trim() : '',
+				alignH: table.classList.contains('blog-table_h-center') ? 'center' : 'left',
+				alignV: table.classList.contains('blog-table_v-middle') ? 'middle' : 'top',
+				cellAlign: cellAlign,
+				rows: rows
+			};
 		};
 
 		const clipboardToInlineHtml = (clipboardData) => {
@@ -1638,23 +2004,9 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				}
 
 				if (tagName === 'table') {
-					const rows = [];
-					element.querySelectorAll('tr').forEach((tr) => {
-						const cells = [];
-						tr.querySelectorAll('th, td').forEach((cell) => {
-							cells.push(flattenBlockHtmlToInline(cell.innerHTML));
-						});
-						if (cells.length > 0) {
-							rows.push(cells);
-						}
-					});
-
 					blocks.push({
 						type: 'table',
-						data: {
-							withHead: element.querySelector('th') !== null,
-							rows: rows.length > 0 ? rows : [['', ''], ['', '']]
-						}
+						data: parseTableElement(element)
 					});
 					return;
 				}
@@ -1769,18 +2121,45 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				}
 
 				const withHead = data.withHead !== false;
-				const renderRow = (row, cellTag) => {
-					const cells = Array.isArray(row) ? row : [];
-					return `<tr>${cells.map((cell) => `<${cellTag}>${sanitizeInlineHtml(flattenBlockHtmlToInline(cell))}</${cellTag}>`).join('')}</tr>`;
-				};
-
-				if (withHead) {
-					const headHtml = renderRow(rows[0] || [], 'th');
-					const bodyHtml = rows.slice(1).map((row) => renderRow(row, 'td')).join('');
-					return `<table><thead>${headHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
+				const cellAlign = data.cellAlign && typeof data.cellAlign === 'object' ? data.cellAlign : {};
+				const tableClasses = ['blog-table'];
+				if (data.alignH === 'center') {
+					tableClasses.push('blog-table_h-center');
+				}
+				if (data.alignV === 'middle') {
+					tableClasses.push('blog-table_v-middle');
 				}
 
-				return `<table><tbody>${rows.map((row) => renderRow(row, 'td')).join('')}</tbody></table>`;
+				const renderCell = (cellHtml, rowIndex, cellIndex, cellTag) => {
+					const align = cellAlign[rowIndex + '-' + cellIndex] || {};
+					const cellClasses = [];
+					if (align.h === 'center') {
+						cellClasses.push('blog-table-cell_h-center');
+					}
+					if (align.v === 'middle') {
+						cellClasses.push('blog-table-cell_v-middle');
+					}
+					const classAttr = cellClasses.length > 0 ? ' class="' + cellClasses.join(' ') + '"' : '';
+					return '<' + cellTag + classAttr + '>' + sanitizeInlineHtml(flattenBlockHtmlToInline(cellHtml)) + '</' + cellTag + '>';
+				};
+
+				const renderRow = (row, rowIndex, cellTag) => {
+					const cells = Array.isArray(row) ? row : [];
+					return '<tr>' + cells.map((cell, cellIndex) => renderCell(cell, rowIndex, cellIndex, cellTag)).join('') + '</tr>';
+				};
+
+				const caption = String(data.caption || '').trim();
+				const captionHtml = caption !== '' ? '<caption>' + escapeHtml(caption) + '</caption>' : '';
+				let bodyHtml = '';
+
+				if (withHead) {
+					const headHtml = renderRow(rows[0] || [], 0, 'th');
+					bodyHtml = rows.slice(1).map((row, index) => renderRow(row, index + 1, 'td')).join('');
+					return '<table class="' + tableClasses.join(' ') + '">' + captionHtml + '<thead>' + headHtml + '</thead><tbody>' + bodyHtml + '</tbody></table>';
+				}
+
+				bodyHtml = rows.map((row, index) => renderRow(row, index, 'td')).join('');
+				return '<table class="' + tableClasses.join(' ') + '">' + captionHtml + '<tbody>' + bodyHtml + '</tbody></table>';
 			}
 
 			if (block.type === 'code') {

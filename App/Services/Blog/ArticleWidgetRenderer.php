@@ -120,7 +120,7 @@ class ArticleWidgetRenderer
 
 				$this->enqueue($widget);
 
-				return '<div class="blog-widget" data-widget="' . htmlspecialchars($widget->id, ENT_QUOTES) . '">' . $widget->html() . '</div>';
+				return '<div' . $matches[1] . '>' . $widget->html() . '</div>';
 			},
 			$html
 		) ?? $html;

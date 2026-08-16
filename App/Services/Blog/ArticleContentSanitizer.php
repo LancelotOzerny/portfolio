@@ -142,7 +142,7 @@ class ArticleContentSanitizer
 			'span' => ['style', 'class'],
 			'table', 'aside' => ['class'],
 			'details' => ['class', 'open'],
-			'div' => ['class', 'data-widget'],
+			'div' => ['class', 'data-widget', 'data-widget-params'],
 			'td', 'th' => ['colspan', 'rowspan', 'class'],
 			default => [],
 		};
@@ -208,10 +208,55 @@ class ArticleContentSanitizer
 		$widget = strtolower(trim($element->getAttribute('data-widget')));
 		if ($widget === '' || preg_match('/^[a-z0-9-]+$/', $widget) !== 1) {
 			$element->removeAttribute('data-widget');
+			$element->removeAttribute('data-widget-params');
 			return;
 		}
 
 		$element->setAttribute('data-widget', $widget);
+
+		$paramsJson = $this->sanitizeWidgetParamsJson($element->getAttribute('data-widget-params'));
+		if ($paramsJson === '') {
+			$element->removeAttribute('data-widget-params');
+			return;
+		}
+
+		$element->setAttribute('data-widget-params', $paramsJson);
+	}
+
+	private function sanitizeWidgetParamsJson(string $raw): string
+	{
+		$decoded = json_decode($raw, true);
+		if (!is_array($decoded)) {
+			return '';
+		}
+
+		$clean = [];
+		foreach ($decoded as $key => $value) {
+			if (!is_string($key) || preg_match('/^[a-z][a-z0-9_]*$/', $key) !== 1) {
+				continue;
+			}
+
+			if (is_int($value) || is_float($value)) {
+				$number = (float) $value;
+				if (is_nan($number) || is_infinite($number)) {
+					continue;
+				}
+
+				$clean[$key] = $value;
+				continue;
+			}
+
+			if (is_string($value) && preg_match('/^[a-zA-Z0-9._-]{1,64}$/', $value) === 1) {
+				$clean[$key] = $value;
+			}
+		}
+
+		if ($clean === []) {
+			return '';
+		}
+
+		$encoded = json_encode($clean, JSON_UNESCAPED_UNICODE);
+		return is_string($encoded) ? $encoded : '';
 	}
 
 	private function sanitizeTableCellAttributes(DOMElement $element): void

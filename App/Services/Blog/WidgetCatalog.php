@@ -92,7 +92,76 @@ class WidgetCatalog
 			$htmlFile,
 			is_file($cssFile) ? $publicDir . '/widget.css' : '',
 			is_file($jsFile) ? $publicDir . '/widget.js' : '',
+			$this->readFields($meta['fields'] ?? null),
 		);
+	}
+
+	/**
+	 * @return list<array<string, mixed>>
+	 */
+	private function readFields(mixed $source): array
+	{
+		if (!is_array($source)) {
+			return [];
+		}
+
+		$fields = [];
+		foreach ($source as $item) {
+			if (!is_array($item)) {
+				continue;
+			}
+
+			$name = trim((string) ($item['name'] ?? ''));
+			$label = trim((string) ($item['label'] ?? ''));
+			$type = trim((string) ($item['type'] ?? 'number'));
+			if (preg_match('/^[a-z][a-z0-9_]*$/', $name) !== 1 || $label === '' || !in_array($type, ['number', 'select'], true)) {
+				continue;
+			}
+
+			$field = [
+				'name' => $name,
+				'label' => $label,
+				'type' => $type,
+			];
+
+			if ($type === 'number') {
+				foreach (['min', 'max', 'step'] as $key) {
+					if (isset($item[$key]) && is_numeric($item[$key])) {
+						$field[$key] = 0 + $item[$key];
+					}
+				}
+			}
+
+			if ($type === 'select') {
+				$options = [];
+				foreach (is_array($item['options'] ?? null) ? $item['options'] : [] as $option) {
+					if (!is_array($option)) {
+						continue;
+					}
+
+					$value = trim((string) ($option['value'] ?? ''));
+					$optionLabel = trim((string) ($option['label'] ?? ''));
+					if (preg_match('/^[a-z0-9_-]+$/', $value) !== 1 || $optionLabel === '') {
+						continue;
+					}
+
+					$options[] = [
+						'value' => $value,
+						'label' => $optionLabel,
+					];
+				}
+
+				if ($options === []) {
+					continue;
+				}
+
+				$field['options'] = $options;
+			}
+
+			$fields[] = $field;
+		}
+
+		return $fields;
 	}
 
 	private function widgetsRoot(): string

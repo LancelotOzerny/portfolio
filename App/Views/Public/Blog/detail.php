@@ -15,10 +15,7 @@ $ratingCount = (int) ($rating['count'] ?? 0);
 $userRating = isset($rating['user_rating']) && $rating['user_rating'] !== null ? (int) $rating['user_rating'] : null;
 $widgetCatalog = new \App\Services\Blog\WidgetCatalog();
 $editorWidgets = array_map(
-	static fn (\App\Services\Blog\WidgetDefinition $widget): array => [
-		'id' => $widget->id,
-		'title' => $widget->title,
-	],
+	static fn (\App\Services\Blog\WidgetDefinition $widget): array => $widget->editorData(),
 	$widgetCatalog->all()
 );
 
@@ -1944,10 +1941,13 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			constructor({ data, api }) {
 				this.api = api;
 				this.data = {
-					widget: this.normalizeWidget(data && data.widget)
+					widget: this.normalizeWidget(data && data.widget),
+					params: {}
 				};
+				this.data.params = this.normalizeParams(data && data.params);
 				this.wrapper = null;
 				this.titleEl = null;
+				this.fieldsEl = null;
 			}
 
 			normalizeWidget(widgetId) {
@@ -1959,8 +1959,45 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				return widgets[0] ? widgets[0].id : '';
 			}
 
+			currentWidget() {
+				return widgets.find((item) => item.id === this.data.widget) || null;
+			}
+
+			widgetFields() {
+				const current = this.currentWidget();
+				return current && Array.isArray(current.fields) ? current.fields : [];
+			}
+
+			normalizeParams(source) {
+				const params = {};
+				const input = source && typeof source === 'object' && !Array.isArray(source) ? source : {};
+				this.widgetFields().forEach((field) => {
+					if (!Object.prototype.hasOwnProperty.call(input, field.name)) {
+						return;
+					}
+
+					const value = input[field.name];
+					if (field.type === 'select') {
+						const options = Array.isArray(field.options) ? field.options : [];
+						const match = options.find((option) => option.value === String(value));
+						if (match) {
+							params[field.name] = match.value;
+						}
+						return;
+					}
+
+					if (value === '' || value === null || value === undefined) {
+						return;
+					}
+
+					params[field.name] = value;
+				});
+
+				return params;
+			}
+
 			widgetTitle() {
-				const current = widgets.find((item) => item.id === this.data.widget);
+				const current = this.currentWidget();
 				return current ? current.title : 'Виджет';
 			}
 
@@ -1968,12 +2005,20 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				this.wrapper = document.createElement('div');
 				this.wrapper.className = 'blog-editor-widget-block';
 				this.wrapper.contentEditable = 'false';
+				this.wrapper.addEventListener('keydown', (event) => event.stopPropagation());
+				this.wrapper.addEventListener('keyup', (event) => event.stopPropagation());
+				this.wrapper.addEventListener('paste', (event) => event.stopPropagation());
 
 				this.titleEl = document.createElement('span');
 				this.titleEl.className = 'blog-editor-widget-block__title';
-				this.refreshTitle();
 				this.wrapper.appendChild(this.titleEl);
 
+				this.fieldsEl = document.createElement('div');
+				this.fieldsEl.className = 'blog-editor-widget-fields';
+				this.wrapper.appendChild(this.fieldsEl);
+
+				this.refreshTitle();
+				this.drawFields();
 				return this.wrapper;
 			}
 
@@ -1981,6 +2026,63 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				if (this.titleEl) {
 					this.titleEl.textContent = this.widgetTitle();
 				}
+			}
+
+			drawFields() {
+				if (!this.fieldsEl) {
+					return;
+				}
+
+				this.fieldsEl.innerHTML = '';
+				const fields = this.widgetFields();
+				this.fieldsEl.hidden = fields.length === 0;
+
+				fields.forEach((field) => {
+					const label = document.createElement('label');
+					label.className = 'blog-editor-widget-field';
+
+					const caption = document.createElement('span');
+					caption.textContent = field.label;
+					label.appendChild(caption);
+
+					if (field.type === 'select') {
+						const select = document.createElement('select');
+						select.dataset.widgetField = field.name;
+						(field.options || []).forEach((optionData) => {
+							const option = document.createElement('option');
+							option.value = optionData.value;
+							option.textContent = optionData.label;
+							select.appendChild(option);
+						});
+						select.value = this.data.params[field.name] || (field.options && field.options[0] ? field.options[0].value : '');
+						select.addEventListener('change', () => {
+							this.data.params[field.name] = select.value;
+						});
+						label.appendChild(select);
+					} else {
+						const input = document.createElement('input');
+						input.type = 'number';
+						input.dataset.widgetField = field.name;
+						if (field.min !== undefined) {
+							input.min = String(field.min);
+						}
+						if (field.max !== undefined) {
+							input.max = String(field.max);
+						}
+						if (field.step !== undefined) {
+							input.step = String(field.step);
+						}
+						if (this.data.params[field.name] !== undefined) {
+							input.value = String(this.data.params[field.name]);
+						}
+						input.addEventListener('input', () => {
+							this.data.params[field.name] = input.value;
+						});
+						label.appendChild(input);
+					}
+
+					this.fieldsEl.appendChild(label);
+				});
 			}
 
 			renderSettings() {
@@ -1995,7 +2097,9 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					button.classList.toggle(this.api.styles.settingsButtonActive, this.data.widget === item.id);
 					button.addEventListener('click', () => {
 						this.data.widget = item.id;
+						this.data.params = {};
 						this.refreshTitle();
+						this.drawFields();
 						wrapper.querySelectorAll('.' + this.api.styles.settingsButton).forEach((node) => {
 							node.classList.toggle(this.api.styles.settingsButtonActive, node === button);
 						});
@@ -2007,9 +2111,24 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			}
 
 			save() {
+				this.data.params = this.normalizeParams(this.readParamsFromDom());
 				return {
-					widget: this.data.widget
+					widget: this.data.widget,
+					params: this.data.params
 				};
+			}
+
+			readParamsFromDom() {
+				const params = {};
+				if (!this.fieldsEl) {
+					return params;
+				}
+
+				this.fieldsEl.querySelectorAll('[data-widget-field]').forEach((field) => {
+					params[field.dataset.widgetField] = field.value;
+				});
+
+				return params;
 			}
 		}
 
@@ -2019,6 +2138,49 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
+
+		const parseWidgetParams = (raw) => {
+			if (!raw) {
+				return {};
+			}
+
+			try {
+				const parsed = JSON.parse(raw);
+				if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+					return {};
+				}
+
+				const params = {};
+				Object.keys(parsed).forEach((key) => {
+					if (!/^[a-z][a-z0-9_]*$/.test(key)) {
+						return;
+					}
+
+					const value = parsed[key];
+					if (typeof value === 'number' && Number.isFinite(value)) {
+						params[key] = value;
+						return;
+					}
+
+					if (typeof value === 'string' && /^[a-zA-Z0-9._-]{1,64}$/.test(value)) {
+						params[key] = value;
+					}
+				});
+
+				return params;
+			} catch (error) {
+				return {};
+			}
+		};
+
+		const serializeWidgetParams = (source) => {
+			const params = parseWidgetParams(JSON.stringify(source && typeof source === 'object' ? source : {}));
+			if (Object.keys(params).length === 0) {
+				return '';
+			}
+
+			return JSON.stringify(params);
+		};
 
 		const flattenBlockHtmlToInline = (html) => {
 			const template = document.createElement('template');
@@ -2326,7 +2488,8 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 						blocks.push({
 							type: 'widget',
 							data: {
-								widget: widgetId
+								widget: widgetId,
+								params: parseWidgetParams(element.getAttribute('data-widget-params'))
 							}
 						});
 						return;
@@ -2436,7 +2599,10 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				if (!/^[a-z0-9-]+$/.test(widgetId) || !widgets.some((item) => item.id === widgetId)) {
 					return '';
 				}
-				return `<div class="blog-widget" data-widget="${escapeHtml(widgetId)}"></div>`;
+
+				const paramsJson = serializeWidgetParams(data.params);
+				const paramsAttr = paramsJson !== '' ? ` data-widget-params="${escapeHtml(paramsJson)}"` : '';
+				return `<div class="blog-widget" data-widget="${escapeHtml(widgetId)}"${paramsAttr}></div>`;
 			}
 
 			if (block.type === 'table') {

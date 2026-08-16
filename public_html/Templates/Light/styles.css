@@ -1580,9 +1580,45 @@ body.light-page.status-layout .status-page {
 }
 
 .blog-editor-widget-block {
+	display: grid;
+	gap: 12px;
 	padding: 4px 0;
 	color: var(--ml-muted);
 	font-weight: 600;
+}
+
+.blog-editor-widget-fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px 12px;
+	font-weight: 400;
+}
+
+.blog-editor-widget-field {
+	display: grid;
+	gap: 6px;
+	color: var(--ml-ink);
+	font-size: 0.92rem;
+	font-weight: 600;
+}
+
+.blog-editor-widget-field input,
+.blog-editor-widget-field select {
+	width: 100%;
+	min-height: 38px;
+	padding: 0 10px;
+	border: 1px solid rgba(23, 23, 23, 0.16);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--ml-ink);
+	font: inherit;
+	font-weight: 400;
+}
+
+@media (max-width: 720px) {
+	.blog-editor-widget-fields {
+		grid-template-columns: 1fr;
+	}
 }
 
 .blog-editor-widget-settings {

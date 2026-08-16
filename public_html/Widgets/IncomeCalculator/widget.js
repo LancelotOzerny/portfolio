@@ -36,6 +36,47 @@
 				event.preventDefault();
 				this.calculate();
 			});
+
+			if (this.applyPreset()) {
+				this.calculate();
+			}
+		}
+
+		applyPreset() {
+			const raw = this.root.getAttribute('data-widget-params');
+			if (!raw) {
+				return false;
+			}
+
+			let params;
+			try {
+				params = JSON.parse(raw);
+			} catch (error) {
+				return false;
+			}
+
+			if (!params || typeof params !== 'object' || Array.isArray(params)) {
+				return false;
+			}
+
+			let applied = false;
+			Object.keys(params).forEach((name) => {
+				const value = params[name];
+				const radio = this.form.querySelector('input[type="radio"][name="' + name + '"][value="' + String(value) + '"]');
+				if (radio instanceof HTMLInputElement) {
+					radio.checked = true;
+					applied = true;
+					return;
+				}
+
+				const field = this.form.elements.namedItem(name);
+				if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) {
+					field.value = String(value);
+					applied = true;
+				}
+			});
+
+			return applied;
 		}
 
 		calculate() {

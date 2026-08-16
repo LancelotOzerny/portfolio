@@ -1,0 +1,11 @@
+.widget-counter {
+	min-height: 42px;
+	padding: 0 18px;
+	border: 1px solid var(--ml-ink);
+	border-radius: 8px;
+	background: var(--ml-ink);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}

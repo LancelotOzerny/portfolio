@@ -1291,6 +1291,10 @@ body.light-page.status-layout .status-page {
 	padding: 14px 18px;
 }
 
+.blog-detail__content .blog-widget {
+	margin: 0;
+}
+
 .blog-detail__content table {
 	width: 100%;
 	border-collapse: collapse;
@@ -1573,6 +1577,25 @@ body.light-page.status-layout .status-page {
 	border: 1px dashed rgba(23, 23, 23, 0.16);
 	border-radius: 8px;
 	outline: none;
+}
+
+.blog-editor-widget-block {
+	padding: 4px 0;
+	color: var(--ml-muted);
+	font-weight: 600;
+}
+
+.blog-editor-widget-settings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.blog-editor-widget-settings .cdx-settings-button {
+	width: auto;
+	min-width: 34px;
+	padding: 0 8px;
+	font-size: 12px;
 }
 
 .blog-editor-table-block {

@@ -13,6 +13,14 @@ $rating = is_array($data['rating'] ?? null) ? $data['rating'] : [];
 $ratingAverage = (float) ($rating['average'] ?? 0);
 $ratingCount = (int) ($rating['count'] ?? 0);
 $userRating = isset($rating['user_rating']) && $rating['user_rating'] !== null ? (int) $rating['user_rating'] : null;
+$widgetCatalog = new \App\Services\Blog\WidgetCatalog();
+$editorWidgets = array_map(
+	static fn (\App\Services\Blog\WidgetDefinition $widget): array => [
+		'id' => $widget->id,
+		'title' => $widget->title,
+	],
+	$widgetCatalog->all()
+);
 
 $renderStarsMarkup = static function (float $value, int $max = 5): string {
 	$filled = (int) max(0, min($max, round($value)));
@@ -25,14 +33,15 @@ $renderStarsMarkup = static function (float $value, int $max = 5): string {
 	return $markup;
 };
 
-$renderArticleContent = static function (string $rawContent): void {
+$renderArticleContent = static function (string $rawContent) use ($widgetCatalog): void {
 	$rawContent = trim($rawContent);
 	if ($rawContent === '') {
 		return;
 	}
 
 	if ($rawContent !== strip_tags($rawContent)) {
-		echo (new \App\Services\Blog\ArticleContentSanitizer())->sanitize($rawContent);
+		$html = (new \App\Services\Blog\ArticleContentSanitizer())->sanitize($rawContent);
+		echo (new \App\Services\Blog\ArticleWidgetRenderer($widgetCatalog))->hydrate($html);
 		return;
 	}
 
@@ -698,6 +707,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 		const csrfToken = <?= json_encode($csrfToken, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 		const uploadUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/image/';
 		const uploadFileUrl = '/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/file/';
+		const widgets = <?= json_encode($editorWidgets, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
 		if (!window.EditorJS || !window.List || !editorRoot || !editorInput || !blocksInput || !form) {
 			return;
@@ -1923,6 +1933,86 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			}
 		}
 
+		class WidgetBlockTool {
+			static get toolbox() {
+				return {
+					title: 'Виджет',
+					icon: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
+				};
+			}
+
+			constructor({ data, api }) {
+				this.api = api;
+				this.data = {
+					widget: this.normalizeWidget(data && data.widget)
+				};
+				this.wrapper = null;
+				this.titleEl = null;
+			}
+
+			normalizeWidget(widgetId) {
+				const id = String(widgetId || '').trim();
+				if (widgets.some((item) => item.id === id)) {
+					return id;
+				}
+
+				return widgets[0] ? widgets[0].id : '';
+			}
+
+			widgetTitle() {
+				const current = widgets.find((item) => item.id === this.data.widget);
+				return current ? current.title : 'Виджет';
+			}
+
+			render() {
+				this.wrapper = document.createElement('div');
+				this.wrapper.className = 'blog-editor-widget-block';
+				this.wrapper.contentEditable = 'false';
+
+				this.titleEl = document.createElement('span');
+				this.titleEl.className = 'blog-editor-widget-block__title';
+				this.refreshTitle();
+				this.wrapper.appendChild(this.titleEl);
+
+				return this.wrapper;
+			}
+
+			refreshTitle() {
+				if (this.titleEl) {
+					this.titleEl.textContent = this.widgetTitle();
+				}
+			}
+
+			renderSettings() {
+				const wrapper = document.createElement('div');
+				wrapper.className = 'blog-editor-widget-settings';
+
+				widgets.forEach((item) => {
+					const button = document.createElement('div');
+					button.className = this.api.styles.settingsButton;
+					button.textContent = item.title;
+					button.title = item.title;
+					button.classList.toggle(this.api.styles.settingsButtonActive, this.data.widget === item.id);
+					button.addEventListener('click', () => {
+						this.data.widget = item.id;
+						this.refreshTitle();
+						wrapper.querySelectorAll('.' + this.api.styles.settingsButton).forEach((node) => {
+							node.classList.toggle(this.api.styles.settingsButtonActive, node === button);
+						});
+					});
+					wrapper.appendChild(button);
+				});
+
+				return wrapper;
+			}
+
+			save() {
+				return {
+					widget: this.data.widget
+				};
+			}
+		}
+
 		const escapeHtml = (value) => String(value || '')
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -2230,6 +2320,19 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					return;
 				}
 
+				if (tagName === 'div' && element.classList.contains('blog-widget')) {
+					const widgetId = String(element.getAttribute('data-widget') || '').trim();
+					if (widgetId !== '') {
+						blocks.push({
+							type: 'widget',
+							data: {
+								widget: widgetId
+							}
+						});
+						return;
+					}
+				}
+
 				if (tagName === 'pre') {
 					blocks.push({
 						type: 'code',
@@ -2326,6 +2429,14 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 				}
 				const openAttr = data.opened ? ' open="open"' : '';
 				return `<details class="blog-spoiler"${openAttr}><summary>${title !== '' ? title : 'Подробнее'}</summary><p>${text}</p></details>`;
+			}
+
+			if (block.type === 'widget') {
+				const widgetId = String(data.widget || '').trim().toLowerCase();
+				if (!/^[a-z0-9-]+$/.test(widgetId) || !widgets.some((item) => item.id === widgetId)) {
+					return '';
+				}
+				return `<div class="blog-widget" data-widget="${escapeHtml(widgetId)}"></div>`;
 			}
 
 			if (block.type === 'table') {
@@ -2451,6 +2562,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					class: SpoilerBlockTool,
 					inlineToolbar: inlineTools
 				},
+				widget: WidgetBlockTool,
 				table: TableBlockTool,
 				code: CodeTool,
 				file: {

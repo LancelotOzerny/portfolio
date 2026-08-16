@@ -17,6 +17,7 @@ class ArticleContentSanitizer
 		'caption',
 		'code',
 		'details',
+		'div',
 		'em',
 		'h1',
 		'h2',
@@ -55,11 +56,13 @@ class ArticleContentSanitizer
 		'th' => ['blog-table-cell_h-center', 'blog-table-cell_v-middle'],
 		'aside' => ['blog-alert', 'blog-alert_info', 'blog-alert_warning', 'blog-alert_danger', 'blog-alert_success'],
 		'details' => ['blog-spoiler'],
+		'div' => ['blog-widget'],
 	];
 
 	private const REQUIRED_CLASSES = [
 		'aside' => 'blog-alert',
 		'details' => 'blog-spoiler',
+		'div' => 'blog-widget',
 	];
 
 	public function sanitize(string $html): string
@@ -139,6 +142,7 @@ class ArticleContentSanitizer
 			'span' => ['style', 'class'],
 			'table', 'aside' => ['class'],
 			'details' => ['class', 'open'],
+			'div' => ['class', 'data-widget'],
 			'td', 'th' => ['colspan', 'rowspan', 'class'],
 			default => [],
 		};
@@ -172,6 +176,10 @@ class ArticleContentSanitizer
 		if ($tagName === 'details') {
 			$this->sanitizeDetailsAttributes($element);
 		}
+
+		if ($tagName === 'div') {
+			$this->sanitizeWidgetAttributes($element);
+		}
 	}
 
 	private function shouldUnwrapStyledBlock(DOMElement $element, string $tagName): bool
@@ -193,6 +201,17 @@ class ArticleContentSanitizer
 		}
 
 		$element->setAttribute('open', 'open');
+	}
+
+	private function sanitizeWidgetAttributes(DOMElement $element): void
+	{
+		$widget = strtolower(trim($element->getAttribute('data-widget')));
+		if ($widget === '' || preg_match('/^[a-z0-9-]+$/', $widget) !== 1) {
+			$element->removeAttribute('data-widget');
+			return;
+		}
+
+		$element->setAttribute('data-widget', $widget);
 	}
 
 	private function sanitizeTableCellAttributes(DOMElement $element): void
@@ -315,7 +334,7 @@ class ArticleContentSanitizer
 
 	private function sanitizeWithoutDom(string $html): string
 	{
-		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub><aside><details><summary>');
+		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub><aside><details><summary><div>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
 

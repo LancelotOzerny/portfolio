@@ -1769,6 +1769,160 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			}
 		}
 
+		class AlertBlockTool {
+			static get toolbox() {
+				return {
+					title: 'Alert',
+					icon: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'
+				};
+			}
+
+			static get enableLineBreaks() {
+				return true;
+			}
+
+			static get styles() {
+				return [
+					{ id: 'info', title: 'Инфо', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M11 12h1v4h1"/></svg>' },
+					{ id: 'warning', title: 'Внимание', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>' },
+					{ id: 'danger', title: 'Опасно', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>' },
+					{ id: 'success', title: 'Успех', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>' }
+				];
+			}
+
+			constructor({ data, api }) {
+				this.api = api;
+				this.data = {
+					style: this.normalizeStyle(data && data.style),
+					text: data && data.text ? String(data.text) : ''
+				};
+				this.wrapper = null;
+				this.textEl = null;
+			}
+
+			normalizeStyle(style) {
+				return ['info', 'warning', 'danger', 'success'].includes(style) ? style : 'info';
+			}
+
+			render() {
+				this.wrapper = document.createElement('div');
+				this.applyStyle();
+
+				this.textEl = document.createElement('div');
+				this.textEl.className = 'blog-editor-alert-block__text';
+				this.textEl.contentEditable = 'true';
+				this.textEl.dataset.placeholder = 'Текст уведомления';
+				this.textEl.innerHTML = this.data.text || '';
+				this.wrapper.appendChild(this.textEl);
+
+				return this.wrapper;
+			}
+
+			applyStyle() {
+				if (!this.wrapper) {
+					return;
+				}
+
+				this.wrapper.className = 'blog-editor-alert-block blog-editor-alert-block_' + this.data.style;
+			}
+
+			renderSettings() {
+				const wrapper = document.createElement('div');
+				wrapper.className = 'blog-editor-alert-settings';
+
+				AlertBlockTool.styles.forEach((item) => {
+					const button = document.createElement('div');
+					button.className = this.api.styles.settingsButton;
+					button.innerHTML = item.icon;
+					button.title = item.title;
+					button.setAttribute('aria-label', item.title);
+					button.classList.toggle(this.api.styles.settingsButtonActive, this.data.style === item.id);
+					button.addEventListener('click', () => {
+						this.data.style = item.id;
+						this.applyStyle();
+						wrapper.querySelectorAll('.' + this.api.styles.settingsButton).forEach((node) => {
+							node.classList.toggle(this.api.styles.settingsButtonActive, node === button);
+						});
+					});
+					wrapper.appendChild(button);
+				});
+
+				return wrapper;
+			}
+
+			save() {
+				return {
+					style: this.data.style,
+					text: this.textEl ? this.textEl.innerHTML : (this.data.text || '')
+				};
+			}
+		}
+
+		class SpoilerBlockTool {
+			static get toolbox() {
+				return {
+					title: 'Раскрывающийся блок',
+					icon: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h16"/><path d="M16 9l4 3-4 3"/></svg>'
+				};
+			}
+
+			static get enableLineBreaks() {
+				return true;
+			}
+
+			constructor({ data, api }) {
+				this.api = api;
+				this.data = {
+					title: data && data.title ? String(data.title) : '',
+					text: data && data.text ? String(data.text) : '',
+					opened: Boolean(data && data.opened)
+				};
+				this.wrapper = null;
+				this.titleEl = null;
+				this.textEl = null;
+			}
+
+			render() {
+				this.wrapper = document.createElement('div');
+				this.wrapper.className = 'blog-editor-spoiler-block';
+
+				this.titleEl = document.createElement('div');
+				this.titleEl.className = 'blog-editor-spoiler-block__title';
+				this.titleEl.contentEditable = 'true';
+				this.titleEl.dataset.placeholder = 'Заголовок';
+				this.titleEl.innerHTML = this.data.title || '';
+
+				this.textEl = document.createElement('div');
+				this.textEl.className = 'blog-editor-spoiler-block__text';
+				this.textEl.contentEditable = 'true';
+				this.textEl.dataset.placeholder = 'Скрытый текст';
+				this.textEl.innerHTML = this.data.text || '';
+
+				this.wrapper.appendChild(this.titleEl);
+				this.wrapper.appendChild(this.textEl);
+				return this.wrapper;
+			}
+
+			renderSettings() {
+				const button = document.createElement('div');
+				button.className = this.api.styles.settingsButton + (this.data.opened ? ' ' + this.api.styles.settingsButtonActive : '');
+				button.textContent = 'Открыт';
+				button.addEventListener('click', () => {
+					this.data.opened = !this.data.opened;
+					button.classList.toggle(this.api.styles.settingsButtonActive, this.data.opened);
+				});
+				return button;
+			}
+
+			save() {
+				return {
+					title: this.titleEl ? this.titleEl.innerHTML : (this.data.title || ''),
+					text: this.textEl ? this.textEl.innerHTML : (this.data.text || ''),
+					opened: Boolean(this.data.opened)
+				};
+			}
+		}
+
 		const escapeHtml = (value) => String(value || '')
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -1779,7 +1933,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 		const flattenBlockHtmlToInline = (html) => {
 			const template = document.createElement('template');
 			template.innerHTML = String(html || '');
-			const blockTags = new Set(['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'TR', 'UL', 'OL']);
+			const blockTags = new Set(['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'TR', 'UL', 'OL', 'ASIDE', 'DETAILS', 'SUMMARY']);
 
 			const getDepth = (node) => {
 				let depth = 0;
@@ -2037,6 +2191,45 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					return;
 				}
 
+				if (tagName === 'aside') {
+					const style = element.classList.contains('blog-alert_warning')
+						? 'warning'
+						: (element.classList.contains('blog-alert_danger')
+							? 'danger'
+							: (element.classList.contains('blog-alert_success')
+								? 'success'
+								: ((element.classList.contains('blog-alert') || element.classList.contains('blog-alert_info')) ? 'info' : '')));
+					if (style !== '') {
+						blocks.push({
+							type: 'alert',
+							data: {
+								style: style,
+								text: flattenBlockHtmlToInline(element.innerHTML)
+							}
+						});
+						return;
+					}
+				}
+
+				if (tagName === 'details') {
+					const summary = element.querySelector(':scope > summary');
+					const body = element.cloneNode(true);
+					const clonedSummary = body.querySelector('summary');
+					if (clonedSummary) {
+						clonedSummary.remove();
+					}
+
+					blocks.push({
+						type: 'spoiler',
+						data: {
+							title: summary ? flattenBlockHtmlToInline(summary.innerHTML) : '',
+							text: flattenBlockHtmlToInline(body.innerHTML),
+							opened: element.hasAttribute('open')
+						}
+					});
+					return;
+				}
+
 				if (tagName === 'pre') {
 					blocks.push({
 						type: 'code',
@@ -2112,6 +2305,27 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 
 			if (block.type === 'quote') {
 				return `<blockquote>${sanitizeInlineHtml(flattenBlockHtmlToInline(data.text))}</blockquote>`;
+			}
+
+			if (block.type === 'alert' || block.type === 'warning' || block.type === 'danger' || block.type === 'success') {
+				const variant = ['info', 'warning', 'danger', 'success'].includes(data.style)
+					? data.style
+					: (block.type === 'alert' ? 'info' : block.type);
+				const text = sanitizeInlineHtml(flattenBlockHtmlToInline(data.text));
+				if (text === '') {
+					return '';
+				}
+				return `<aside class="blog-alert blog-alert_${variant}">${text}</aside>`;
+			}
+
+			if (block.type === 'spoiler') {
+				const title = sanitizeInlineHtml(flattenBlockHtmlToInline(data.title));
+				const text = sanitizeInlineHtml(flattenBlockHtmlToInline(data.text));
+				if (title === '' && text === '') {
+					return '';
+				}
+				const openAttr = data.opened ? ' open="open"' : '';
+				return `<details class="blog-spoiler"${openAttr}><summary>${title !== '' ? title : 'Подробнее'}</summary><p>${text}</p></details>`;
 			}
 
 			if (block.type === 'table') {
@@ -2229,6 +2443,14 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 					class: Quote,
 					inlineToolbar: inlineTools
 				},
+				alert: {
+					class: AlertBlockTool,
+					inlineToolbar: inlineTools
+				},
+				spoiler: {
+					class: SpoilerBlockTool,
+					inlineToolbar: inlineTools
+				},
 				table: TableBlockTool,
 				code: CodeTool,
 				file: {
@@ -2276,7 +2498,9 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 
 			const inList = Boolean(target.closest('.cdx-list'));
 			const inQuote = Boolean(target.closest('.cdx-quote'));
-			if (!inList && !inQuote) {
+			const inAlert = Boolean(target.closest('.blog-editor-alert-block'));
+			const inSpoiler = Boolean(target.closest('.blog-editor-spoiler-block'));
+			if (!inList && !inQuote && !inAlert && !inSpoiler) {
 				return;
 			}
 

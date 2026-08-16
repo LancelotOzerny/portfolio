@@ -10,10 +10,13 @@ class ArticleContentSanitizer
 {
 	private const ALLOWED_TAGS = [
 		'a',
+		'aside',
 		'b',
 		'blockquote',
 		'br',
+		'caption',
 		'code',
+		'details',
 		'em',
 		'h1',
 		'h2',
@@ -32,6 +35,7 @@ class ArticleContentSanitizer
 		'span',
 		'strong',
 		'sub',
+		'summary',
 		'sup',
 		'table',
 		'tbody',
@@ -39,7 +43,6 @@ class ArticleContentSanitizer
 		'th',
 		'thead',
 		'tr',
-		'caption',
 		'u',
 		'ul',
 		'wbr',
@@ -50,6 +53,13 @@ class ArticleContentSanitizer
 		'table' => ['blog-table', 'blog-table_h-center', 'blog-table_v-middle'],
 		'td' => ['blog-table-cell_h-center', 'blog-table-cell_v-middle'],
 		'th' => ['blog-table-cell_h-center', 'blog-table-cell_v-middle'],
+		'aside' => ['blog-alert', 'blog-alert_info', 'blog-alert_warning', 'blog-alert_danger', 'blog-alert_success'],
+		'details' => ['blog-spoiler'],
+	];
+
+	private const REQUIRED_CLASSES = [
+		'aside' => 'blog-alert',
+		'details' => 'blog-spoiler',
 	];
 
 	public function sanitize(string $html): string
@@ -96,6 +106,9 @@ class ArticleContentSanitizer
 				} else {
 					$this->sanitizeAttributes($child, $tagName);
 					$this->sanitizeNode($child);
+					if ($this->shouldUnwrapStyledBlock($child, $tagName)) {
+						$this->unwrapNode($child);
+					}
 				}
 			}
 
@@ -124,7 +137,8 @@ class ArticleContentSanitizer
 			'img' => ['src', 'alt', 'title'],
 			'mark' => ['style'],
 			'span' => ['style', 'class'],
-			'table' => ['class'],
+			'table', 'aside' => ['class'],
+			'details' => ['class', 'open'],
 			'td', 'th' => ['colspan', 'rowspan', 'class'],
 			default => [],
 		};
@@ -154,6 +168,31 @@ class ArticleContentSanitizer
 		if ($tagName === 'td' || $tagName === 'th') {
 			$this->sanitizeTableCellAttributes($element);
 		}
+
+		if ($tagName === 'details') {
+			$this->sanitizeDetailsAttributes($element);
+		}
+	}
+
+	private function shouldUnwrapStyledBlock(DOMElement $element, string $tagName): bool
+	{
+		if (!isset(self::REQUIRED_CLASSES[$tagName])) {
+			return false;
+		}
+
+		$class = trim($element->getAttribute('class'));
+		$names = preg_split('/\s+/', $class) ?: [];
+
+		return !in_array(self::REQUIRED_CLASSES[$tagName], $names, true);
+	}
+
+	private function sanitizeDetailsAttributes(DOMElement $element): void
+	{
+		if (!$element->hasAttribute('open')) {
+			return;
+		}
+
+		$element->setAttribute('open', 'open');
 	}
 
 	private function sanitizeTableCellAttributes(DOMElement $element): void
@@ -276,7 +315,7 @@ class ArticleContentSanitizer
 
 	private function sanitizeWithoutDom(string $html): string
 	{
-		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub>');
+		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub><aside><details><summary>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
 

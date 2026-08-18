@@ -2,6 +2,7 @@
 /* @var array $data */
 
 use App\Services\Blog\BlogArticlePublicationService;
+use App\Services\ContentEditor\ContentEditor;
 
 $article = $data['article'] ?? null;
 $topics = $data['topics'] ?? [];
@@ -327,7 +328,20 @@ $formatAdminDatetime = static function (?string $value): string {
 
 						<div class="col-12">
 							<label class="form-label">Детальный текст</label>
-							<textarea name="detail_text" rows="14" class="form-control font-monospace" spellcheck="false"><?= htmlspecialchars($detailText) ?></textarea>
+							<?php
+							(new ContentEditor())->render([
+								'id' => 'admin-article-editor',
+								'name' => 'detail_text',
+								'html' => $detailText,
+								'class' => 'content-editor_admin',
+								'uploadUrl' => '/admin/content-editor/upload/image/',
+								'uploadFileUrl' => '/admin/content-editor/upload/file/',
+								'extraUploadFields' => [
+									'scope' => 'article',
+									'entity_id' => (string) $articleId,
+								],
+							]);
+							?>
 						</div>
 					</div>
 				</div>

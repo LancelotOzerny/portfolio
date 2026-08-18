@@ -9,6 +9,7 @@ use App\Services\Blog\BlogArticlePublicationService;
 use App\Services\Blog\BlogDateFormatter;
 use App\Services\Blog\BlogSeoService;
 use App\Services\Blog\SymbolicCodeService;
+use App\Services\ContentEditor\ContentEditorUploadService;
 use App\Services\Site\EditModeService;
 use App\Services\Seo\SeoContext;
 use App\Services\Seo\SeoValidator;
@@ -564,7 +565,7 @@ class BlogController extends BaseController
 		try {
 			$dbArticle = $this->resolveDbArticle($article);
 			$articleId = (int) ($dbArticle->id ?? 0);
-			$url = $this->saveInlineArticleImage($articleId, 'image');
+			$url = (new ContentEditorUploadService())->saveImage($articleId, 'image', 'articles', 'article');
 			echo json_encode([
 				'success' => 1,
 				'file' => [
@@ -592,7 +593,7 @@ class BlogController extends BaseController
 		try {
 			$dbArticle = $this->resolveDbArticle($article);
 			$articleId = (int) ($dbArticle->id ?? 0);
-			$file = $this->saveInlineArticleFile($articleId, 'file');
+			$file = (new ContentEditorUploadService())->saveFile($articleId, 'file', 'articles', 'article');
 			echo json_encode([
 				'success' => 1,
 				'file' => $file,
@@ -812,171 +813,6 @@ class BlogController extends BaseController
 		}
 
 		return true;
-	}
-
-	private function saveInlineArticleImage(int $articleId, string $fileKey): string
-	{
-		$file = $_FILES[$fileKey] ?? null;
-		if (!is_array($file)) {
-			throw new \RuntimeException('Image file was not sent.');
-		}
-
-		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-		if ($errorCode !== UPLOAD_ERR_OK) {
-			throw new \RuntimeException('Image upload error.');
-		}
-
-		$tmpPath = (string) ($file['tmp_name'] ?? '');
-		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
-			throw new \RuntimeException('Invalid uploaded image.');
-		}
-
-		$mime = $this->detectImageMimeType($tmpPath);
-		$allowedMimeToExt = [
-			'image/jpeg' => 'jpg',
-			'image/png' => 'png',
-			'image/gif' => 'gif',
-			'image/webp' => 'webp',
-		];
-
-		if (!isset($allowedMimeToExt[$mime])) {
-			throw new \RuntimeException('Only JPG/PNG/GIF/WEBP images are allowed.');
-		}
-
-		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
-		if ($documentRoot === '') {
-			throw new \RuntimeException('Document root is not configured.');
-		}
-
-		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'articles';
-		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-			throw new \RuntimeException('Unable to create upload directory.');
-		}
-
-		$fileName = sprintf(
-			'article_%d_%s_%s.%s',
-			$articleId,
-			date('Ymd_His'),
-			bin2hex(random_bytes(4)),
-			$allowedMimeToExt[$mime]
-		);
-		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
-
-		if (!move_uploaded_file($tmpPath, $targetPath)) {
-			throw new \RuntimeException('Unable to save uploaded image.');
-		}
-
-		return '/upload/articles/' . $fileName;
-	}
-
-	private function saveInlineArticleFile(int $articleId, string $fileKey): array
-	{
-		$file = $_FILES[$fileKey] ?? null;
-		if (!is_array($file)) {
-			throw new \RuntimeException('File was not sent.');
-		}
-
-		$errorCode = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-		if ($errorCode !== UPLOAD_ERR_OK) {
-			throw new \RuntimeException('File upload error.');
-		}
-
-		$tmpPath = (string) ($file['tmp_name'] ?? '');
-		if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
-			throw new \RuntimeException('Invalid uploaded file.');
-		}
-
-		$originalName = trim((string) ($file['name'] ?? ''));
-		$extension = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
-		$allowedExtensions = ['docx', 'pdf', 'txt'];
-		if (!in_array($extension, $allowedExtensions, true)) {
-			throw new \RuntimeException('Only DOCX/TXT/PDF files are allowed.');
-		}
-
-		$mime = $this->detectImageMimeType($tmpPath);
-		$allowedMimeByExtension = [
-			'docx' => [
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				'application/zip',
-				'application/octet-stream',
-			],
-			'pdf' => [
-				'application/pdf',
-				'application/x-pdf',
-				'application/octet-stream',
-			],
-			'txt' => [
-				'text/plain',
-				'text/x-plain',
-				'application/octet-stream',
-			],
-		];
-
-		if ($mime !== '' && !in_array($mime, $allowedMimeByExtension[$extension], true)) {
-			throw new \RuntimeException('Uploaded file type does not match its extension.');
-		}
-
-		$documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
-		if ($documentRoot === '') {
-			throw new \RuntimeException('Document root is not configured.');
-		}
-
-		$uploadDir = $documentRoot . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'articles';
-		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-			throw new \RuntimeException('Unable to create upload directory.');
-		}
-
-		$fileName = sprintf(
-			'article_%d_file_%s_%s.%s',
-			$articleId,
-			date('Ymd_His'),
-			bin2hex(random_bytes(4)),
-			$extension
-		);
-		$targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
-
-		if (!move_uploaded_file($tmpPath, $targetPath)) {
-			throw new \RuntimeException('Unable to save uploaded file.');
-		}
-
-		return [
-			'url' => '/upload/articles/' . $fileName,
-			'name' => $originalName !== '' ? $originalName : $fileName,
-			'extension' => $extension,
-		];
-	}
-
-	private function detectImageMimeType(string $filePath): string
-	{
-		$mime = '';
-
-		if (function_exists('finfo_open')) {
-			$finfo = finfo_open(FILEINFO_MIME_TYPE);
-			if ($finfo !== false) {
-				$detected = finfo_file($finfo, $filePath);
-				finfo_close($finfo);
-
-				if (is_string($detected)) {
-					$mime = $detected;
-				}
-			}
-		}
-
-		if ($mime === '' && function_exists('mime_content_type')) {
-			$detected = mime_content_type($filePath);
-			if (is_string($detected)) {
-				$mime = $detected;
-			}
-		}
-
-		if ($mime === '' && function_exists('getimagesize')) {
-			$imageInfo = @getimagesize($filePath);
-			if (is_array($imageInfo) && isset($imageInfo['mime']) && is_string($imageInfo['mime'])) {
-				$mime = $imageInfo['mime'];
-			}
-		}
-
-		return strtolower(trim($mime));
 	}
 
 	private function ensureAdmin(): bool

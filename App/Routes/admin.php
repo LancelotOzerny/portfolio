@@ -77,6 +77,8 @@ $router->post('/admin/settings/backup/upload/', \Controllers\Admin\BackupControl
 $router->post('/admin/settings/backup/delete/{file}/', \Controllers\Admin\BackupController::class, 'delete');
 $router->post('/admin/settings/backup/restore/{file}/', \Controllers\Admin\BackupController::class, 'restore');
 $router->get('/admin/settings/backup/download/{file}/', \Controllers\Admin\BackupController::class, 'download');
+$router->post('/admin/content-editor/upload/image/', \Controllers\Admin\ContentEditorController::class, 'uploadImage');
+$router->post('/admin/content-editor/upload/file/', \Controllers\Admin\ContentEditorController::class, 'uploadFile');
 $router->post('/admin/projects/create/', \Controllers\Admin\ProjectsController::class, 'create');
 $router->get('/admin/projects/{id}/', \Controllers\Admin\ProjectsController::class, 'detail');
 $router->post('/admin/projects/{id}/', \Controllers\Admin\ProjectsController::class, 'updateMainInfo');

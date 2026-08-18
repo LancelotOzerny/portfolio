@@ -73,6 +73,19 @@ class BlogTopicsModel extends BaseModel
 		return $this->findBy('code', $code);
 	}
 
+	/**
+	 * @return list<object>
+	 */
+	public function findEnabled(): array
+	{
+		$qb = (new QueryBuilder($this->table))
+			->select()
+			->where('enabled', '=', 1)
+			->orderBy('id', 'DESC');
+
+		return $this->execQuery($qb) ?? [];
+	}
+
 	public function isCodeTaken(string $code, ?int $excludeId = null): bool
 	{
 		$code = trim($code);

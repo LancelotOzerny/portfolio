@@ -56,9 +56,8 @@ $error = trim((string) ($data['error'] ?? ''));
 								<td><?= htmlspecialchars($roleName !== '' ? $roleName : '—') ?></td>
 								<td class="text-nowrap"><?= htmlspecialchars($roleLevel !== '' ? $roleLevel : '—') ?></td>
 								<td class="text-end">
-									<?php if ($isCurrent): ?>
-										<span class="text-secondary small">Текущий пользователь</span>
-									<?php else: ?>
+									<a class="btn btn-outline-primary btn-sm" href="/admin/users/<?= $userId ?>/">Открыть</a>
+									<?php if (!$isCurrent): ?>
 										<form action="/admin/users/<?= $userId ?>/delete/" method="post" class="d-inline" onsubmit="return confirm('Удалить пользователя «<?= htmlspecialchars($login, ENT_QUOTES) ?>»?');">
 											<button class="btn btn-outline-danger btn-sm" type="submit">Удалить</button>
 										</form>

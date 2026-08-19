@@ -2,6 +2,8 @@
 
 namespace Controllers\Admin;
 
+use App\Services\ApiToken\ApiTokenService;
+use App\Services\Auth\PasswordVerifier;
 use App\Services\Auth\RoleCode;
 use App\Services\Auth\UserRegistrationService;
 use InvalidArgumentException;
@@ -16,6 +18,8 @@ use Throwable;
 
 class UsersController extends BaseController
 {
+	private const TOKEN_FLASH_KEY = 'admin_user_plain_token';
+
 	public function index(): void
 	{
 		if (!$this->ensureAdmin()) {
@@ -50,6 +54,41 @@ class UsersController extends BaseController
 		Template::getInstance()->showFooter();
 	}
 
+	public function detail(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		$user = $this->loadUser($id);
+		if ($user === null) {
+			header('Location: /admin/users/?error=' . rawurlencode('Пользователь не найден.'));
+			return;
+		}
+
+		$token = null;
+		try {
+			$token = (new ApiTokenService())->findActive($id);
+		} catch (Throwable) {
+			$token = null;
+		}
+
+		$plainToken = $this->pullPlainToken();
+		$currentUserId = (int) (Auth::getInstance()->getCurrentUser()?->id ?? 0);
+
+		Template::getInstance()->setParam('title', 'Пользователь ' . (string) ($user->login ?? ''));
+		Template::getInstance()->showHeader();
+		$this->render('detail', [
+			'user' => $user,
+			'token' => $token,
+			'plainToken' => $plainToken,
+			'currentUserId' => $currentUserId,
+			'saved' => isset($_GET['saved']) && $_GET['saved'] === '1',
+			'error' => trim((string) ($_GET['error'] ?? '')),
+		]);
+		Template::getInstance()->showFooter();
+	}
+
 	public function create(): void
 	{
 		if (!$this->ensureAdmin()) {
@@ -80,6 +119,69 @@ class UsersController extends BaseController
 		}
 	}
 
+	public function generateToken(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			if ($this->loadUser($id) === null) {
+				throw new RuntimeException('Пользователь не найден.');
+			}
+
+			$service = new ApiTokenService();
+			if ($service->hasActive($id)) {
+				throw new InvalidArgumentException('У пользователя уже есть действующий токен. Получите его или перегенерируйте.');
+			}
+
+			$issued = $service->issue($id);
+			$this->storePlainToken($issued->token);
+			header('Location: /admin/users/' . $id . '/?saved=1');
+		} catch (Throwable $exception) {
+			$this->redirectWithError('/admin/users/' . $id . '/', $exception);
+		}
+	}
+
+	public function revealToken(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			if ($this->loadUser($id) === null) {
+				throw new RuntimeException('Пользователь не найден.');
+			}
+
+			$this->assertCurrentAdminPassword((string) ($_POST['password'] ?? ''));
+			$token = (new ApiTokenService())->reveal($id);
+			$this->storePlainToken($token);
+			header('Location: /admin/users/' . $id . '/?saved=1');
+		} catch (Throwable $exception) {
+			$this->redirectWithError('/admin/users/' . $id . '/', $exception);
+		}
+	}
+
+	public function regenerateToken(int $id): void
+	{
+		if (!$this->ensureAdmin()) {
+			return;
+		}
+
+		try {
+			if ($this->loadUser($id) === null) {
+				throw new RuntimeException('Пользователь не найден.');
+			}
+
+			$issued = (new ApiTokenService())->regenerate($id);
+			$this->storePlainToken($issued->token);
+			header('Location: /admin/users/' . $id . '/?saved=1');
+		} catch (Throwable $exception) {
+			$this->redirectWithError('/admin/users/' . $id . '/', $exception);
+		}
+	}
+
 	public function delete(int $id): void
 	{
 		if (!$this->ensureAdmin()) {
@@ -102,6 +204,8 @@ class UsersController extends BaseController
 				throw new InvalidArgumentException('Нельзя удалить последнего администратора.');
 			}
 
+			(new ApiTokenService())->revoke($id);
+
 			if (!$usersModel->deleteById($id)) {
 				throw new RuntimeException('Не удалось удалить пользователя.');
 			}
@@ -110,6 +214,40 @@ class UsersController extends BaseController
 		} catch (Throwable $exception) {
 			$this->redirectWithError('/admin/users/', $exception);
 		}
+	}
+
+	private function loadUser(int $id): ?object
+	{
+		if ($id <= 0) {
+			return null;
+		}
+
+		try {
+			return (new UsersModel())->findWithRights($id);
+		} catch (Throwable) {
+			return null;
+		}
+	}
+
+	private function assertCurrentAdminPassword(string $password): void
+	{
+		$admin = Auth::getInstance()->getCurrentUser();
+		if ($admin === null || !(new PasswordVerifier())->verify($password, $admin)) {
+			throw new InvalidArgumentException('Неверный пароль.');
+		}
+	}
+
+	private function storePlainToken(string $token): void
+	{
+		$_SESSION[self::TOKEN_FLASH_KEY] = $token;
+	}
+
+	private function pullPlainToken(): string
+	{
+		$token = $_SESSION[self::TOKEN_FLASH_KEY] ?? '';
+		unset($_SESSION[self::TOKEN_FLASH_KEY]);
+
+		return is_string($token) ? $token : '';
 	}
 
 	private function isAdminUser(object $user): bool

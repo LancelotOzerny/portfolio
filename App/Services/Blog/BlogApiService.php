@@ -2,11 +2,11 @@
 
 namespace App\Services\Blog;
 
+use App\Services\ApiToken\ApiTokenAuth;
 use App\Services\Auth\RoleCode;
 use App\Services\Auth\RoleLevels;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
-use Modules\Main\Auth;
 use Throwable;
 
 final class BlogApiService
@@ -18,6 +18,7 @@ final class BlogApiService
 		private readonly BlogArticlePublicationService $publicationService = new BlogArticlePublicationService(),
 		private readonly SymbolicCodeService $codeService = new SymbolicCodeService(),
 		private readonly RoleLevels $roleLevels = new RoleLevels(),
+		private readonly ApiTokenAuth $apiAuth = new ApiTokenAuth(),
 	) {
 	}
 
@@ -197,7 +198,7 @@ final class BlogApiService
 
 	private function currentRoleCode(): string
 	{
-		$user = Auth::getInstance()->getCurrentUserData();
+		$user = $this->apiAuth->resolveUser();
 		if ($user === null) {
 			return '';
 		}

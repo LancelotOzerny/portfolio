@@ -45,6 +45,10 @@ $router->post('/admin/users/roles/create/', \Controllers\Admin\UserRolesControll
 $router->get('/admin/users/roles/{id}/', \Controllers\Admin\UserRolesController::class, 'edit');
 $router->post('/admin/users/roles/{id}/', \Controllers\Admin\UserRolesController::class, 'update');
 $router->post('/admin/users/roles/{id}/delete/', \Controllers\Admin\UserRolesController::class, 'delete');
+$router->post('/admin/users/{id}/token/generate/', \Controllers\Admin\UsersController::class, 'generateToken');
+$router->post('/admin/users/{id}/token/reveal/', \Controllers\Admin\UsersController::class, 'revealToken');
+$router->post('/admin/users/{id}/token/regenerate/', \Controllers\Admin\UsersController::class, 'regenerateToken');
+$router->get('/admin/users/{id}/', \Controllers\Admin\UsersController::class, 'detail');
 $router->post('/admin/users/{id}/delete/', \Controllers\Admin\UsersController::class, 'delete');
 $router->get('/admin/development/sql/', \Controllers\Admin\DevelopmentController::class, 'sql');
 $router->post('/admin/development/sql/execute/', \Controllers\Admin\DevelopmentController::class, 'executeSql');

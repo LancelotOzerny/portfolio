@@ -11,9 +11,14 @@ class BlogController
 		private readonly BlogApiService $blogApi = new BlogApiService(),
 	) {
 		header('Access-Control-Allow-Origin: *');
-		header('Access-Control-Allow-Methods: GET');
-		header('Access-Control-Allow-Headers: *');
+		header('Access-Control-Allow-Methods: GET, OPTIONS');
+		header('Access-Control-Allow-Headers: Authorization, Content-Type');
 		header('Content-Type: application/json; charset=utf-8');
+	}
+
+	public function options(string $topic = '', string $article = ''): void
+	{
+		http_response_code(204);
 	}
 
 	public function list(): void

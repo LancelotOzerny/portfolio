@@ -2,6 +2,7 @@
 
 namespace Controllers;
 
+use App\Services\Auth\PasswordVerifier;
 use App\Services\Auth\UserRegistrationService;
 use InvalidArgumentException;
 use Models\UsersModel;
@@ -56,8 +57,7 @@ class AuthController
 			return;
 		}
 
-		$storedPassword = $this->getStoredPassword($user);
-		if ($storedPassword === null || !$this->verifyPassword($password, $storedPassword)) {
+		if (!(new PasswordVerifier())->verify($password, $user)) {
 			$this->jsonResponse([
 				'success' => false,
 				'message' => 'Неверный логин или пароль',
@@ -171,36 +171,6 @@ class AuthController
 		}
 
 		return is_array($_POST) ? $_POST : [];
-	}
-
-	private function getStoredPassword(object $user): ?string
-	{
-		$candidates = ['password_hash', 'password', 'pass'];
-
-		foreach ($candidates as $field) {
-			if (isset($user->{$field}) && is_string($user->{$field}) && $user->{$field} !== '') {
-				return $user->{$field};
-			}
-		}
-
-		return null;
-	}
-
-	private function verifyPassword(string $password, string $storedPassword): bool
-	{
-		if (str_starts_with($storedPassword, '$2y$') || str_starts_with($storedPassword, '$argon2')) {
-			return password_verify($password, $storedPassword);
-		}
-
-		if (strlen($storedPassword) === 32 && ctype_xdigit($storedPassword)) {
-			return hash_equals(strtolower($storedPassword), md5($password));
-		}
-
-		if (strlen($storedPassword) === 40 && ctype_xdigit($storedPassword)) {
-			return hash_equals(strtolower($storedPassword), sha1($password));
-		}
-
-		return hash_equals($storedPassword, $password);
 	}
 
 	private function jsonResponse(array $payload, int $statusCode = 200): void

@@ -2,8 +2,11 @@
 
 namespace App\Services\Blog;
 
+use App\Services\Auth\RoleCode;
+use App\Services\Auth\RoleLevels;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
+use Modules\Main\Auth;
 use Throwable;
 
 final class BlogApiService
@@ -14,6 +17,7 @@ final class BlogApiService
 		private readonly BlogSeoService $seoService = new BlogSeoService(),
 		private readonly BlogArticlePublicationService $publicationService = new BlogArticlePublicationService(),
 		private readonly SymbolicCodeService $codeService = new SymbolicCodeService(),
+		private readonly RoleLevels $roleLevels = new RoleLevels(),
 	) {
 	}
 
@@ -22,9 +26,12 @@ final class BlogApiService
 	 */
 	public function listTopics(): array
 	{
-		$items = [];
+		$topics = $this->canSeeDrafts()
+			? $this->topicsModel->findAll()
+			: $this->topicsModel->findEnabled();
 
-		foreach ($this->topicsModel->findEnabled() as $topic) {
+		$items = [];
+		foreach ($topics as $topic) {
 			$items[] = $this->mapTopic($topic);
 		}
 
@@ -36,13 +43,13 @@ final class BlogApiService
 	 */
 	public function listTopicArticles(string $topicSegment): ?array
 	{
-		$topic = $this->resolveEnabledTopic($topicSegment);
+		$topic = $this->resolveAccessibleTopic($topicSegment);
 		if ($topic === null) {
 			return null;
 		}
 
 		$items = [];
-		foreach ($this->articlesModel->findActiveByTopicId((int) $topic->id) as $article) {
+		foreach ($this->articlesModel->findByTopicId((int) $topic->id, !$this->canSeeDrafts()) as $article) {
 			$items[] = $this->mapArticleBrief($article);
 		}
 
@@ -54,12 +61,12 @@ final class BlogApiService
 	 */
 	public function getArticle(string $topicSegment, string $articleSegment): ?array
 	{
-		$topic = $this->resolveEnabledTopic($topicSegment);
+		$topic = $this->resolveAccessibleTopic($topicSegment);
 		if ($topic === null) {
 			return null;
 		}
 
-		foreach ($this->articlesModel->findActiveByTopicId((int) $topic->id) as $article) {
+		foreach ($this->articlesModel->findByTopicId((int) $topic->id, !$this->canSeeDrafts()) as $article) {
 			if ($this->matchesArticle($article, $articleSegment)) {
 				return $this->mapArticleDetail($article);
 			}
@@ -68,14 +75,18 @@ final class BlogApiService
 		return null;
 	}
 
-	private function resolveEnabledTopic(string $segment): ?object
+	private function resolveAccessibleTopic(string $segment): ?object
 	{
 		$topic = $this->resolveTopic($segment);
-		if ($topic === null || (int) ($topic->enabled ?? 0) !== 1) {
+		if ($topic === null) {
 			return null;
 		}
 
-		return $topic;
+		if ($this->canSeeDrafts() || (int) ($topic->enabled ?? 0) === 1) {
+			return $topic;
+		}
+
+		return null;
 	}
 
 	private function resolveTopic(string $segment): ?object
@@ -123,6 +134,7 @@ final class BlogApiService
 	private function mapTopic(object $topic): array
 	{
 		$topicId = (int) ($topic->id ?? 0);
+		$isDraft = (int) ($topic->enabled ?? 0) !== 1;
 
 		return [
 			'id' => $topicId,
@@ -131,6 +143,7 @@ final class BlogApiService
 			'code' => $this->codeService->resolvePublicSegment((string) ($topic->code ?? ''), $topicId),
 			'detail_text' => (string) ($topic->detail_text ?? ''),
 			'preview_text' => (string) ($topic->preview_text ?? ''),
+			'status' => $isDraft ? 'draft' : 'published',
 			'seo' => $this->seoService->getFormData(BlogSeoService::TYPE_TOPIC, (string) $topicId),
 		];
 	}
@@ -141,6 +154,7 @@ final class BlogApiService
 	private function mapArticleBrief(object $article): array
 	{
 		$articleId = (int) ($article->id ?? 0);
+		$isDraft = !$this->publicationService->isPublished($article);
 
 		return [
 			'id' => $articleId,
@@ -148,6 +162,7 @@ final class BlogApiService
 			'preview_text' => (string) ($article->preview_text ?? ''),
 			'code' => $this->codeService->resolvePublicSegment((string) ($article->code ?? ''), $articleId),
 			'published_at' => $this->publicationService->getPublicationDatetime($article),
+			'status' => $isDraft ? 'draft' : 'published',
 		];
 	}
 
@@ -162,5 +177,31 @@ final class BlogApiService
 		$payload['seo'] = $this->seoService->getFormData(BlogSeoService::TYPE_ARTICLE, (string) $articleId);
 
 		return $payload;
+	}
+
+	private function canSeeDrafts(): bool
+	{
+		$code = $this->currentRoleCode();
+		if ($code === '') {
+			return false;
+		}
+
+		if ($code === RoleCode::AI_AGENT || $code === RoleCode::ADMIN) {
+			return true;
+		}
+
+		$adminLevel = $this->roleLevels->getLevel(RoleCode::ADMIN);
+
+		return $adminLevel > 0 && $this->roleLevels->getLevel($code) >= $adminLevel;
+	}
+
+	private function currentRoleCode(): string
+	{
+		$user = Auth::getInstance()->getCurrentUserData();
+		if ($user === null) {
+			return '';
+		}
+
+		return strtolower(trim((string) ($user->role_code ?? '')));
 	}
 }

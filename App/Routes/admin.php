@@ -39,6 +39,13 @@ $router->get('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, '
 $router->post('/admin/seo/{pageKey}/', \Controllers\Admin\SeoController::class, 'update');
 $router->post('/admin/seo/{pageKey}/reset/', \Controllers\Admin\SeoController::class, 'reset');
 $router->get('/admin/users/', \Controllers\Admin\UsersController::class, 'index');
+$router->post('/admin/users/create/', \Controllers\Admin\UsersController::class, 'create');
+$router->get('/admin/users/roles/', \Controllers\Admin\UserRolesController::class, 'index');
+$router->post('/admin/users/roles/create/', \Controllers\Admin\UserRolesController::class, 'create');
+$router->get('/admin/users/roles/{id}/', \Controllers\Admin\UserRolesController::class, 'edit');
+$router->post('/admin/users/roles/{id}/', \Controllers\Admin\UserRolesController::class, 'update');
+$router->post('/admin/users/roles/{id}/delete/', \Controllers\Admin\UserRolesController::class, 'delete');
+$router->post('/admin/users/{id}/delete/', \Controllers\Admin\UsersController::class, 'delete');
 $router->get('/admin/development/sql/', \Controllers\Admin\DevelopmentController::class, 'sql');
 $router->post('/admin/development/sql/execute/', \Controllers\Admin\DevelopmentController::class, 'executeSql');
 $router->post('/admin/development/sql/execute-file/', \Controllers\Admin\DevelopmentController::class, 'executeSqlFile');

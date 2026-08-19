@@ -2,6 +2,7 @@
 
 namespace Modules\Main;
 
+use App\Services\Auth\RoleCode;
 use Models\UsersModel;
 use Throwable;
 
@@ -71,15 +72,37 @@ class Auth
 
 	public function isAdmin(): bool
 	{
+		return $this->hasMinLevel(100) || $this->hasRole(RoleCode::ADMIN);
+	}
+
+	public function hasRole(string $code): bool
+	{
 		$user = $this->getCurrentUserData();
 		if ($user === null) {
 			return false;
 		}
 
-		$roleLevel = (int) ($user->role_level ?? 0);
-		$roleName = strtolower((string) ($user->role_name ?? ''));
+		$code = strtolower(trim($code));
+		if ($code === '') {
+			return false;
+		}
 
-		return $roleLevel >= 100 || $roleName === 'admin';
+		$roleCode = strtolower(trim((string) ($user->role_code ?? '')));
+		if ($roleCode !== '' && $roleCode === $code) {
+			return true;
+		}
+
+		return $code === RoleCode::ADMIN && strtolower((string) ($user->role_name ?? '')) === RoleCode::ADMIN;
+	}
+
+	public function hasMinLevel(int $level): bool
+	{
+		$user = $this->getCurrentUserData();
+		if ($user === null) {
+			return false;
+		}
+
+		return (int) ($user->role_level ?? 0) >= $level;
 	}
 
 	public function getCurrentUserData(): ?object

@@ -2,6 +2,8 @@
 
 namespace Controllers;
 
+use App\Services\Auth\UserRegistrationService;
+use InvalidArgumentException;
 use Models\UsersModel;
 use Modules\Main\Auth;
 use Modules\Validator\AuthValidator;
@@ -83,9 +85,66 @@ class AuthController
 				'login' => (string) ($currentUser->login ?? ''),
 				'email' => (string) ($currentUser->email ?? ''),
 				'role' => (string) ($currentUser->role_name ?? ''),
+				'role_code' => (string) ($currentUser->role_code ?? ''),
 				'role_level' => (int) ($currentUser->role_level ?? 0),
 			],
 		]);
+	}
+
+	public function register(): void
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		header('Access-Control-Allow-Origin: *');
+		header('Access-Control-Allow-Methods: POST, OPTIONS');
+		header('Access-Control-Allow-Headers: Content-Type');
+
+		if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+			http_response_code(204);
+			return;
+		}
+
+		$payload = $this->getPayload();
+		$validation = (new AuthValidator())->validateRegisterPayload($payload);
+
+		if ($validation['is_valid'] !== true) {
+			$this->jsonResponse([
+				'success' => false,
+				'message' => 'Ошибка валидации',
+				'errors' => $validation['errors'],
+			], 422);
+			return;
+		}
+
+		try {
+			$user = (new UserRegistrationService())->register(
+				$validation['data']['login'],
+				$validation['data']['password']
+			);
+		} catch (InvalidArgumentException $exception) {
+			$this->jsonResponse([
+				'success' => false,
+				'message' => $exception->getMessage(),
+			], 422);
+			return;
+		} catch (Throwable) {
+			$this->jsonResponse([
+				'success' => false,
+				'message' => 'Не удалось зарегистрировать пользователя',
+			], 500);
+			return;
+		}
+
+		$this->jsonResponse([
+			'success' => true,
+			'message' => 'Регистрация выполнена успешно',
+			'user' => [
+				'id' => (int) ($user->id ?? 0),
+				'login' => (string) ($user->login ?? ''),
+				'role' => (string) ($user->role_name ?? ''),
+				'role_code' => (string) ($user->role_code ?? ''),
+				'role_level' => (int) ($user->role_level ?? 0),
+			],
+		], 201);
 	}
 
 	public function logout(): void

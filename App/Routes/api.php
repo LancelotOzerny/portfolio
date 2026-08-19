@@ -12,3 +12,4 @@ $router->get('/api/blog/', \Controllers\Api\BlogController::class, 'list');
 $router->get('/api/blog/{topic}/', \Controllers\Api\BlogController::class, 'topic');
 $router->get('/api/blog/{topic}/{article}/', \Controllers\Api\BlogController::class, 'article');
 $router->post('/api/auth/login/', \Controllers\AuthController::class, 'login');
+$router->post('/api/auth/register/', \Controllers\AuthController::class, 'register');

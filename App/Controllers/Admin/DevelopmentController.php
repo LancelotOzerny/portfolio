@@ -171,8 +171,16 @@ class DevelopmentController extends BaseController
 			$db = DBConnection::getConnection();
 			$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-			if ($this->isReadableQuery($sql)) {
-				$stmt = $db->query($sql);
+			$statements = $this->splitSqlStatements($sql);
+			if ($statements === []) {
+				$this->setFlash(false, 'SQL запрос не может быть пустым.', [
+					'sql' => $sql,
+				]);
+				return;
+			}
+
+			if (count($statements) === 1 && $this->isReadableQuery($statements[0])) {
+				$stmt = $db->query($statements[0]);
 				$rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
 				$this->setFlash(true, $successMessage, [
@@ -183,7 +191,12 @@ class DevelopmentController extends BaseController
 				return;
 			}
 
-			$affectedRows = $db->exec($sql);
+			$affectedRows = 0;
+			foreach ($statements as $statement) {
+				$result = $db->exec($statement);
+				$affectedRows += is_int($result) ? $result : 0;
+			}
+
 			$this->setFlash(true, $successMessage, [
 				'type' => 'affected',
 				'affectedRows' => $affectedRows,
@@ -202,6 +215,25 @@ class DevelopmentController extends BaseController
 		$firstWord = strtoupper((string) strtok($normalized, " \t\r\n"));
 
 		return in_array($firstWord, ['SELECT', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN'], true);
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function splitSqlStatements(string $sql): array
+	{
+		$withoutComments = preg_replace('/^\s*--[^\n]*$/m', '', $sql) ?? $sql;
+		$parts = explode(';', $withoutComments);
+		$statements = [];
+
+		foreach ($parts as $part) {
+			$statement = trim($part);
+			if ($statement !== '') {
+				$statements[] = $statement;
+			}
+		}
+
+		return $statements;
 	}
 
 	private function collectMigrationFiles(): array

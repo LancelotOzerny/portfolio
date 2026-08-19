@@ -34,4 +34,29 @@ class AuthValidator
 			],
 		];
 	}
+
+	public function validateRegisterPayload(array $payload): array
+	{
+		$validation = $this->validateLoginPayload($payload);
+		$errors = $validation['errors'];
+		$data = $validation['data'];
+
+		if (array_key_exists('password_confirm', $payload)) {
+			$passwordConfirm = (string) $payload['password_confirm'];
+			if ($passwordConfirm === '') {
+				$errors['password_confirm'] = 'Повторите пароль';
+			} elseif ($passwordConfirm !== $data['password']) {
+				$errors['password_confirm'] = 'Пароли не совпадают';
+			}
+		}
+
+		$rightsId = (int) ($payload['rights_id'] ?? 0);
+		$data['rights_id'] = $rightsId > 0 ? $rightsId : null;
+
+		return [
+			'is_valid' => empty($errors),
+			'errors' => $errors,
+			'data' => $data,
+		];
+	}
 }

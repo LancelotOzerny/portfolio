@@ -113,6 +113,20 @@ final class DefaultAdminMenuListener
 			href: '/admin/users/',
 			icon: 'По',
 			matchPrefixes: ['/admin/users/'],
+			children: [
+				new AdminMenuItem(
+					id: 'users.list',
+					label: 'Список пользователей',
+					href: '/admin/users/',
+					matchExact: ['/admin/users/'],
+				),
+				new AdminMenuItem(
+					id: 'users.roles',
+					label: 'Пользовательские роли',
+					href: '/admin/users/roles/',
+					matchPrefixes: ['/admin/users/roles/'],
+				),
+			],
 		));
 
 		$event->addItem(new AdminMenuItem(

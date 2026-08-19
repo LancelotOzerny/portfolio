@@ -7,7 +7,9 @@ App/Configs/Hidden/
 
 public_html/upload/
 upload/
-storage/
+storage/*
+!storage/migrations/
+!storage/migrations/*.sql
 
 *.log
 *.txt

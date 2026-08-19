@@ -25,6 +25,26 @@ final class RoleLevels
 		return $this->levelsByCode[$code] ?? 0;
 	}
 
+	public function isAtLeast(string $userCode, string $requiredCode): bool
+	{
+		$userCode = strtolower(trim($userCode));
+		$requiredCode = strtolower(trim($requiredCode));
+		if ($userCode === '' || $requiredCode === '') {
+			return false;
+		}
+
+		if ($userCode === $requiredCode) {
+			return true;
+		}
+
+		$requiredLevel = $this->getLevel($requiredCode);
+		if ($requiredLevel <= 0) {
+			return false;
+		}
+
+		return $this->getLevel($userCode) >= $requiredLevel;
+	}
+
 	private function load(RightsModel $rightsModel): void
 	{
 		try {

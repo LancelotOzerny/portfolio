@@ -5,8 +5,12 @@ namespace App\Services\Blog;
 use App\Services\ApiToken\ApiTokenAuth;
 use App\Services\Auth\RoleCode;
 use App\Services\Auth\RoleLevels;
+use App\Services\ContentEditor\ContentEditorUploadService;
+use App\Services\Seo\Config\SeoConfig;
+use InvalidArgumentException;
 use Models\BlogArticlesModel;
 use Models\BlogTopicsModel;
+use RuntimeException;
 use Throwable;
 
 final class BlogApiService
@@ -19,7 +23,59 @@ final class BlogApiService
 		private readonly SymbolicCodeService $codeService = new SymbolicCodeService(),
 		private readonly RoleLevels $roleLevels = new RoleLevels(),
 		private readonly ApiTokenAuth $apiAuth = new ApiTokenAuth(),
+		private readonly ContentEditorUploadService $uploadService = new ContentEditorUploadService(),
+		private readonly SeoConfig $seoConfig = new SeoConfig(),
 	) {
+	}
+
+	public function isAuthenticated(): bool
+	{
+		return $this->apiAuth->resolveUser() !== null;
+	}
+
+	public function canManageMedia(): bool
+	{
+		$code = $this->currentRoleCode();
+		if ($code === '') {
+			return false;
+		}
+
+		if ($code === RoleCode::ADMIN) {
+			return true;
+		}
+
+		return $this->roleLevels->isAtLeast($code, RoleCode::AI_AGENT);
+	}
+
+	public function uploadArticleMedia(string $articleCode, string $type, string $fileKey = 'file'): ?string
+	{
+		$type = strtolower(trim($type));
+		if ($type !== 'preview' && $type !== 'detail') {
+			throw new InvalidArgumentException('Поле type должно быть preview или detail.');
+		}
+
+		$article = $this->findArticleForMedia($articleCode);
+		if ($article === null) {
+			return null;
+		}
+
+		$articleId = (int) ($article->id ?? 0);
+		if ($articleId <= 0) {
+			return null;
+		}
+
+		$relativePath = $this->uploadService->saveImage(
+			$articleId,
+			$fileKey,
+			'images/blog/articles',
+			'blog_article_' . $type
+		);
+
+		if (!$this->articlesModel->updateImagePath($articleId, $type, $relativePath)) {
+			throw new RuntimeException('Не удалось сохранить путь к изображению.');
+		}
+
+		return $this->absolutePublicUrl($relativePath);
 	}
 
 	/**
@@ -204,5 +260,50 @@ final class BlogApiService
 		}
 
 		return strtolower(trim((string) ($user->role_code ?? '')));
+	}
+
+	private function findArticleForMedia(string $articleCode): ?object
+	{
+		$articleCode = trim($articleCode);
+		if ($articleCode === '') {
+			return null;
+		}
+
+		$normalized = $this->codeService->normalize($articleCode);
+		if ($normalized !== '') {
+			$article = $this->articlesModel->findByCode($normalized);
+			if ($article !== null) {
+				return $article;
+			}
+		}
+
+		$article = $this->articlesModel->findByCode($articleCode);
+		if ($article !== null) {
+			return $article;
+		}
+
+		if (ctype_digit($articleCode)) {
+			return $this->articlesModel->findById((int) $articleCode);
+		}
+
+		return null;
+	}
+
+	private function absolutePublicUrl(string $path): string
+	{
+		$path = '/' . ltrim(str_replace('\\', '/', $path), '/');
+		$domain = rtrim((string) ($this->seoConfig->getSite()['domain'] ?? ''), '/');
+		if ($domain !== '') {
+			return $domain . $path;
+		}
+
+		$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+			|| ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443');
+		$host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+		if ($host === '') {
+			return $path;
+		}
+
+		return ($https ? 'https' : 'http') . '://' . $host . $path;
 	}
 }

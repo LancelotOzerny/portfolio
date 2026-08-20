@@ -212,8 +212,13 @@ class BlogArticlesModel extends BaseModel
 
 	public function findLatestActive(int $limit): array
 	{
+		return $this->findLatest($limit, true);
+	}
+
+	public function findLatest(int $limit, bool $onlyActive = true): array
+	{
 		try {
-			$articles = $this->findLatestActiveViaRelations($limit);
+			$articles = $this->findLatestViaRelations($limit, $onlyActive);
 			if ($articles !== []) {
 				return $articles;
 			}
@@ -221,7 +226,7 @@ class BlogArticlesModel extends BaseModel
 		}
 
 		try {
-			return $this->findLatestActiveLegacy($limit);
+			return $this->findLatestLegacy($limit, $onlyActive);
 		} catch (Throwable) {
 			return [];
 		}
@@ -600,15 +605,20 @@ class BlogArticlesModel extends BaseModel
 		}
 	}
 
-	private function findLatestActiveViaRelations(int $limit): array
+	private function findLatestViaRelations(int $limit, bool $onlyActive): array
 	{
+		$joinType = $onlyActive ? 'INNER' : 'LEFT';
 		$qb = (new QueryBuilder($this->table))
 			->selectRaw('blog_articles.*, MIN(blog_topics.id) AS topic_id_resolved, MIN(blog_topics.title) AS topic_title, MIN(blog_topics.code) AS topic_code')
-			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', 'INNER')
-			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', 'INNER')
-			->where('blog_articles.enabled', '=', 1)
-			->where('blog_topics.enabled', '=', 1)
-			->groupBy('blog_articles.id')
+			->join('blog_article_topic_relations', 'blog_articles.id', 'blog_article_topic_relations.article_id', $joinType)
+			->join('blog_topics', 'blog_article_topic_relations.topic_id', 'blog_topics.id', $joinType);
+
+		if ($onlyActive) {
+			$qb->where('blog_articles.enabled', '=', 1)
+				->where('blog_topics.enabled', '=', 1);
+		}
+
+		$qb->groupBy('blog_articles.id')
 			->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
@@ -619,14 +629,19 @@ class BlogArticlesModel extends BaseModel
 		return $this->execQuery($qb) ?? [];
 	}
 
-	private function findLatestActiveLegacy(int $limit): array
+	private function findLatestLegacy(int $limit, bool $onlyActive): array
 	{
+		$joinType = $onlyActive ? 'INNER' : 'LEFT';
 		$qb = (new QueryBuilder($this->table))
 			->selectRaw('blog_articles.*, blog_articles.topic_id AS topic_id_resolved, blog_topics.title AS topic_title, blog_topics.code AS topic_code')
-			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', 'INNER')
-			->where('blog_articles.enabled', '=', 1)
-			->where('blog_topics.enabled', '=', 1)
-			->orderBy('blog_articles.created_at', 'DESC')
+			->join('blog_topics', 'blog_articles.topic_id', 'blog_topics.id', $joinType);
+
+		if ($onlyActive) {
+			$qb->where('blog_articles.enabled', '=', 1)
+				->where('blog_topics.enabled', '=', 1);
+		}
+
+		$qb->orderBy('blog_articles.created_at', 'DESC')
 			->orderBy('blog_articles.id', 'DESC');
 
 		if ($limit > 0) {

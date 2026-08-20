@@ -15,6 +15,8 @@ use Throwable;
 
 final class BlogApiService
 {
+	private const ARTICLES_LIST_LIMIT = 100;
+
 	public function __construct(
 		private readonly BlogTopicsModel $topicsModel = new BlogTopicsModel(),
 		private readonly BlogArticlesModel $articlesModel = new BlogArticlesModel(),
@@ -98,19 +100,27 @@ final class BlogApiService
 	/**
 	 * @return list<array<string, mixed>>|null
 	 */
-	public function listTopicArticles(string $topicSegment): ?array
+	public function listArticles(?string $rubric = null): ?array
 	{
-		$topic = $this->resolveAccessibleTopic($topicSegment);
+		$onlyActive = !$this->canSeeDrafts();
+		$rubric = trim((string) $rubric);
+
+		if ($rubric === '') {
+			return $this->mapArticleBriefs(
+				$this->articlesModel->findLatest(self::ARTICLES_LIST_LIMIT, $onlyActive)
+			);
+		}
+
+		$topic = $this->resolveAccessibleTopic($rubric);
 		if ($topic === null) {
 			return null;
 		}
 
-		$items = [];
-		foreach ($this->articlesModel->findByTopicId((int) $topic->id, !$this->canSeeDrafts()) as $article) {
-			$items[] = $this->mapArticleBrief($article);
-		}
+		$articles = $this->sortByLatest(
+			$this->articlesModel->findByTopicId((int) $topic->id, $onlyActive)
+		);
 
-		return $items;
+		return $this->mapArticleBriefs(array_slice($articles, 0, self::ARTICLES_LIST_LIMIT));
 	}
 
 	/**
@@ -203,6 +213,39 @@ final class BlogApiService
 			'status' => $isDraft ? 'draft' : 'published',
 			'seo' => $this->seoService->getFormData(BlogSeoService::TYPE_TOPIC, (string) $topicId),
 		];
+	}
+
+	/**
+	 * @param list<object> $articles
+	 * @return list<array<string, mixed>>
+	 */
+	private function mapArticleBriefs(array $articles): array
+	{
+		$items = [];
+		foreach ($articles as $article) {
+			$items[] = $this->mapArticleBrief($article);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * @param list<object> $articles
+	 * @return list<object>
+	 */
+	private function sortByLatest(array $articles): array
+	{
+		usort($articles, static function (object $left, object $right): int {
+			$leftCreated = strtotime((string) ($left->created_at ?? '')) ?: 0;
+			$rightCreated = strtotime((string) ($right->created_at ?? '')) ?: 0;
+			if ($leftCreated !== $rightCreated) {
+				return $rightCreated <=> $leftCreated;
+			}
+
+			return (int) ($right->id ?? 0) <=> (int) ($left->id ?? 0);
+		});
+
+		return $articles;
 	}
 
 	/**

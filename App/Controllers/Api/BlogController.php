@@ -23,7 +23,7 @@ class BlogController
 		http_response_code(204);
 	}
 
-	public function list(): void
+	public function rubrics(): void
 	{
 		try {
 			$this->respond(true, [
@@ -35,10 +35,12 @@ class BlogController
 		}
 	}
 
-	public function topic(string $topic): void
+	public function articles(): void
 	{
+		$rubric = trim((string) ($_GET['rubric'] ?? ''), " \t\n\r\0\x0B/");
+
 		try {
-			$items = $this->blogApi->listTopicArticles($topic);
+			$items = $this->blogApi->listArticles($rubric === '' ? null : $rubric);
 		} catch (Throwable) {
 			http_response_code(500);
 			$this->respond(false, ['message' => 'Не удалось загрузить статьи.']);

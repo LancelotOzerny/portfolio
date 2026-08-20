@@ -23,6 +23,7 @@ final class BlogApiService
 		private readonly BlogSeoService $seoService = new BlogSeoService(),
 		private readonly BlogArticlePublicationService $publicationService = new BlogArticlePublicationService(),
 		private readonly SymbolicCodeService $codeService = new SymbolicCodeService(),
+		private readonly ArticleContentSanitizer $contentSanitizer = new ArticleContentSanitizer(),
 		private readonly RoleLevels $roleLevels = new RoleLevels(),
 		private readonly ApiTokenAuth $apiAuth = new ApiTokenAuth(),
 		private readonly ContentEditorUploadService $uploadService = new ContentEditorUploadService(),
@@ -156,6 +157,30 @@ final class BlogApiService
 		}
 
 		return $this->mapArticleBrief($updated);
+	}
+
+	/**
+	 * @return array<string, mixed>|null
+	 */
+	public function updateArticleDetailText(string $articleSegment, string $detailText): ?array
+	{
+		$article = $this->findArticleBySegment($articleSegment);
+		if ($article === null) {
+			return null;
+		}
+
+		$articleId = (int) ($article->id ?? 0);
+		$detailText = $this->contentSanitizer->sanitize($detailText);
+		if (!$this->articlesModel->updateDetailText($articleId, $detailText)) {
+			throw new RuntimeException('Не удалось сохранить детальный текст.');
+		}
+
+		$updated = $this->articlesModel->findById($articleId);
+		if ($updated === null) {
+			throw new RuntimeException('Не удалось получить обновлённую статью.');
+		}
+
+		return $this->mapArticleDetail($updated);
 	}
 
 	public function uploadArticleMedia(string $articleCode, string $type, string $fileKey = 'file'): ?string

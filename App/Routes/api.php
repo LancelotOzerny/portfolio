@@ -13,6 +13,7 @@ $router->post('/api/blog/rubrics/{rubric}/create/', \Controllers\Api\BlogControl
 $router->get('/api/blog/articles/', \Controllers\Api\BlogController::class, 'articles');
 $router->post('/api/blog/articles/{article}/edit/seo/', \Controllers\Api\BlogController::class, 'editSeo');
 $router->post('/api/blog/articles/{article}/edit/preview-text/', \Controllers\Api\BlogController::class, 'editPreviewText');
+$router->post('/api/blog/articles/{article}/edit/detail-text/', \Controllers\Api\BlogController::class, 'editDetailText');
 $router->post('/api/blog/articles/{article}/edit/preview-image/', \Controllers\Api\BlogController::class, 'editPreviewImage');
 $router->post('/api/blog/articles/{article}/edit/detail-image/', \Controllers\Api\BlogController::class, 'editDetailImage');
 $router->post('/api/blog/media/', \Controllers\Api\BlogController::class, 'uploadMedia');
@@ -22,6 +23,7 @@ $router->addRoute('OPTIONS', '/api/blog/rubrics/{rubric}/create/', \Controllers\
 $router->addRoute('OPTIONS', '/api/blog/articles/', \Controllers\Api\BlogController::class, 'options');
 $router->addRoute('OPTIONS', '/api/blog/articles/{article}/edit/seo/', \Controllers\Api\BlogController::class, 'options');
 $router->addRoute('OPTIONS', '/api/blog/articles/{article}/edit/preview-text/', \Controllers\Api\BlogController::class, 'options');
+$router->addRoute('OPTIONS', '/api/blog/articles/{article}/edit/detail-text/', \Controllers\Api\BlogController::class, 'options');
 $router->addRoute('OPTIONS', '/api/blog/articles/{article}/edit/preview-image/', \Controllers\Api\BlogController::class, 'options');
 $router->addRoute('OPTIONS', '/api/blog/articles/{article}/edit/detail-image/', \Controllers\Api\BlogController::class, 'options');
 $router->addRoute('OPTIONS', '/api/blog/media/', \Controllers\Api\BlogController::class, 'options');

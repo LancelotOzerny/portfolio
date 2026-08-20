@@ -162,6 +162,42 @@ class BlogController
 		$this->respond(true, ['item' => $item]);
 	}
 
+	public function editDetailText(string $article): void
+	{
+		if (!$this->requireManager()) {
+			return;
+		}
+
+		$data = $this->requestPayload();
+
+		try {
+			$item = $this->blogApi->updateArticleDetailText(
+				$article,
+				(string) ($data['detail_text'] ?? '')
+			);
+		} catch (InvalidArgumentException $exception) {
+			http_response_code(400);
+			$this->respond(false, ['message' => $exception->getMessage()]);
+			return;
+		} catch (RuntimeException $exception) {
+			http_response_code(400);
+			$this->respond(false, ['message' => $exception->getMessage()]);
+			return;
+		} catch (Throwable) {
+			http_response_code(500);
+			$this->respond(false, ['message' => 'Не удалось сохранить детальный текст.']);
+			return;
+		}
+
+		if ($item === null) {
+			http_response_code(404);
+			$this->respond(false, ['message' => 'Статья не найдена.']);
+			return;
+		}
+
+		$this->respond(true, ['item' => $item]);
+	}
+
 	public function editPreviewImage(string $article): void
 	{
 		$this->editArticleImage($article, 'preview');

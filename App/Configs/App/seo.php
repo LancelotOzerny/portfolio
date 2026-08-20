@@ -2,7 +2,7 @@
 return [
 	'site' => [
 		'name' => 'Lancy Studio',
-		'domain' => 'https://lancy.dev.ru',
+		'domain' => 'https://lancy-dev.ru',
 		'title_template' => '%title% — %site_name%',
 		'default_title' => 'Lancy Studio',
 		'default_description' => 'Портфолио PHP и FullStack-разработчика. Создание сайтов и веб-приложений на PHP, MySQL, Bitrix, HTML и JavaScript.',

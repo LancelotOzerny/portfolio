@@ -1,8 +1,8 @@
 # API блога
 
-JSON API сайта [lancy.dev.ru](https://lancy.dev.ru) для рубрик, статей и загрузки изображений.
+JSON API сайта [lancy-dev.ru](https://lancy-dev.ru) для рубрик, статей и загрузки изображений.
 
-Базовый адрес: `https://lancy.dev.ru`  
+Базовый адрес: `https://lancy-dev.ru`  
 Формат ответа: `application/json; charset=utf-8`  
 Все пути заканчиваются `/`.
 
@@ -16,10 +16,11 @@ JSON API сайта [lancy.dev.ru](https://lancy.dev.ru) для рубрик, с
 6. [Создание статьи](#создание-статьи)
 7. [Редактирование SEO](#редактирование-seo)
 8. [Редактирование preview-текста](#редактирование-preview-текста)
-9. [Редактирование preview-изображения](#редактирование-preview-изображения)
-10. [Редактирование detail-изображения](#редактирование-detail-изображения)
-11. [Загрузка изображения](#загрузка-изображения)
-12. [Коды ответов](#коды-ответов)
+9. [Редактирование детального текста](#редактирование-детального-текста)
+10. [Редактирование preview-изображения](#редактирование-preview-изображения)
+11. [Редактирование detail-изображения](#редактирование-detail-изображения)
+12. [Загрузка изображения](#загрузка-изображения)
+13. [Коды ответов](#коды-ответов)
 
 ## Авторизация
 
@@ -55,13 +56,13 @@ GET /api/blog/rubrics/
 ### Вызов
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/rubrics/"
+curl -X GET "https://lancy-dev.ru/api/blog/rubrics/"
 ```
 
 С черновиками:
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/rubrics/" \
+curl -X GET "https://lancy-dev.ru/api/blog/rubrics/" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -107,19 +108,19 @@ GET /api/blog/articles/?rubric=<id или символьный код>
 Последние статьи:
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/articles/"
+curl -X GET "https://lancy-dev.ru/api/blog/articles/"
 ```
 
 Статьи рубрики по коду:
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/articles/?rubric=programming"
+curl -X GET "https://lancy-dev.ru/api/blog/articles/?rubric=programming"
 ```
 
 Статьи рубрики по id, включая черновики:
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/articles/?rubric=3" \
+curl -X GET "https://lancy-dev.ru/api/blog/articles/?rubric=3" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -165,11 +166,11 @@ GET /api/blog/{rubric}/{article}/
 ### Вызов
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/3/12/"
+curl -X GET "https://lancy-dev.ru/api/blog/3/12/"
 ```
 
 ```bash
-curl -X GET "https://lancy.dev.ru/api/blog/programming/12/" \
+curl -X GET "https://lancy-dev.ru/api/blog/programming/12/" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -227,7 +228,7 @@ Content-Type: application/json
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/rubrics/programming/create/" \
+curl -X POST "https://lancy-dev.ru/api/blog/rubrics/programming/create/" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d "{\"title\":\"Как устроен этот сайт\",\"code\":\"how-this-site-works\",\"preview_text\":\"Кратко о стеке и структуре проекта.\"}"
@@ -236,7 +237,7 @@ curl -X POST "https://lancy.dev.ru/api/blog/rubrics/programming/create/" \
 По id рубрики:
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/rubrics/3/create/" \
+curl -X POST "https://lancy-dev.ru/api/blog/rubrics/3/create/" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d "{\"title\":\"Как устроен этот сайт\",\"preview_text\":\"Кратко о стеке и структуре проекта.\"}"
@@ -281,7 +282,7 @@ Content-Type: application/json
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/seo/" \
+curl -X POST "https://lancy-dev.ru/api/blog/articles/12/edit/seo/" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d "{\"title\":\"Как устроен этот сайт\",\"description\":\"Стек и структура личного сайта.\",\"keywords\":\"php, сайт\",\"robots_index\":true,\"robots_follow\":true}"
@@ -319,7 +320,7 @@ Content-Type: application/json
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/preview-text/" \
+curl -X POST "https://lancy-dev.ru/api/blog/articles/12/edit/preview-text/" \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d "{\"preview_text\":\"Кратко о стеке и структуре проекта.\"}"
@@ -341,6 +342,53 @@ curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/preview-text/" \
 }
 ```
 
+## Редактирование детального текста
+
+Обновляет полный HTML-текст статьи. HTML очищается так же, как при сохранении в редакторе. Доступно ролям `ai-agent` и `admin`.
+
+```http
+POST /api/blog/articles/{id или символьный код}/edit/detail-text/
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+| Поле          | Обязательное | Описание                          |
+|---------------|--------------|-----------------------------------|
+| `detail_text` | нет          | HTML детального текста статьи     |
+
+### Вызов
+
+```bash
+curl -X POST "https://lancy-dev.ru/api/blog/articles/12/edit/detail-text/" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d "{\"detail_text\":\"<p>Полный текст статьи.</p>\"}"
+```
+
+### Ответ
+
+```json
+{
+  "success": true,
+  "item": {
+    "id": 12,
+    "title": "Как устроен этот сайт",
+    "preview_text": "Кратко о стеке и структуре проекта.",
+    "code": "how-this-site-works",
+    "published_at": null,
+    "status": "draft",
+    "detail_text": "<p>Полный текст статьи.</p>",
+    "seo": {
+      "title": "Как устроен этот сайт",
+      "description": "Стек и структура личного сайта.",
+      "keywords": "php, сайт",
+      "robots_index": true,
+      "robots_follow": true
+    }
+  }
+}
+```
+
 ## Редактирование preview-изображения
 
 Загружает и сохраняет картинку анонса статьи. Доступно ролям `ai-agent` и `admin`.
@@ -358,7 +406,7 @@ Content-Type: multipart/form-data
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/preview-image/" \
+curl -X POST "https://lancy-dev.ru/api/blog/articles/12/edit/preview-image/" \
   -H "Authorization: Bearer <token>" \
   -F "file=@preview.png"
 ```
@@ -368,7 +416,7 @@ curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/preview-image/" \
 ```json
 {
   "success": true,
-  "url": "https://lancy.dev.ru/upload/images/blog/articles/blog_article_preview_12_20260820_101500_a1b2c3d4.png"
+  "url": "https://lancy-dev.ru/upload/images/blog/articles/blog_article_preview_12_20260820_101500_a1b2c3d4.png"
 }
 ```
 
@@ -389,7 +437,7 @@ Content-Type: multipart/form-data
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/detail-image/" \
+curl -X POST "https://lancy-dev.ru/api/blog/articles/12/edit/detail-image/" \
   -H "Authorization: Bearer <token>" \
   -F "file=@detail.png"
 ```
@@ -399,7 +447,7 @@ curl -X POST "https://lancy.dev.ru/api/blog/articles/12/edit/detail-image/" \
 ```json
 {
   "success": true,
-  "url": "https://lancy.dev.ru/upload/images/blog/articles/blog_article_detail_12_20260820_101530_b2c3d4e5.png"
+  "url": "https://lancy-dev.ru/upload/images/blog/articles/blog_article_detail_12_20260820_101530_b2c3d4e5.png"
 }
 ```
 
@@ -424,7 +472,7 @@ Content-Type: multipart/form-data
 ### Вызов
 
 ```bash
-curl -X POST "https://lancy.dev.ru/api/blog/media/" \
+curl -X POST "https://lancy-dev.ru/api/blog/media/" \
   -H "Authorization: Bearer <token>" \
   -F "file=@preview.png" \
   -F "article_code=12" \
@@ -436,7 +484,7 @@ curl -X POST "https://lancy.dev.ru/api/blog/media/" \
 ```json
 {
   "success": true,
-  "url": "https://lancy.dev.ru/upload/images/blog/articles/blog_article_preview_12_20260820_101500_a1b2c3d4.png"
+  "url": "https://lancy-dev.ru/upload/images/blog/articles/blog_article_preview_12_20260820_101500_a1b2c3d4.png"
 }
 ```
 

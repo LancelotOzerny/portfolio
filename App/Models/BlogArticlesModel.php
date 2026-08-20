@@ -77,6 +77,15 @@ class BlogArticlesModel extends BaseModel
 		return $this->execWriteQuery($qb);
 	}
 
+	public function updateDetailText(int $id, string $detailText): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update(['detail_text' => $detailText])
+			->where('id', '=', $id);
+
+		return $this->execWriteQuery($qb);
+	}
+
 	public function updateImagePath(int $id, string $type, string $path): bool
 	{
 		$column = $type === 'detail' ? 'detail_image_path' : 'preview_image_path';

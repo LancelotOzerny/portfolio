@@ -10,14 +10,14 @@ class BlogArticlesModel extends BaseModel
 {
 	protected string $table = 'blog_articles';
 
-	public function createForAdmin(int $topicId, string $title, string $code): int
+	public function createForAdmin(int $topicId, string $title, string $code, string $previewText = ''): int
 	{
 		$qb = (new QueryBuilder($this->table))->insert([
 			'topic_id' => $topicId,
 			'title' => $title,
 			'code' => $code,
 			'enabled' => 0,
-			'preview_text' => '',
+			'preview_text' => $previewText,
 			'preview_image_path' => '',
 			'detail_text' => '',
 			'detail_image_path' => '',
@@ -63,6 +63,15 @@ class BlogArticlesModel extends BaseModel
 				'title' => $title,
 				'preview_text' => $previewText,
 			])
+			->where('id', '=', $id);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	public function updatePreviewText(int $id, string $previewText): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update(['preview_text' => $previewText])
 			->where('id', '=', $id);
 
 		return $this->execWriteQuery($qb);

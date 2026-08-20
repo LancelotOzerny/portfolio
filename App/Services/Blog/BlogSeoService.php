@@ -90,6 +90,72 @@ final class BlogSeoService
 	}
 
 	/**
+	 * @param array<string, mixed> $input
+	 * @return array{
+	 *   title: string,
+	 *   description: string,
+	 *   keywords: string,
+	 *   robots_index: bool,
+	 *   robots_follow: bool
+	 * }
+	 */
+	public function saveFromApi(string $type, string $key, array $input): array
+	{
+		$current = $this->getFormData($type, $key);
+		$fields = $this->validator->validateBlogSeoForm([
+			'title' => array_key_exists('title', $input) ? $input['title'] : $current['title'],
+			'description' => array_key_exists('description', $input) ? $input['description'] : $current['description'],
+			'keywords' => array_key_exists('keywords', $input) ? $input['keywords'] : $current['keywords'],
+		]);
+
+		$existing = null;
+		try {
+			$existing = $this->model->findByTarget($type, $key);
+		} catch (Throwable) {
+			$existing = null;
+		}
+
+		$this->persist($type, $key, $fields, [
+			'robots_index' => $this->boolFlag(
+				$input['robots_index'] ?? null,
+				(int) ($existing->robots_index ?? 1)
+			),
+			'robots_follow' => $this->boolFlag(
+				$input['robots_follow'] ?? null,
+				(int) ($existing->robots_follow ?? 1)
+			),
+		]);
+
+		return $this->getFormData($type, $key);
+	}
+
+	private function boolFlag(mixed $value, int $default): int
+	{
+		if ($value === null || $value === '') {
+			return $default;
+		}
+
+		if (is_bool($value)) {
+			return $value ? 1 : 0;
+		}
+
+		if (is_int($value) || is_float($value)) {
+			return ((int) $value) !== 0 ? 1 : 0;
+		}
+
+		$normalized = strtolower(trim((string) $value));
+		if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+			return 1;
+		}
+
+		if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+			return 0;
+		}
+
+		return $default;
+	}
+
+	/**
 	 * @param array{title: ?string, description: ?string, keywords: ?string} $fields
 	 * @param array{robots_index: int, robots_follow: int} $robots
 	 */

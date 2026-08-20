@@ -35,7 +35,7 @@ final class BlogApiService
 		return $this->apiAuth->resolveUser() !== null;
 	}
 
-	public function canManageMedia(): bool
+	public function canManage(): bool
 	{
 		$code = $this->currentRoleCode();
 		if ($code === '') {
@@ -49,6 +49,115 @@ final class BlogApiService
 		return $this->roleLevels->isAtLeast($code, RoleCode::AI_AGENT);
 	}
 
+	public function canManageMedia(): bool
+	{
+		return $this->canManage();
+	}
+
+	/**
+	 * @return array<string, mixed>|null
+	 */
+	public function createArticle(string $rubricSegment, string $title, string $code, string $previewText): ?array
+	{
+		$title = trim($title);
+		$previewText = trim($previewText);
+
+		if ($title === '') {
+			throw new InvalidArgumentException('Укажите заголовок.');
+		}
+
+		if (mb_strlen($title) > 255) {
+			throw new InvalidArgumentException('Заголовок должен быть не длиннее 255 символов.');
+		}
+
+		if (mb_strlen($previewText) > 500) {
+			throw new InvalidArgumentException('Preview текст должен быть не длиннее 500 символов.');
+		}
+
+		$topic = $this->resolveTopic($rubricSegment);
+		if ($topic === null) {
+			return null;
+		}
+
+		$topicId = (int) ($topic->id ?? 0);
+		if ($topicId <= 0) {
+			return null;
+		}
+
+		$code = $this->codeService->normalize($code);
+		if ($code === '') {
+			$code = $this->codeService->fromTitle($title);
+		}
+
+		if (!$this->codeService->isValid($code)) {
+			throw new InvalidArgumentException('Символьный код должен содержать только латинские буквы, цифры, "-" и "_".');
+		}
+
+		if ($this->articlesModel->isCodeTaken($code)) {
+			throw new InvalidArgumentException('Символьный код уже используется.');
+		}
+
+		$articleId = $this->articlesModel->createForAdmin($topicId, $title, $code, $previewText);
+		if ($articleId <= 0) {
+			throw new RuntimeException('Не удалось создать статью.');
+		}
+
+		if (!$this->articlesModel->replaceTopicIds($articleId, [$topicId])) {
+			throw new RuntimeException('Не удалось привязать статью к рубрике.');
+		}
+
+		$article = $this->articlesModel->findById($articleId);
+		if ($article === null) {
+			throw new RuntimeException('Статья создана, но не удалось получить данные.');
+		}
+
+		return $this->mapArticleBrief($article);
+	}
+
+	/**
+	 * @param array<string, mixed> $input
+	 * @return array<string, mixed>|null
+	 */
+	public function updateArticleSeo(string $articleSegment, array $input): ?array
+	{
+		$article = $this->findArticleBySegment($articleSegment);
+		if ($article === null) {
+			return null;
+		}
+
+		$articleId = (int) ($article->id ?? 0);
+
+		return $this->seoService->saveFromApi(BlogSeoService::TYPE_ARTICLE, (string) $articleId, $input);
+	}
+
+	/**
+	 * @return array<string, mixed>|null
+	 */
+	public function updateArticlePreviewText(string $articleSegment, string $previewText): ?array
+	{
+		$previewText = trim($previewText);
+		if (mb_strlen($previewText) > 500) {
+			throw new InvalidArgumentException('Preview текст должен быть не длиннее 500 символов.');
+		}
+
+		$article = $this->findArticleBySegment($articleSegment);
+		if ($article === null) {
+			return null;
+		}
+
+		$articleId = (int) ($article->id ?? 0);
+		if (!$this->articlesModel->updatePreviewText($articleId, $previewText)) {
+			throw new RuntimeException('Не удалось сохранить preview текст.');
+		}
+
+		$updated = $this->articlesModel->findById($articleId);
+		if ($updated === null) {
+			throw new RuntimeException('Не удалось получить обновлённую статью.');
+		}
+
+		return $this->mapArticleBrief($updated);
+	}
+
 	public function uploadArticleMedia(string $articleCode, string $type, string $fileKey = 'file'): ?string
 	{
 		$type = strtolower(trim($type));
@@ -56,7 +165,7 @@ final class BlogApiService
 			throw new InvalidArgumentException('Поле type должно быть preview или detail.');
 		}
 
-		$article = $this->findArticleForMedia($articleCode);
+		$article = $this->findArticleBySegment($articleCode);
 		if ($article === null) {
 			return null;
 		}
@@ -305,7 +414,7 @@ final class BlogApiService
 		return strtolower(trim((string) ($user->role_code ?? '')));
 	}
 
-	private function findArticleForMedia(string $articleCode): ?object
+	private function findArticleBySegment(string $articleCode): ?object
 	{
 		$articleCode = trim($articleCode);
 		if ($articleCode === '') {

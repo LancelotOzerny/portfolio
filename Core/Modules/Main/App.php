@@ -34,10 +34,18 @@ class App
 
 	public function start() : void
 	{
-		$match = Router::getInstance()->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+		$router = Router::getInstance();
+		$method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
+		$uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+		$match = $router->dispatch($method, $uri);
 
-		if (!$match)
-		{
+		if ($match === null) {
+			$slashLocation = $router->locationWithTrailingSlash($method, $uri);
+			if ($slashLocation !== null) {
+				$this->redirectToSlash($method, $slashLocation);
+				return;
+			}
+
 			$match = [\Controllers\Public\StatusController::class, 'page404', []];
 		}
 
@@ -62,6 +70,12 @@ class App
 		echo $html;
 	}
 
+	private function redirectToSlash(string $method, string $location): void
+	{
+		$code = in_array(strtoupper($method), ['GET', 'HEAD'], true) ? 301 : 308;
+		http_response_code($code);
+		header('Location: ' . $location);
+	}
 
 	protected function requireRoutes() : void
 	{

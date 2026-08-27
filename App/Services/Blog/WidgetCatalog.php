@@ -114,7 +114,7 @@ class WidgetCatalog
 			$name = trim((string) ($item['name'] ?? ''));
 			$label = trim((string) ($item['label'] ?? ''));
 			$type = trim((string) ($item['type'] ?? 'number'));
-			if (preg_match('/^[a-z][a-z0-9_]*$/', $name) !== 1 || $label === '' || !in_array($type, ['number', 'select'], true)) {
+			if (preg_match('/^[a-z][a-z0-9_]*$/', $name) !== 1 || $label === '' || !in_array($type, ['number', 'select', 'text', 'rows'], true)) {
 				continue;
 			}
 
@@ -130,6 +130,18 @@ class WidgetCatalog
 						$field[$key] = 0 + $item[$key];
 					}
 				}
+			}
+
+			if ($type === 'text') {
+				$maxlength = isset($item['maxlength']) && is_numeric($item['maxlength']) ? (int) $item['maxlength'] : 80;
+				$field['maxlength'] = max(1, min(120, $maxlength));
+			}
+
+			if ($type === 'rows') {
+				$maxRows = isset($item['max']) && is_numeric($item['max']) ? (int) $item['max'] : 24;
+				$field['max'] = max(2, min(50, $maxRows));
+				$field['x_label'] = $this->fieldCaption($item['x_label'] ?? null, 'X');
+				$field['y_label'] = $this->fieldCaption($item['y_label'] ?? null, 'Y');
 			}
 
 			if ($type === 'select') {
@@ -162,6 +174,20 @@ class WidgetCatalog
 		}
 
 		return $fields;
+	}
+
+	private function fieldCaption(mixed $value, string $fallback): string
+	{
+		$caption = trim(strip_tags((string) $value));
+		if ($caption === '') {
+			return $fallback;
+		}
+
+		if (mb_strlen($caption) > 20) {
+			$caption = mb_substr($caption, 0, 20);
+		}
+
+		return $caption;
 	}
 
 	private function widgetsRoot(): string

@@ -93,6 +93,30 @@ class Router
         return null;
     }
 
+	/**
+	 * Если путь без завершающего «/» не найден, но тот же путь со слешем есть в маршрутах —
+	 * возвращает Location для редиректа (query-string сохраняется).
+	 */
+	public function locationWithTrailingSlash(string $httpMethod, string $uri): ?string
+	{
+		$path = parse_url($uri, PHP_URL_PATH);
+		if (!is_string($path) || $path === '/' || str_ends_with($path, '/')) {
+			return null;
+		}
+
+		$slashedPath = $path . '/';
+		if ($this->dispatch($httpMethod, $slashedPath) === null) {
+			return null;
+		}
+
+		$query = parse_url($uri, PHP_URL_QUERY);
+		if (is_string($query) && $query !== '') {
+			return $slashedPath . '?' . $query;
+		}
+
+		return $slashedPath;
+	}
+
     protected function compilePath(string $path): array
     {
         $paramNames = [];

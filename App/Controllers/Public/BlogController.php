@@ -92,6 +92,11 @@ class BlogController extends BaseController
 	{
 		$topicData = $this->findTopic($topic);
 		$articleData = $topicData !== null ? $this->findArticle($topicData, $article) : null;
+		if ($articleData === null) {
+			(new StatusController())->page404();
+			return;
+		}
+
 		$rating = [
 			'average' => 0.0,
 			'count' => 0,

@@ -1,0 +1,32 @@
+{
+	"id": "bar-chart",
+	"title": "Диаграмма",
+	"fields": [
+		{
+			"name": "title",
+			"label": "Заголовок",
+			"type": "text",
+			"maxlength": 80
+		},
+		{
+			"name": "xlabel",
+			"label": "Подпись оси X",
+			"type": "text",
+			"maxlength": 40
+		},
+		{
+			"name": "ylabel",
+			"label": "Подпись оси Y",
+			"type": "text",
+			"maxlength": 40
+		},
+		{
+			"name": "points",
+			"label": "Значения",
+			"type": "rows",
+			"max": 24,
+			"x_label": "X",
+			"y_label": "Y"
+		}
+	]
+}

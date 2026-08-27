@@ -223,40 +223,97 @@ class ArticleContentSanitizer
 		$element->setAttribute('data-widget-params', $paramsJson);
 	}
 
+	private const MAX_WIDGET_PARAM_STRING = 120;
+	private const MAX_WIDGET_PARAM_LIST = 32;
+
 	private function sanitizeWidgetParamsJson(string $raw): string
 	{
 		$decoded = json_decode($raw, true);
-		if (!is_array($decoded)) {
+		if (!is_array($decoded) || array_is_list($decoded)) {
 			return '';
 		}
 
-		$clean = [];
-		foreach ($decoded as $key => $value) {
-			if (!is_string($key) || preg_match('/^[a-z][a-z0-9_]*$/', $key) !== 1) {
-				continue;
-			}
-
-			if (is_int($value) || is_float($value)) {
-				$number = (float) $value;
-				if (is_nan($number) || is_infinite($number)) {
-					continue;
-				}
-
-				$clean[$key] = $value;
-				continue;
-			}
-
-			if (is_string($value) && preg_match('/^[a-zA-Z0-9._-]{1,64}$/', $value) === 1) {
-				$clean[$key] = $value;
-			}
-		}
-
+		$clean = $this->sanitizeWidgetParamMap($decoded, 0);
 		if ($clean === []) {
 			return '';
 		}
 
 		$encoded = json_encode($clean, JSON_UNESCAPED_UNICODE);
 		return is_string($encoded) ? $encoded : '';
+	}
+
+	/**
+	 * @param array<mixed> $source
+	 * @return array<string, mixed>
+	 */
+	private function sanitizeWidgetParamMap(array $source, int $depth): array
+	{
+		$clean = [];
+		foreach ($source as $key => $value) {
+			if (!is_string($key) || preg_match('/^[a-z][a-z0-9_]*$/', $key) !== 1) {
+				continue;
+			}
+
+			$sanitized = $this->sanitizeWidgetParamValue($value, $depth);
+			if ($sanitized === null) {
+				continue;
+			}
+
+			$clean[$key] = $sanitized;
+		}
+
+		return $clean;
+	}
+
+	private function sanitizeWidgetParamValue(mixed $value, int $depth): mixed
+	{
+		if (is_int($value) || is_float($value)) {
+			$number = (float) $value;
+			if (is_nan($number) || is_infinite($number)) {
+				return null;
+			}
+
+			return $value;
+		}
+
+		if (is_string($value)) {
+			$text = $this->sanitizeWidgetParamString($value);
+			return $text === '' ? null : $text;
+		}
+
+		if (!is_array($value) || $depth > 0) {
+			return null;
+		}
+
+		if (!array_is_list($value)) {
+			return null;
+		}
+
+		$rows = [];
+		foreach (array_slice($value, 0, self::MAX_WIDGET_PARAM_LIST) as $item) {
+			if (!is_array($item) || array_is_list($item)) {
+				continue;
+			}
+
+			$row = $this->sanitizeWidgetParamMap($item, $depth + 1);
+			if ($row !== []) {
+				$rows[] = $row;
+			}
+		}
+
+		return $rows === [] ? null : $rows;
+	}
+
+	private function sanitizeWidgetParamString(string $value): string
+	{
+		$value = trim(strip_tags($value));
+		$value = str_replace(['<', '>'], '', $value);
+		$value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? '';
+		if (mb_strlen($value) > self::MAX_WIDGET_PARAM_STRING) {
+			$value = mb_substr($value, 0, self::MAX_WIDGET_PARAM_STRING);
+		}
+
+		return $value;
 	}
 
 	private function sanitizeTableCellAttributes(DOMElement $element): void

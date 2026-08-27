@@ -1326,6 +1326,22 @@
 						return;
 					}
 
+					if (field.type === 'text') {
+						const text = String(value || '').trim();
+						if (text !== '') {
+							params[field.name] = text.slice(0, Number(field.maxlength) || 120);
+						}
+						return;
+					}
+
+					if (field.type === 'rows') {
+						const rows = this.normalizeRows(value, field);
+						if (rows.length > 0) {
+							params[field.name] = rows;
+						}
+						return;
+					}
+
 					if (value === '' || value === null || value === undefined) {
 						return;
 					}
@@ -1334,6 +1350,30 @@
 				});
 
 				return params;
+			}
+
+			normalizeRows(source, field) {
+				const maxRows = Math.max(2, Math.min(50, Number(field && field.max) || 24));
+				if (!Array.isArray(source)) {
+					return [];
+				}
+
+				const rows = [];
+				source.slice(0, maxRows).forEach((item) => {
+					if (!item || typeof item !== 'object' || Array.isArray(item)) {
+						return;
+					}
+
+					const x = String(item.x || '').trim().slice(0, 40);
+					const y = Number.parseFloat(String(item.y).replace(',', '.'));
+					if (!Number.isFinite(y)) {
+						return;
+					}
+
+					rows.push({ x: x, y: y });
+				});
+
+				return rows;
 			}
 
 			widgetTitle() {
@@ -1378,6 +1418,11 @@
 				this.fieldsEl.hidden = fields.length === 0;
 
 				fields.forEach((field) => {
+					if (field.type === 'rows') {
+						this.fieldsEl.appendChild(this.drawRowsField(field));
+						return;
+					}
+
 					const label = document.createElement('label');
 					label.className = 'blog-editor-widget-field';
 
@@ -1401,28 +1446,213 @@
 						label.appendChild(select);
 					} else {
 						const input = document.createElement('input');
-						input.type = 'number';
+						input.type = field.type === 'text' ? 'text' : 'number';
 						input.dataset.widgetField = field.name;
-						if (field.min !== undefined) {
-							input.min = String(field.min);
-						}
-						if (field.max !== undefined) {
-							input.max = String(field.max);
-						}
-						if (field.step !== undefined) {
-							input.step = String(field.step);
+						if (field.type === 'text') {
+							input.maxLength = Number(field.maxlength) || 120;
+							input.addEventListener('input', () => {
+								this.data.params[field.name] = input.value;
+								this.refreshChartPreview();
+							});
+						} else {
+							if (field.min !== undefined) {
+								input.min = String(field.min);
+							}
+							if (field.max !== undefined) {
+								input.max = String(field.max);
+							}
+							if (field.step !== undefined) {
+								input.step = String(field.step);
+							}
+							input.addEventListener('input', () => {
+								this.data.params[field.name] = input.value;
+							});
 						}
 						if (this.data.params[field.name] !== undefined) {
 							input.value = String(this.data.params[field.name]);
 						}
-						input.addEventListener('input', () => {
-							this.data.params[field.name] = input.value;
-						});
 						label.appendChild(input);
 					}
 
 					this.fieldsEl.appendChild(label);
 				});
+
+				this.refreshChartPreview();
+			}
+
+			drawRowsField(field) {
+				const wrap = document.createElement('div');
+				wrap.className = 'blog-editor-widget-field blog-editor-widget-field_rows';
+				wrap.dataset.widgetField = field.name;
+				wrap.dataset.widgetFieldType = 'rows';
+				wrap.dataset.widgetFieldMax = String(field.max || 24);
+
+				const caption = document.createElement('span');
+				caption.textContent = field.label;
+				wrap.appendChild(caption);
+
+				const table = document.createElement('table');
+				table.className = 'blog-editor-widget-rows';
+				const thead = document.createElement('thead');
+				const headRow = document.createElement('tr');
+				[field.x_label || 'X', field.y_label || 'Y', ''].forEach((title) => {
+					const th = document.createElement('th');
+					th.textContent = title;
+					headRow.appendChild(th);
+				});
+				thead.appendChild(headRow);
+				table.appendChild(thead);
+
+				const tbody = document.createElement('tbody');
+				table.appendChild(tbody);
+				wrap.appendChild(table);
+
+				const saved = Array.isArray(this.data.params[field.name]) ? this.data.params[field.name] : [];
+				const startRows = Math.max(3, saved.length);
+				for (let index = 0; index < startRows; index += 1) {
+					tbody.appendChild(this.createChartRow(saved[index] || null));
+				}
+
+				const addButton = document.createElement('button');
+				addButton.type = 'button';
+				addButton.className = 'blog-editor-widget-rows__add';
+				addButton.textContent = 'Добавить строку';
+				addButton.addEventListener('click', () => {
+					const maxRows = Number(wrap.dataset.widgetFieldMax) || 24;
+					if (tbody.children.length >= maxRows) {
+						return;
+					}
+					tbody.appendChild(this.createChartRow(null));
+					this.refreshChartPreview();
+				});
+				wrap.appendChild(addButton);
+
+				const preview = document.createElement('div');
+				preview.className = 'blog-editor-widget-chart-preview';
+				preview.dataset.chartPreview = '1';
+				wrap.appendChild(preview);
+
+				wrap.addEventListener('input', () => this.refreshChartPreview());
+				return wrap;
+			}
+
+			createChartRow(source) {
+				const tr = document.createElement('tr');
+				tr.dataset.chartRow = '1';
+
+				const xCell = document.createElement('td');
+				const xInput = document.createElement('input');
+				xInput.type = 'text';
+				xInput.maxLength = 40;
+				xInput.placeholder = 'Подпись';
+				xInput.dataset.chartX = '1';
+				xInput.value = source && source.x ? String(source.x) : '';
+				xCell.appendChild(xInput);
+
+				const yCell = document.createElement('td');
+				const yInput = document.createElement('input');
+				yInput.type = 'number';
+				yInput.step = 'any';
+				yInput.placeholder = '0';
+				yInput.dataset.chartY = '1';
+				if (source && source.y !== undefined && source.y !== null && source.y !== '') {
+					yInput.value = String(source.y);
+				}
+				yCell.appendChild(yInput);
+
+				const actionCell = document.createElement('td');
+				const removeButton = document.createElement('button');
+				removeButton.type = 'button';
+				removeButton.className = 'blog-editor-widget-rows__remove';
+				removeButton.setAttribute('aria-label', 'Удалить строку');
+				removeButton.textContent = '×';
+				removeButton.addEventListener('click', () => {
+					const tbody = tr.parentElement;
+					if (!tbody || tbody.children.length <= 1) {
+						xInput.value = '';
+						yInput.value = '';
+						this.refreshChartPreview();
+						return;
+					}
+					tr.remove();
+					this.refreshChartPreview();
+				});
+				actionCell.appendChild(removeButton);
+
+				tr.appendChild(xCell);
+				tr.appendChild(yCell);
+				tr.appendChild(actionCell);
+				return tr;
+			}
+
+			readRowsFrom(wrap) {
+				const rows = [];
+				if (!wrap) {
+					return rows;
+				}
+
+				wrap.querySelectorAll('[data-chart-row]').forEach((row) => {
+					const xInput = row.querySelector('[data-chart-x]');
+					const yInput = row.querySelector('[data-chart-y]');
+					rows.push({
+						x: xInput ? xInput.value : '',
+						y: yInput ? yInput.value : ''
+					});
+				});
+
+				return rows;
+			}
+
+			refreshChartPreview() {
+				if (!this.fieldsEl) {
+					return;
+				}
+
+				const preview = this.fieldsEl.querySelector('[data-chart-preview]');
+				if (!preview) {
+					return;
+				}
+
+				const rowsWrap = this.fieldsEl.querySelector('[data-widget-field-type="rows"]');
+				const rows = this.normalizeRows(this.readRowsFrom(rowsWrap), { max: 24 });
+				preview.innerHTML = '';
+
+				const titleInput = this.fieldsEl.querySelector('[data-widget-field="title"]');
+				const title = titleInput ? String(titleInput.value || '').trim() : '';
+				if (title !== '') {
+					const titleEl = document.createElement('div');
+					titleEl.className = 'blog-editor-widget-chart-preview__title';
+					titleEl.textContent = title;
+					preview.appendChild(titleEl);
+				}
+
+				if (rows.length === 0) {
+					const empty = document.createElement('p');
+					empty.className = 'blog-editor-widget-chart-preview__empty';
+					empty.textContent = 'Укажите значения Y — здесь появится диаграмма.';
+					preview.appendChild(empty);
+					return;
+				}
+
+				const plot = document.createElement('div');
+				plot.className = 'blog-editor-widget-chart-preview__plot';
+				const maxY = Math.max(0, ...rows.map((row) => row.y));
+				rows.forEach((row) => {
+					const col = document.createElement('div');
+					col.className = 'blog-editor-widget-chart-preview__col';
+					const bar = document.createElement('span');
+					bar.className = 'blog-editor-widget-chart-preview__bar';
+					const height = maxY > 0 ? Math.max(4, Math.round((Math.max(0, row.y) / maxY) * 100)) : 4;
+					bar.style.height = height + '%';
+					bar.title = String(row.y);
+					const label = document.createElement('span');
+					label.className = 'blog-editor-widget-chart-preview__label';
+					label.textContent = row.x !== '' ? row.x : String(row.y);
+					col.appendChild(bar);
+					col.appendChild(label);
+					plot.appendChild(col);
+				});
+				preview.appendChild(plot);
 			}
 
 			renderSettings() {
@@ -1465,6 +1695,11 @@
 				}
 
 				this.fieldsEl.querySelectorAll('[data-widget-field]').forEach((field) => {
+					if (field.dataset.widgetFieldType === 'rows') {
+						params[field.dataset.widgetField] = this.readRowsFrom(field);
+						return;
+					}
+
 					params[field.dataset.widgetField] = field.value;
 				});
 
@@ -1479,42 +1714,88 @@
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
 
+		const MAX_WIDGET_PARAM_STRING = 120;
+		const MAX_WIDGET_PARAM_LIST = 32;
+
+		const sanitizeWidgetParamString = (value) => {
+			const text = String(value || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/[<>]/g, '').trim();
+			if (text === '') {
+				return '';
+			}
+
+			return Array.from(text).slice(0, MAX_WIDGET_PARAM_STRING).join('');
+		};
+
+		const sanitizeWidgetParamMap = (source, depth) => {
+			const params = {};
+			if (!source || typeof source !== 'object' || Array.isArray(source)) {
+				return params;
+			}
+
+			Object.keys(source).forEach((key) => {
+				if (!/^[a-z][a-z0-9_]*$/.test(key)) {
+					return;
+				}
+
+				const sanitized = sanitizeWidgetParamValue(source[key], depth);
+				if (sanitized === undefined) {
+					return;
+				}
+
+				params[key] = sanitized;
+			});
+
+			return params;
+		};
+
+		const sanitizeWidgetParamValue = (value, depth) => {
+			if (typeof value === 'number' && Number.isFinite(value)) {
+				return value;
+			}
+
+			if (typeof value === 'string') {
+				const text = sanitizeWidgetParamString(value);
+				return text === '' ? undefined : text;
+			}
+
+			if (!Array.isArray(value) || depth > 0) {
+				return undefined;
+			}
+
+			const rows = [];
+			value.slice(0, MAX_WIDGET_PARAM_LIST).forEach((item) => {
+				if (!item || typeof item !== 'object' || Array.isArray(item)) {
+					return;
+				}
+
+				const row = sanitizeWidgetParamMap(item, depth + 1);
+				if (Object.keys(row).length > 0) {
+					rows.push(row);
+				}
+			});
+
+			return rows.length > 0 ? rows : undefined;
+		};
+
 		const parseWidgetParams = (raw) => {
 			if (!raw) {
 				return {};
 			}
 
+			if (typeof raw === 'object' && !Array.isArray(raw)) {
+				return sanitizeWidgetParamMap(raw, 0);
+			}
+
 			try {
 				const parsed = JSON.parse(raw);
-				if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-					return {};
-				}
-
-				const params = {};
-				Object.keys(parsed).forEach((key) => {
-					if (!/^[a-z][a-z0-9_]*$/.test(key)) {
-						return;
-					}
-
-					const value = parsed[key];
-					if (typeof value === 'number' && Number.isFinite(value)) {
-						params[key] = value;
-						return;
-					}
-
-					if (typeof value === 'string' && /^[a-zA-Z0-9._-]{1,64}$/.test(value)) {
-						params[key] = value;
-					}
-				});
-
-				return params;
+				return sanitizeWidgetParamMap(parsed, 0);
 			} catch (error) {
 				return {};
 			}
 		};
 
 		const serializeWidgetParams = (source) => {
-			const params = parseWidgetParams(JSON.stringify(source && typeof source === 'object' ? source : {}));
+			const params = parseWidgetParams(source && typeof source === 'object' ? source : {});
 			if (Object.keys(params).length === 0) {
 				return '';
 			}

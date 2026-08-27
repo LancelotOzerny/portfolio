@@ -14,4 +14,5 @@ storage/*
 *.log
 *.txt
 *.zip
+*.xml
 desktop.ini

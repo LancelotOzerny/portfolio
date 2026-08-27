@@ -80,7 +80,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			<span><?= htmlspecialchars((string) $article['title']) ?></span>
 		</nav>
 		<div class="blog-detail-hero__title-block">
-			<h2><?= htmlspecialchars((string) $article['title']) ?></h2>
+			<h1><?= htmlspecialchars((string) $article['title']) ?></h1>
 			<div class="blog-rating" data-blog-rating-summary>
 				<span class="blog-rating__stars" data-blog-rating-stars><?= $renderStarsMarkup($ratingAverage) ?></span>
 				<span class="blog-rating__value" data-blog-rating-value><?= number_format($ratingAverage, 1, '.', '') ?></span>

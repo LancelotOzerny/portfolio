@@ -17,5 +17,24 @@
         },
         "enabled": true,
         "subtasks": []
+    },
+    {
+        "id": 2,
+        "name": "Генерация sitemap и robots.txt",
+        "description": "Обновляет карту сайта по опубликованным статьям и активным проектам.",
+        "class": "\\App\\Cron\\SitemapBuilder",
+        "method": "run",
+        "params": "",
+        "important": false,
+        "urgent": false,
+        "schedule": {
+            "minute": "*",
+            "hour": "2,14",
+            "day": "*",
+            "month": "*",
+            "weekday": "*"
+        },
+        "enabled": true,
+        "subtasks": []
     }
 ]

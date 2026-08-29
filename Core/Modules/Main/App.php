@@ -59,6 +59,11 @@ class App
 		$html = ob_get_clean();
 
 		$viewData = ViewData::getInstance();
+		if ((new \App\Services\Site\EditModeService())->isOptimizationActive()) {
+			$startedAt = defined('APP_REQUEST_STARTED_AT') ? APP_REQUEST_STARTED_AT : hrtime(true);
+			$generationSeconds = (hrtime(true) - $startedAt) / 1_000_000_000;
+			$viewData->set('page_generation_time', number_format($generationSeconds, 6, ',', ''));
+		}
 		$html = $viewData->replacePlaceholders($html);
 
 		$cssLines = \Modules\Main\AssetLoader::getInstance()->getCssLines();

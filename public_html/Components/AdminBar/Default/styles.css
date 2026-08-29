@@ -48,6 +48,26 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 	flex: 0 0 auto;
 }
 
+.admin-bar__performance
+{
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	margin-right: 6px;
+	padding-right: 14px;
+	border-right: 1px solid rgba(255, 255, 255, .16);
+	color: rgba(255, 255, 255, .68);
+	font-size: 11px;
+	line-height: 1.35;
+	white-space: nowrap;
+}
+
+.admin-bar__performance strong
+{
+	color: #ffffff;
+	font-weight: 700;
+}
+
 .admin-bar__center
 {
 	flex: 1 1 auto;
@@ -275,6 +295,11 @@ body:has(.admin-bar) .main-navigation.is-collapsed
 
 @media (max-width: 520px)
 {
+	.admin-bar__performance
+	{
+		display: none;
+	}
+
 	.admin-bar__inner
 	{
 		padding: 0 12px;

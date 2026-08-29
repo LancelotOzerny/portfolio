@@ -19,13 +19,17 @@ class AdminBar extends BaseComponent
 	{
 		$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 		$isAdminArea = str_starts_with($currentPath, '/admin/');
-		$isEditMode = (new EditModeService())->isActive();
+		$editModeService = new EditModeService();
+		$isEditMode = $editModeService->isActive();
+		$isOptimizationMode = $editModeService->isOptimizationActive();
 		$show = Auth::getInstance()->isAdmin() && !$isAdminArea;
 
 		$this->setParam('show', $show);
 		$this->setParam('back_url', $currentPath);
 		$this->setParam('is_edit_mode', $isEditMode);
+		$this->setParam('is_optimization_mode', $isOptimizationMode);
 		$this->setParam('edit_toggle_url', $this->buildEditToggleUrl($currentPath, $isEditMode));
+		$this->setParam('optimization_toggle_url', $this->buildOptimizationToggleUrl($currentPath, $isOptimizationMode));
 		$this->setParam('groups', $show ? $this->buildGroups($currentPath, $isEditMode) : []);
 	}
 
@@ -46,7 +50,21 @@ class AdminBar extends BaseComponent
 
 		if ($isEditMode) {
 			$query['edit'] = '0';
+			$query['optimization'] = '0';
 		} else {
+			$query['edit'] = 'true';
+		}
+
+		$queryString = http_build_query($query);
+		return $currentPath . ($queryString !== '' ? '?' . $queryString : '');
+	}
+
+	private function buildOptimizationToggleUrl(string $currentPath, bool $isOptimizationMode): string
+	{
+		$query = $_GET;
+		$query['optimization'] = $isOptimizationMode ? '0' : 'true';
+
+		if (!$isOptimizationMode) {
 			$query['edit'] = 'true';
 		}
 

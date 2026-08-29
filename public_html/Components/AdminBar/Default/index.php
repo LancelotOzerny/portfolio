@@ -2,7 +2,9 @@
 	<?php
 	$backUrl = rawurlencode((string) ($this->getParam('back_url') ?? '/'));
 	$isEditMode = (bool) $this->getParam('is_edit_mode');
+	$isOptimizationMode = (bool) $this->getParam('is_optimization_mode');
 	$editToggleUrl = (string) $this->getParam('edit_toggle_url');
+	$optimizationToggleUrl = (string) $this->getParam('optimization_toggle_url');
 	$groups = $this->getParam('groups');
 	$groups = is_array($groups) ? $groups : [];
 	?>
@@ -52,6 +54,13 @@
 			</div>
 
 			<div class="admin-bar__side admin-bar__side--right">
+				<?php if ($isOptimizationMode): ?>
+					<div class="admin-bar__performance" aria-label="Производительность страницы">
+						<span>Генерация: <strong><?= \Modules\Main\ViewData::getInstance()->showParam('page_generation_time') ?> с</strong></span>
+						<span>С компонентами и изображениями: <strong data-page-load-time>измеряется…</strong></span>
+					</div>
+				<?php endif; ?>
+
 				<a class="admin-bar__toggle<?= $isEditMode ? ' is-active' : '' ?>"
 				   href="<?= htmlspecialchars($editToggleUrl) ?>"
 				   title="<?= $isEditMode ? 'Выключить режим редактирования' : 'Включить режим редактирования' ?>"
@@ -61,6 +70,17 @@
 						<span class="admin-bar__toggle-thumb"></span>
 					</span>
 					<span class="admin-bar__toggle-label">Редактирование</span>
+				</a>
+
+				<a class="admin-bar__toggle<?= $isOptimizationMode ? ' is-active' : '' ?>"
+				   href="<?= htmlspecialchars($optimizationToggleUrl) ?>"
+				   title="<?= $isOptimizationMode ? 'Выключить режим оптимизации' : 'Включить режим оптимизации' ?>"
+				   aria-label="<?= $isOptimizationMode ? 'Выключить режим оптимизации' : 'Включить режим оптимизации' ?>"
+				   aria-pressed="<?= $isOptimizationMode ? 'true' : 'false' ?>">
+					<span class="admin-bar__toggle-track">
+						<span class="admin-bar__toggle-thumb"></span>
+					</span>
+					<span class="admin-bar__toggle-label">Оптимизация</span>
 				</a>
 
 				<a class="admin-bar__logout" href="/auth/logout/?back=<?= $backUrl ?>" title="Выйти" aria-label="Выйти">

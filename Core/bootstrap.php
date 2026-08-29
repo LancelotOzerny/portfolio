@@ -1,4 +1,7 @@
 <?php
+
+defined('APP_REQUEST_STARTED_AT') || define('APP_REQUEST_STARTED_AT', hrtime(true));
+
 require_once __DIR__ . '/Modules/Main/Autoloader.php';
 require_once __DIR__ . '/Modules/Main/App.php';
 

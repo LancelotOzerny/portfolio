@@ -11,9 +11,11 @@ class BaseComponent
 	private static bool $editAssetsRegistered = false;
 	private static int $editInstanceCounter = 0;
 	private string $editKey = '';
+	private float $preparationTimeMs = 0.0;
 
     final public function __construct(array $params = [])
     {
+		$startedAt = hrtime(true);
 		$this->editKey = $this->resolveEditKey($params);
 		$params = $this->mergeStoredParams($params);
 		$this->prepareData($params);
@@ -26,6 +28,8 @@ class BaseComponent
 		{
 			$this->setParam('template', 'Default');
 		}
+
+		$this->preparationTimeMs = $this->elapsedMilliseconds($startedAt);
 	}
 
     protected function prepareData(array $params = []) : void
@@ -51,6 +55,7 @@ class BaseComponent
 
     final public function render() : void
     {
+		$startedAt = hrtime(true);
 		$classPath = $this->getClassPath();
 		$template = $this->getParam('template');
         $templatePath = "{$classPath}/{$template}";
@@ -90,6 +95,9 @@ class BaseComponent
 
 		if ($isEditMode) {
 			echo '</div>';
+			if ($this->isOptimizationMode()) {
+				echo $this->renderPerformanceBadge($this->elapsedMilliseconds($startedAt));
+			}
 			echo $this->renderEditTriggerButton();
 			echo $this->renderEditWrapperClose();
 		}
@@ -107,6 +115,11 @@ class BaseComponent
 	protected function isEditMode(): bool
 	{
 		return (new EditModeService())->isActive();
+	}
+
+	protected function isOptimizationMode(): bool
+	{
+		return (new EditModeService())->isOptimizationActive();
 	}
 
 	protected function isEditableInAdmin(): bool
@@ -295,5 +308,27 @@ class BaseComponent
 	private function renderEditWrapperClose(): string
 	{
 		return '</div>';
+	}
+
+	private function renderPerformanceBadge(float $renderTimeMs): string
+	{
+		$totalTimeMs = $this->preparationTimeMs + $renderTimeMs;
+
+		return sprintf(
+			'<div class="component-edit__performance" title="Время выполнения компонента">Подготовка: %s с · Рендер: %s с · Всего: %s с</div>',
+			$this->formatSeconds($this->preparationTimeMs),
+			$this->formatSeconds($renderTimeMs),
+			$this->formatSeconds($totalTimeMs)
+		);
+	}
+
+	private function elapsedMilliseconds(int $startedAt): float
+	{
+		return (hrtime(true) - $startedAt) / 1_000_000;
+	}
+
+	private function formatSeconds(float $milliseconds): string
+	{
+		return number_format($milliseconds / 1000, 6, ',', '');
 	}
 }

@@ -70,7 +70,9 @@ $formatDate = static function (string $rawDate): string {
 				<figure class="project-detail__image">
 					<img src="<?= htmlspecialchars((string) $currentProject->detail_image_url) ?>"
 					     alt="<?= htmlspecialchars((string) $currentProject->name) ?>"
-					     title="<?= htmlspecialchars((string) $currentProject->name) ?>">
+					     title="<?= htmlspecialchars((string) $currentProject->name) ?>"
+					     loading="lazy"
+					     decoding="async">
 				</figure>
 			<?php endif; ?>
 

@@ -14,7 +14,9 @@
 			<div class="projects-light-card__media">
 				<img class="projects-light-card__image"
 				     src="<?= htmlspecialchars($previewImage) ?>"
-				     alt="<?= htmlspecialchars($projectName) ?>">
+				     alt="<?= htmlspecialchars($projectName) ?>"
+				     loading="lazy"
+				     decoding="async">
 			</div>
 
 			<div class="projects-light-card__body">

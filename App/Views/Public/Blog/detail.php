@@ -67,7 +67,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 ?>
 
 <section class="blog-detail-hero">
-	<img src="<?= htmlspecialchars((string) $article['detail_image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>">
+	<img src="<?= htmlspecialchars((string) $article['detail_image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>" loading="eager" decoding="async" fetchpriority="high">
 	<div class="blog-detail-hero__overlay" aria-hidden="true"></div>
 	<div class="site-container blog-detail-hero__container">
 		<nav class="blog-breadcrumbs" aria-label="Хлебные крошки">
@@ -397,6 +397,7 @@ $seoForm = is_array($data['seo_form'] ?? null) ? $data['seo_form'] : [];
 			image.src = avatarUrl || defaultAvatarUrl;
 			image.alt = authorName || 'Аватар';
 			image.loading = 'lazy';
+			image.decoding = 'async';
 			image.width = 40;
 			image.height = 40;
 			avatar.appendChild(image);

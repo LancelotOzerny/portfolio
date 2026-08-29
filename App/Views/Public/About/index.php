@@ -18,6 +18,7 @@
                     'edit_key' => 'about.hero-photo',
                     'path' => '/upload/images/main/profile.png',
                     'alt' => 'Максим Беляков',
+					'loading' => 'eager',
             ]))->render();
             ?>
 		</div>

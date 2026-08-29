@@ -70,7 +70,7 @@ $createError = trim((string) ($data['createError'] ?? ''));
                         <div class="row g-0">
                             <div class="col-12 col-md-3">
                                 <?php if ($previewImage !== ''): ?>
-                                    <img src="<?= htmlspecialchars($previewImage) ?>" class="img-fluid rounded-start w-100" style="object-fit: cover; height: 220px; max-height: 300px;" alt="Превью проекта">
+                                    <img src="<?= htmlspecialchars($previewImage) ?>" class="img-fluid rounded-start w-100" style="object-fit: cover; height: 220px; max-height: 300px;" alt="Превью проекта" loading="lazy" decoding="async">
                                 <?php else: ?>
                                     <div class="d-flex align-items-center justify-content-center bg-light text-secondary" style="height: 220px; max-height: 300px;">
                                         Нет изображения

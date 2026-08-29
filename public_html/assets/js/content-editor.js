@@ -2187,7 +2187,7 @@
 				if (!url) {
 					return '';
 				}
-				return `<img src="${escapeHtml(url)}" alt="${escapeHtml(data.caption || '')}">`;
+				return `<img src="${escapeHtml(url)}" alt="${escapeHtml(data.caption || '')}" loading="lazy" decoding="async">`;
 			}
 
 			if (block.type === 'quote') {

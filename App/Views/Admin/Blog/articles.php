@@ -121,6 +121,8 @@ $publicationService = new BlogArticlePublicationService();
 									class="img-fluid rounded-start w-100"
 									style="object-fit: cover; height: 220px; max-height: 300px;"
 									alt="<?= htmlspecialchars($title) ?>"
+									loading="lazy"
+									decoding="async"
 								>
 							</div>
 

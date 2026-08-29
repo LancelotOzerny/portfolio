@@ -45,7 +45,7 @@ $flash = is_array($data['flash'] ?? null) ? $data['flash'] : null;
 								<tr>
 									<td style="width: 96px;">
 										<?php if ($logo !== ''): ?>
-											<img src="<?= htmlspecialchars($logo) ?>" alt="" class="rounded border" style="width: 72px; height: 52px; object-fit: contain;">
+											<img src="<?= htmlspecialchars($logo) ?>" alt="" class="rounded border" style="width: 72px; height: 52px; object-fit: contain;" loading="lazy" decoding="async">
 										<?php else: ?>
 											<div class="d-inline-flex align-items-center justify-content-center border rounded text-secondary small" style="width: 72px; height: 52px;">Нет</div>
 										<?php endif; ?>

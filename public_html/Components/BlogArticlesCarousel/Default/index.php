@@ -26,7 +26,7 @@ $error = trim((string) ($this->getParam('error') ?? ''));
 						<?php foreach ($items as $item): ?>
 							<a class="blog-carousel-card" href="<?= htmlspecialchars((string) $item['url']) ?>">
 								<span class="blog-carousel-card__media">
-									<img src="<?= htmlspecialchars((string) $item['image']) ?>" alt="<?= htmlspecialchars((string) $item['title']) ?>">
+									<img src="<?= htmlspecialchars((string) $item['image']) ?>" alt="<?= htmlspecialchars((string) $item['title']) ?>" loading="lazy" decoding="async">
 								</span>
 								<span class="blog-carousel-card__body">
 									<?php if ($item['topic_title'] !== ''): ?>

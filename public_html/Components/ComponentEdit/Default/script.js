@@ -445,7 +445,7 @@
 				button.className = 'component-edit-modal__image-item';
 				button.dataset.imagePath = item.path;
 				button.innerHTML = [
-					'<img src="' + item.path + '" alt="">',
+					'<img src="' + item.path + '" alt="" loading="lazy" decoding="async">',
 					'<span class="component-edit-modal__image-name">' + item.name + '</span>',
 				].join('');
 

@@ -21,7 +21,7 @@ $isFirstFilterElement = true;
             <article class="project-card card h-100 border-0 shadow hover-lift position-relative overflow-hidden">
                 <a class="project-card__media" href="/portfolio/<?= $project->id ?>/" aria-label="<?= $project->name ?? '' ?>">
                     <img src="<?= !empty($project->preview_image_url) ? $project->preview_image_url : '/Components/ProjectsGrid/Default/img/no-image.webp' ?>"
-                         class="project-card__image card-img-top" alt="<?= $project->name ?? '' ?>">
+                         class="project-card__image card-img-top" alt="<?= $project->name ?? '' ?>" loading="lazy" decoding="async">
                 </a>
 
                 <div class="project-card__body card-body d-flex flex-column p-4">

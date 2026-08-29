@@ -16,7 +16,7 @@ $renderIcon = static function (string $icon): void {
 
 <header class="college-navigation" id="site-header" data-college-navigation>
 	<a class="college-navigation__brand" href="/" aria-label="Максим Беляков">
-		<img class="college-navigation__avatar" src="/upload/images/main/profile.png" alt="">
+		<img class="college-navigation__avatar" src="/upload/images/main/profile.png" alt="" loading="eager" decoding="async" fetchpriority="high">
 		<span class="college-navigation__name">Максим <b>Беляков</b></span>
 	</a>
 

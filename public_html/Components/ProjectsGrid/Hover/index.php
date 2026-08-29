@@ -24,7 +24,9 @@ $isFirstFilterElement = true;
 				<div class="project-card__media">
 					<img src="<?= !empty($project->preview_image_url) ? $project->preview_image_url : '/Components/ProjectsGrid/Default/img/no-image.webp' ?>"
 					     class="project-card__image"
-					     alt="">
+					     alt=""
+					     loading="lazy"
+					     decoding="async">
 
 					<div class="project-card__gradient" aria-hidden="true"></div>
 					<div class="project-card__shade" aria-hidden="true"></div>

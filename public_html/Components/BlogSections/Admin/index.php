@@ -61,6 +61,8 @@ $defaultImage = '/Templates/Inner/img/no-image.webp';
 							class="card-img-top"
 							style="object-fit: cover; height: 220px;"
 							alt="<?= htmlspecialchars($title) ?>"
+							loading="lazy"
+							decoding="async"
 						>
 						<div class="card-body d-flex flex-column">
 							<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">

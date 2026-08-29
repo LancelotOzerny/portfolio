@@ -137,7 +137,7 @@ class ArticleContentSanitizer
 	{
 		$allowedAttributes = match ($tagName) {
 			'a' => ['href', 'title', 'target', 'rel'],
-			'img' => ['src', 'alt', 'title'],
+			'img' => ['src', 'alt', 'title', 'loading', 'decoding'],
 			'mark' => ['style'],
 			'span' => ['style', 'class'],
 			'table', 'aside' => ['class'],
@@ -347,7 +347,11 @@ class ArticleContentSanitizer
 		$src = trim($element->getAttribute('src'));
 		if (!$this->isAllowedImageUrl($src)) {
 			$this->unwrapNode($element);
+			return;
 		}
+
+		$element->setAttribute('loading', 'lazy');
+		$element->setAttribute('decoding', 'async');
 	}
 
 	private function sanitizeAllowedClass(DOMElement $element, array $allowedNames): void
@@ -439,6 +443,7 @@ class ArticleContentSanitizer
 		$cleanHtml = strip_tags($html, '<p><h1><h2><h3><h4><h5><h6><img><a><blockquote><pre><code><strong><em><b><i><u><s><mark><span><br><wbr><ul><ol><li><table><caption><thead><tbody><tr><th><td><sup><sub><aside><details><summary><div>');
 		$cleanHtml = preg_replace('~\\s+on[a-z]+\\s*=\\s*("[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+)~i', '', $cleanHtml) ?? '';
 		$cleanHtml = preg_replace('~\\s+(href|src)\\s*=\\s*("|\')\\s*javascript:[^"\']*\\2~i', '', $cleanHtml) ?? '';
+		$cleanHtml = preg_replace('~<img\\b(?![^>]*\\bloading\\s*=)([^>]*)>~i', '<img loading="lazy" decoding="async"$1>', $cleanHtml) ?? '';
 
 		return trim($cleanHtml);
 	}

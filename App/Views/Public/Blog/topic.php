@@ -39,7 +39,7 @@ $canEditTopic = $isEditMode && isset($topic['id']) && (int) $topic['id'] > 0;
 
 <?php if ($detailImagePath !== ''): ?>
 	<section class="blog-topic-detail-image">
-		<img src="<?= htmlspecialchars($detailImagePath) ?>" alt="<?= htmlspecialchars((string) $topic['name']) ?>">
+		<img src="<?= htmlspecialchars($detailImagePath) ?>" alt="<?= htmlspecialchars((string) $topic['name']) ?>" loading="eager" decoding="async" fetchpriority="high">
 	</section>
 <?php endif; ?>
 
@@ -105,7 +105,7 @@ $canEditTopic = $isEditMode && isset($topic['id']) && (int) $topic['id'] > 0;
 				<?php $isDisabled = array_key_exists('enabled', $article) && !$article['enabled']; ?>
 				<a class="blog-article-card<?= $isDisabled ? ' blog-article-card_disabled' : '' ?>" href="/blog/<?= htmlspecialchars((string) $topic['slug']) ?>/<?= htmlspecialchars((string) $article['slug']) ?>/">
 					<span class="blog-article-card__image">
-						<img src="<?= htmlspecialchars((string) $article['image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>">
+						<img src="<?= htmlspecialchars((string) $article['image']) ?>" alt="<?= htmlspecialchars((string) $article['title']) ?>" loading="lazy" decoding="async">
 					</span>
 					<span class="blog-article-card__content">
 						<?php if ($isAdmin && $isDisabled): ?>

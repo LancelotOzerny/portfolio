@@ -14,6 +14,7 @@ class ImagePreview extends BaseComponent
 		$this->setParam('path', $relativePath);
 		$this->setParam('alt', $this->params['alt'] ?? '');
 		$this->setParam('title', $this->params['title'] ?? '');
+		$this->setParam('loading', ($this->params['loading'] ?? '') === 'eager' ? 'eager' : 'lazy');
 	}
 
 	protected function getEditableParamKeys(): array

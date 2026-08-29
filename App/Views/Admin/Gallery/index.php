@@ -84,6 +84,8 @@ $error = trim((string) ($data['error'] ?? ''));
 										class="card-img-top admin-gallery__photo-image"
 										src="<?= htmlspecialchars($photoPath) ?>"
 										alt="<?= htmlspecialchars($photoName) ?>"
+										loading="lazy"
+										decoding="async"
 									>
 									<div class="card-body p-2">
 										<p class="small text-truncate mb-2" title="<?= htmlspecialchars($photoName) ?>">

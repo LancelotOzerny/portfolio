@@ -362,18 +362,59 @@ class BlogArticlesModel extends BaseModel
 
 	public function findTopViewedTopic(?string $sinceDatetime = null): ?object
 	{
+		$topics = $this->findTopViewedTopics($sinceDatetime, 1);
+
+		return $topics[0] ?? null;
+	}
+
+	/**
+	 * @return list<object>
+	 */
+	public function findTopViewedTopics(?string $sinceDatetime = null, int $limit = 3): array
+	{
+		$limit = max(1, $limit);
+
 		try {
-			$topic = $this->findTopViewedTopicViaRelations($sinceDatetime);
-			if ($topic !== null) {
-				return $topic;
+			$topics = $this->findTopViewedTopicsViaRelations($sinceDatetime, $limit);
+			if ($topics !== []) {
+				return $topics;
 			}
 		} catch (Throwable) {
 		}
 
 		try {
-			return $this->findTopViewedTopicLegacy($sinceDatetime);
+			return $this->findTopViewedTopicsLegacy($sinceDatetime, $limit);
 		} catch (Throwable) {
-			return null;
+			return [];
+		}
+	}
+
+	/**
+	 * @return list<object>
+	 */
+	public function findTopRatedArticles(int $limit = 15): array
+	{
+		$limit = max(1, $limit);
+
+		try {
+			$qb = (new QueryBuilder('blog_article_ratings'))
+				->selectRaw(
+					'blog_articles.id AS id,
+					blog_articles.title AS title,
+					blog_articles.preview_image_path AS preview_image_path,
+					AVG(blog_article_ratings.rating) AS avg_rating,
+					COUNT(blog_article_ratings.id) AS votes_count'
+				)
+				->join('blog_articles', 'blog_article_ratings.article_id', 'blog_articles.id', 'INNER')
+				->groupBy(['blog_articles.id', 'blog_articles.title', 'blog_articles.preview_image_path'])
+				->orderBy('avg_rating', 'DESC')
+				->orderBy('votes_count', 'DESC')
+				->orderBy('blog_articles.id', 'DESC')
+				->limit($limit);
+
+			return $this->execQuery($qb) ?? [];
+		} catch (Throwable) {
+			return [];
 		}
 	}
 
@@ -669,7 +710,10 @@ class BlogArticlesModel extends BaseModel
 		return $this->execQuery($qb) ?? [];
 	}
 
-	private function findTopViewedTopicViaRelations(?string $sinceDatetime): ?object
+	/**
+	 * @return list<object>
+	 */
+	private function findTopViewedTopicsViaRelations(?string $sinceDatetime, int $limit): array
 	{
 		$qb = (new QueryBuilder('blog_article_views'))
 			->selectRaw('blog_topics.id AS id, blog_topics.title AS title, COUNT(blog_article_views.id) AS views_count')
@@ -681,17 +725,15 @@ class BlogArticlesModel extends BaseModel
 		$qb->groupBy(['blog_topics.id', 'blog_topics.title'])
 			->orderBy('views_count', 'DESC')
 			->orderBy('blog_topics.id', 'DESC')
-			->limit(1);
+			->limit($limit);
 
-		$result = $this->execQuery($qb, true);
-		if (!is_object($result) || (int) ($result->views_count ?? 0) <= 0) {
-			return null;
-		}
-
-		return $result;
+		return $this->filterPositiveCountRows($this->execQuery($qb) ?? [], 'views_count');
 	}
 
-	private function findTopViewedTopicLegacy(?string $sinceDatetime): ?object
+	/**
+	 * @return list<object>
+	 */
+	private function findTopViewedTopicsLegacy(?string $sinceDatetime, int $limit): array
 	{
 		$qb = (new QueryBuilder('blog_article_views'))
 			->selectRaw('blog_topics.id AS id, blog_topics.title AS title, COUNT(blog_article_views.id) AS views_count')
@@ -703,14 +745,26 @@ class BlogArticlesModel extends BaseModel
 		$qb->groupBy(['blog_topics.id', 'blog_topics.title'])
 			->orderBy('views_count', 'DESC')
 			->orderBy('blog_topics.id', 'DESC')
-			->limit(1);
+			->limit($limit);
 
-		$result = $this->execQuery($qb, true);
-		if (!is_object($result) || (int) ($result->views_count ?? 0) <= 0) {
-			return null;
+		return $this->filterPositiveCountRows($this->execQuery($qb) ?? [], 'views_count');
+	}
+
+	/**
+	 * @param list<object> $rows
+	 * @return list<object>
+	 */
+	private function filterPositiveCountRows(array $rows, string $countField): array
+	{
+		$filtered = [];
+		foreach ($rows as $row) {
+			if (!is_object($row) || (int) ($row->{$countField} ?? 0) <= 0) {
+				continue;
+			}
+			$filtered[] = $row;
 		}
 
-		return $result;
+		return $filtered;
 	}
 
 	private function applyViewsSinceFilter(QueryBuilder $qb, ?string $sinceDatetime): void

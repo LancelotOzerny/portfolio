@@ -88,6 +88,47 @@ class BlogArticleCommentsModel extends BaseModel
 		return $this->execInsertQuery((new QueryBuilder($this->table))->insert($data));
 	}
 
+	/**
+	 * @return list<object>
+	 */
+	public function findTopCommentedArticles(?string $sinceDatetime = null, int $limit = 5): array
+	{
+		$limit = max(1, $limit);
+		$sinceDatetime = trim((string) $sinceDatetime);
+
+		try {
+			$qb = (new QueryBuilder($this->table))
+				->selectRaw(
+					'blog_articles.id AS id,
+					blog_articles.title AS title,
+					COUNT(blog_article_comments.id) AS comments_count'
+				)
+				->join('blog_articles', 'blog_article_comments.article_id', 'blog_articles.id', 'INNER');
+
+			if ($sinceDatetime !== '') {
+				$qb->where('blog_article_comments.created_at', '>=', $sinceDatetime);
+			}
+
+			$qb->groupBy(['blog_articles.id', 'blog_articles.title'])
+				->orderBy('comments_count', 'DESC')
+				->orderBy('blog_articles.id', 'DESC')
+				->limit($limit);
+
+			$rows = $this->execQuery($qb) ?? [];
+			$result = [];
+			foreach ($rows as $row) {
+				if (!is_object($row) || (int) ($row->comments_count ?? 0) <= 0) {
+					continue;
+				}
+				$result[] = $row;
+			}
+
+			return $result;
+		} catch (Throwable) {
+			return [];
+		}
+	}
+
 	public function countSince(string $sinceDatetime): int
 	{
 		$sinceDatetime = trim($sinceDatetime);

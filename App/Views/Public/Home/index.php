@@ -34,11 +34,9 @@
 	</div>
 </section>
 
-<section class="social-section" aria-labelledby="socialTitle">
-	<div class="site-container">
-		<?php (new \Components\SocialNetworks\SocialNetworks())->render(); ?>
-	</div>
-</section>
+<?php (new \Components\SocialNetworks\SocialNetworks([
+        'template' => 'BlackLine'
+]))->render(); ?>
 
 <?php
 (new \Components\BlogArticlesCarousel\BlogArticlesCarousel([

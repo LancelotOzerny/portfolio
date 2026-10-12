@@ -51,58 +51,15 @@
 .networks-line__target
 {
     position: absolute;
-    animation: targetAnim;
-    animation-duration: 8s;
-    animation-play-state: paused;
-    animation-iteration-count: infinite;
+    top: 0;
+    left: 0;
+    width: 42px;
+    height: 42px;
     opacity: 0;
-    transition: 1s;
-}
-
-@keyframes targetAnim
-{
-    0%
-    {
-        top: 0;
-        left: 0;
-        width: 64px;
-        height: 64px;
-    }
-    20%
-    {
-        top: 100%;
-        left: 100%;
-        width: 32px;
-        height: 32px;
-    }
-    40%
-    {
-        top: 0;
-        left: 100%;
-        width: 64px;
-        height: 64px;
-    }
-    60%
-    {
-        top: 100%;
-        left: 0;
-        width: 32px;
-        height: 32px;
-    }
-    80%
-    {
-        top: 50%;
-        left: 50%;
-        width: 24px;
-        height: 24px;
-    }
-    100%
-    {
-        top: 0;
-        left: 0;
-        width: 64px;
-        height: 64px;
-    }
+    pointer-events: none;
+    transform: translate3d(0, 0, 0);
+    transition: opacity .2s ease, transform .72s cubic-bezier(.22, .61, .36, 1);
+    will-change: transform, opacity;
 }
 
 .networks-line__card:hover .networks-line__icon svg
@@ -119,13 +76,9 @@
     transform: translateY(-20px);
 }
 
-@media screen and (min-width: 980px)
+.networks-line__card.is-target-active .networks-line__target
 {
-    .networks-line__card:hover .networks-line__target
-    {
-        animation-play-state: running;
-        opacity: 1;
-    }
+    opacity: 1;
 }
 @media screen and (max-width: 980px)
 {

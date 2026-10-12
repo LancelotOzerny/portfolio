@@ -23,7 +23,7 @@ body.light-page {
 }
 
 .site-container {
-	width: min(1120px, calc(100% - 40px));
+	width: min(1360px, calc(100% - 48px));
 	margin: 0 auto;
 }
 
@@ -356,14 +356,6 @@ body.light-page.status-layout .status-page {
 	height: 100%;
 	object-fit: cover;
 	object-position: 58% center;
-}
-
-.contacts-light-page__container {
-	max-width: 820px;
-}
-
-.about-page-approach__container {
-	max-width: 1120px;
 }
 
 .about-page-approach__text {
@@ -2548,7 +2540,12 @@ body.light-page.status-layout .status-page {
 
 @media (max-width: 640px) {
 	.site-container {
-		width: min(calc(100% - 28px), 1120px);
+		width: min(1360px, calc(100% - 28px));
+	}
+
+	.section-header {
+		flex-direction: column;
+		align-items: stretch;
 	}
 
 	.hero-section__title {

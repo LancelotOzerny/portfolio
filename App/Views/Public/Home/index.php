@@ -38,6 +38,32 @@
         'template' => 'BlackLine'
 ]))->render(); ?>
 
+<section class="about-light" aria-labelledby="aboutTitle">
+    <div class="site-container about-light__container">
+        <div class="section-header">
+            <h2 class="page-title" id="aboutTitle">Немного о себе</h2>
+        </div>
+        <div class="about-light__grid">
+            <div class="about-light__photo">
+                <?php
+                (new \Components\ImagePreview\ImagePreview([
+                        'edit_key' => 'home.about-photo',
+                        'path' => '/upload/images/main/profile.png',
+                        'alt' => 'Максим Беляков',
+                ]))->render();
+                ?>
+            </div>
+            <div class="about-light__text">
+                <?php
+                (new \Components\IncludeArea\IncludeArea([
+                        'path' => 'Light/about.html',
+                ]))->render();
+                ?>
+            </div>
+        </div>
+    </div>
+</section>
+
 <?php
 (new \Components\BlogArticlesCarousel\BlogArticlesCarousel([
 	'edit_key' => 'home.blog-carousel',
@@ -54,38 +80,9 @@
 		</div>
 		<?php
 		(new \Components\ProjectsGrid\ProjectsGrid([
-			'edit_key' => 'home.projects-grid',
-			'use_filters' => false,
-			'show_tags' => false,
-			'limit' => 6,
-			'template' => 'Light',
+			'limit' => 7,
+			'template' => 'Main',
 		]))->render();
 		?>
-	</div>
-</section>
-
-<section class="about-light" aria-labelledby="aboutTitle">
-	<div class="site-container about-light__container">
-		<div class="section-header">
-			<h2 class="page-title" id="aboutTitle">Немного о себе</h2>
-		</div>
-		<div class="about-light__grid">
-			<div class="about-light__photo">
-                <?php
-                (new \Components\ImagePreview\ImagePreview([
-                        'edit_key' => 'home.about-photo',
-                        'path' => '/upload/images/main/profile.png',
-                        'alt' => 'Максим Беляков',
-                ]))->render();
-                ?>
-			</div>
-			<div class="about-light__text">
-				<?php
-				(new \Components\IncludeArea\IncludeArea([
-					'path' => 'Light/about.html',
-				]))->render();
-				?>
-			</div>
-		</div>
 	</div>
 </section>

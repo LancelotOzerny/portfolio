@@ -8,7 +8,7 @@
 </section>
 
 <section class="light-page-section contacts-light-page">
-	<div class="site-container contacts-light-page__container">
+	<div class="site-container">
 		<div class="contacts-light-page__form">
 			<?php
 			(new \Components\ContactForm\ContactForm([

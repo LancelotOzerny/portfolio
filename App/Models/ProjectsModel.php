@@ -42,7 +42,9 @@ class ProjectsModel extends BaseModel
 		string $previewText,
 		string $detailText,
 		string $previewImageUrl,
-		string $detailImageUrl
+		string $detailImageUrl,
+		?int $categoryId,
+		string $tags
 	): bool {
 		$qb = (new QueryBuilder($this->table))
 			->update([
@@ -52,6 +54,8 @@ class ProjectsModel extends BaseModel
 				'detail_text' => $detailText,
 				'preview_image_url' => $previewImageUrl,
 				'detail_image_url' => $detailImageUrl,
+				'category_id' => $categoryId,
+				'tags' => $tags,
 			])
 			->where('id', '=', $id);
 
@@ -82,7 +86,7 @@ class ProjectsModel extends BaseModel
 	public function findAll($limit = 0): array
 	{
 		$linksModel = new LinksModel();
-		$projectTagsModel = new ProjectTagsModel();
+		$categoriesById = $this->getCategoriesById();
 		$qb = (new QueryBuilder($this->table))
 			->select()
 			->where('active', '=', 1)
@@ -98,7 +102,7 @@ class ProjectsModel extends BaseModel
 		foreach ($items as $item)
 		{
 			$item->links = $linksModel->findAllByProject($item->id);
-			$item->tags = $projectTagsModel->findAllByProjectId($item->id);
+			$this->hydrateCategoryAndTags($item, $categoriesById);
 		}
 
 		return $items;
@@ -115,10 +119,62 @@ class ProjectsModel extends BaseModel
 		if ($project)
 		{
 			$project->links = (new LinksModel())->findAllByProject($project->id);
-			$project->tags = (new ProjectTagsModel())->findAllByProjectId($project->id);
+			$this->hydrateCategoryAndTags($project, $this->getCategoriesById());
 			$project->info = (new ProjectsInfoModel())->findAllByProjectId($id);
 		}
 
 		return $project;
+	}
+
+	public function countByCategoryId(int $categoryId): int
+	{
+		$qb = (new QueryBuilder($this->table))
+			->count()
+			->where('category_id', '=', $categoryId);
+		$result = $this->execQuery($qb, true);
+
+		return (int) ($result->total ?? 0);
+	}
+
+	public function clearCategoryId(int $categoryId): bool
+	{
+		$qb = (new QueryBuilder($this->table))
+			->update(['category_id' => null])
+			->where('category_id', '=', $categoryId);
+
+		return $this->execWriteQuery($qb);
+	}
+
+	private function getCategoriesById(): array
+	{
+		$categories = [];
+		foreach ((new TagsModel())->findAllOrdered() as $category) {
+			$categoryId = (int) ($category->id ?? 0);
+			if ($categoryId > 0) {
+				$categories[$categoryId] = $category;
+			}
+		}
+
+		return $categories;
+	}
+
+	private function hydrateCategoryAndTags(object $project, array $categoriesById): void
+	{
+		$categoryId = (int) ($project->category_id ?? 0);
+		$project->category = $categoriesById[$categoryId] ?? null;
+		$project->tags = $this->parseTags((string) ($project->tags ?? ''));
+	}
+
+	private function parseTags(string $rawTags): array
+	{
+		$tags = [];
+		foreach (explode(',', $rawTags) as $tag) {
+			$tag = trim($tag);
+			if ($tag !== '' && !in_array($tag, $tags, true)) {
+				$tags[] = $tag;
+			}
+		}
+
+		return $tags;
 	}
 }

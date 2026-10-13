@@ -31,7 +31,7 @@
 				<?php if ($this->getParam('show_tags') && !empty($project->tags)): ?>
 					<div class="projects-light-card__tags">
 						<?php foreach ($project->tags as $tag): ?>
-							<span class="projects-light-card__tag"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+							<span class="projects-light-card__tag"><?= htmlspecialchars((string) $tag) ?></span>
 						<?php endforeach; ?>
 					</div>
 				<?php endif; ?>

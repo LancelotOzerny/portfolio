@@ -4,8 +4,7 @@
 use App\Services\ContentEditor\ContentEditor;
 
 $project = $data['project'] ?? null;
-$tags = $data['tags'] ?? [];
-$allTags = $data['allTags'] ?? [];
+$allCategories = $data['allCategories'] ?? [];
 $links = $data['links'] ?? [];
 $projectInfo = $data['projectInfo'] ?? [];
 $saveSuccess = (bool) ($data['saveSuccess'] ?? false);
@@ -20,14 +19,8 @@ $isActive = (int) ($project->active ?? 0) === 1;
 $previewImageUrl = trim((string) ($project->preview_image_url ?? ''));
 $detailImageUrl = trim((string) ($project->detail_image_url ?? ''));
 
-$selectedTagIds = [];
-foreach ($tags as $tag) {
-	$tagId = (int) ($tag->id ?? $tag->tag_id ?? 0);
-	if ($tagId > 0) {
-		$selectedTagIds[] = $tagId;
-	}
-}
-$selectedTagIds = array_values(array_unique($selectedTagIds));
+$categoryId = (int) ($project->category_id ?? 0);
+$projectTags = (string) ($project->tags ?? '');
 ?>
 
 <style>
@@ -176,26 +169,25 @@ $selectedTagIds = array_values(array_unique($selectedTagIds));
 
 				<div class="tab-pane fade" id="tab-other" role="tabpanel" aria-labelledby="tab-other-link">
 					<div class="mb-4">
-						<h3 class="h6 mb-3">Теги проекта</h3>
-						<?php if (empty($allTags)): ?>
-							<div class="alert alert-warning mb-0">Список тегов пуст.</div>
-						<?php else: ?>
-							<div class="row g-2">
-								<?php foreach ($allTags as $tag): ?>
-									<?php
-									$tagId = (int) ($tag->id ?? 0);
-									$tagName = trim((string) ($tag->name ?? ''));
-									$checked = in_array($tagId, $selectedTagIds, true);
-									?>
-									<div class="col-12 col-sm-6 col-lg-3">
-										<label class="form-check border rounded px-3 py-2 h-100 d-flex align-items-center gap-2">
-											<input class="form-check-input mt-0" type="checkbox" name="project_tag_ids[]" value="<?= $tagId ?>" <?= $checked ? 'checked' : '' ?>>
-											<span><?= htmlspecialchars($tagName !== '' ? $tagName : ('Тег #' . $tagId)) ?></span>
-										</label>
-									</div>
-								<?php endforeach; ?>
-							</div>
+						<h3 class="h6 mb-3">Категория проекта</h3>
+						<label class="form-label" for="project-category">Категория</label>
+						<select class="form-select" id="project-category" name="category_id">
+							<option value="">Не выбрана</option>
+							<?php foreach ($allCategories as $category): ?>
+								<?php $currentCategoryId = (int) ($category->id ?? 0); ?>
+								<option value="<?= $currentCategoryId ?>" <?= $currentCategoryId === $categoryId ? 'selected' : '' ?>><?= htmlspecialchars((string) ($category->name ?? '')) ?></option>
+							<?php endforeach; ?>
+						</select>
+						<?php if (empty($allCategories)): ?>
+							<div class="form-text">Сначала создайте категорию в разделе «Категории проектов».</div>
 						<?php endif; ?>
+					</div>
+
+					<div class="mb-4">
+						<h3 class="h6 mb-3">Теги проекта</h3>
+						<label class="form-label" for="project-tags">Теги через запятую</label>
+						<input class="form-control" id="project-tags" name="tags" type="text" maxlength="1000" value="<?= htmlspecialchars($projectTags) ?>" placeholder="PHP, MySQL, Bitrix">
+						<div class="form-text">На карточке проекта выводятся первые четыре тега.</div>
 					</div>
 
 					<div class="mb-4">

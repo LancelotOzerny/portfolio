@@ -54,15 +54,8 @@ $createError = trim((string) ($data['createError'] ?? ''));
                 $isActive = (int) ($project->active ?? 0) === 1;
                 $projectId = (int) ($project->id ?? 0);
                 $projectName = (string) ($project->name ?? 'Без названия');
-                $projectTags = $project->tags ?? [];
-                $tagNames = [];
-                foreach ($projectTags as $tag) {
-                    $name = trim((string) ($tag->name ?? ''));
-                    if ($name !== '') {
-                        $tagNames[] = $name;
-                    }
-                }
-                $tagsText = empty($tagNames) ? 'не указаны' : implode(', ', $tagNames);
+                $categoryName = trim((string) ($project->category->name ?? ''));
+                $tagsText = trim((string) ($project->tags ?? ''));
                 ?>
 
                 <div class="col-12">
@@ -94,7 +87,8 @@ $createError = trim((string) ($data['createError'] ?? ''));
                                     <div class="small text-secondary mb-3">
                                         <div>Создан: <?= htmlspecialchars((string) ($project->created_at ?? '-')) ?></div>
                                         <div>Изменен: <?= htmlspecialchars((string) ($project->changed_at ?? '-')) ?></div>
-                                        <div>Теги: <?= htmlspecialchars($tagsText) ?></div>
+										<div>Категория: <?= htmlspecialchars($categoryName !== '' ? $categoryName : 'не выбрана') ?></div>
+										<div>Теги: <?= htmlspecialchars($tagsText !== '' ? $tagsText : 'не указаны') ?></div>
                                     </div>
                                 </div>
                             </div>

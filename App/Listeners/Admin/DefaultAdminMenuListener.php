@@ -57,7 +57,7 @@ final class DefaultAdminMenuListener
 						),
 						new AdminMenuItem(
 							id: 'projects.tags',
-							label: 'Теги проектов',
+							label: 'Категории проектов',
 							href: '/admin/content/tags/',
 							matchPrefixes: ['/admin/content/tags/'],
 						),

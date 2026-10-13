@@ -29,9 +29,9 @@ $isFirstFilterElement = true;
                     <p class="project-card__text card-text text-muted flex-grow-1 mb-3"><?= htmlspecialchars((string) ($project->preview_text ?? '')) ?></p>
 
                     <?php if($project->tags): ?>
-                        <div class="project-card__tags d-flex gap-2 mb-4 flex-wrap">
+                        <div class="project-card__tags d-flex gap-2 mb-4 flex-wrap" <?php if ($this->getParam('use_filters') && !empty($project->category)): ?>data-filter-target="filter-<?= (int) $project->category->id ?>"<?php endif; ?>>
                             <?php foreach ($project->tags as $tag): ?>
-                                <span <?php if($this->getParam('use_filters')) echo "data-filter-target=\"filter-$tag->id\""?> class="project-card__tag badge bg-secondary"><?= $tag->name ?></span>
+                                <span class="project-card__tag badge bg-secondary"><?= htmlspecialchars((string) $tag) ?></span>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>

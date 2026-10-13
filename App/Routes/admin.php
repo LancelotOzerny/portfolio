@@ -27,6 +27,7 @@ $router->post('/admin/content/blog/articles/{id}/schedule/', \Controllers\Admin\
 $router->get('/admin/content/blog/comments/', \Controllers\Admin\BlogController::class, 'comments');
 $router->get('/admin/content/tags/', \Controllers\Admin\TagsController::class, 'index');
 $router->post('/admin/content/tags/create/', \Controllers\Admin\TagsController::class, 'create');
+$router->post('/admin/content/tags/bulk-delete/', \Controllers\Admin\TagsController::class, 'bulkDelete');
 $router->get('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'edit');
 $router->post('/admin/content/tags/{id}/', \Controllers\Admin\TagsController::class, 'update');
 $router->post('/admin/content/tags/{id}/delete/', \Controllers\Admin\TagsController::class, 'delete');

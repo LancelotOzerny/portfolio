@@ -11,8 +11,8 @@ $tagId = (int) ($item->id ?? 0);
 <section class="admin-tags-edit">
 	<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 		<div>
-			<div class="small text-secondary mb-1">Контент → Теги</div>
-			<h1 class="h3 mb-0">Редактирование тега</h1>
+			<div class="small text-secondary mb-1">Контент → Категории проектов</div>
+			<h1 class="h3 mb-0">Редактирование категории</h1>
 		</div>
 		<a class="btn btn-outline-secondary" href="/admin/content/tags/">К списку</a>
 	</div>
@@ -28,7 +28,7 @@ $tagId = (int) ($item->id ?? 0);
 		<div class="card-body">
 			<?php if ($usageCount > 0): ?>
 				<div class="alert alert-light border mb-4">
-					Тег используется в <?= $usageCount ?> <?= $usageCount === 1 ? 'проекте' : 'проектах' ?>.
+					Категория назначена <?= $usageCount ?> <?= $usageCount === 1 ? 'проекту' : 'проектам' ?>.
 				</div>
 			<?php endif; ?>
 
@@ -42,11 +42,11 @@ $tagId = (int) ($item->id ?? 0);
 	<div class="card border-0 shadow-sm border-danger-subtle">
 		<div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
 			<div>
-				<div class="fw-semibold text-danger">Удаление тега</div>
-				<div class="small text-secondary">Связи с проектами будут удалены автоматически.</div>
+				<div class="fw-semibold text-danger">Удаление категории</div>
+				<div class="small text-secondary">Категория будет снята у связанных проектов.</div>
 			</div>
 			<form action="/admin/content/tags/<?= $tagId ?>/delete/" method="post" onsubmit="return confirm('Удалить тег «<?= htmlspecialchars((string) ($item->name ?? ''), ENT_QUOTES) ?>»?');">
-				<button class="btn btn-outline-danger" type="submit">Удалить тег</button>
+				<button class="btn btn-outline-danger" type="submit">Удалить категорию</button>
 			</form>
 		</div>
 	</div>

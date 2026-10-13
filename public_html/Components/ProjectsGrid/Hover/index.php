@@ -41,9 +41,9 @@ $isFirstFilterElement = true;
 						<h5 class="project-card__title"><?= htmlspecialchars((string) ($project->name ?? '')) ?></h5>
 
 						<?php if ($project->tags): ?>
-							<div class="project-card__tags">
+							<div class="project-card__tags" <?php if ($this->getParam('use_filters') && !empty($project->category)): ?>data-filter-target="filter-<?= (int) $project->category->id ?>"<?php endif; ?>>
 								<?php foreach ($project->tags as $tag): ?>
-									<span <?php if ($this->getParam('use_filters')) echo 'data-filter-target="filter-' . (int) ($tag->id ?? 0) . '"'; ?> class="project-card__tag"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+									<span class="project-card__tag"><?= htmlspecialchars((string) $tag) ?></span>
 								<?php endforeach; ?>
 							</div>
 						<?php endif; ?>

@@ -3,11 +3,9 @@
 namespace Controllers\Admin;
 
 use Models\LinksModel;
-use Models\ProjectTagsModel;
 use Models\ProjectsInfoModel;
 use Models\ProjectsLinkModel;
 use Models\ProjectsModel;
-use Models\ProjectsTagsRelationModel;
 use Models\TagsModel;
 use Modules\DBWork\DBConnection;
 use Modules\Main\Auth;
@@ -34,7 +32,9 @@ class ProjectsController extends BaseController
 
 		foreach ($projects as &$project) {
 			$projectId = (int) ($project->id ?? 0);
-			$project->tags = $projectId > 0 ? $this->loadProjectTags($projectId) : [];
+			$categoryId = (int) ($project->category_id ?? 0);
+			$project->category = $categoryId > 0 ? $this->loadCategory($categoryId) : null;
+			$project->tags = trim((string) ($project->tags ?? ''));
 		}
 		unset($project);
 
@@ -91,12 +91,11 @@ class ProjectsController extends BaseController
 			return;
 		}
 
-		$tags = [];
 		$links = [];
 		$projectInfo = [];
-		$allTags = [];
-
-		$tags = $this->loadProjectTags($id);
+		$allCategories = [];
+		$categoryId = (int) ($project->category_id ?? 0);
+		$project->category = $categoryId > 0 ? $this->loadCategory($categoryId) : null;
 
 		try {
 			$links = (new ProjectsLinkModel())->findAllByProjectId($id);
@@ -115,9 +114,9 @@ class ProjectsController extends BaseController
 		}
 
 		try {
-			$allTags = (new TagsModel())->findAll();
+			$allCategories = (new TagsModel())->findAllOrdered();
 		} catch (Throwable) {
-			$allTags = [];
+			$allCategories = [];
 		}
 
 		Template::getInstance()->setParam('title', 'Редактирование проекта ' . $id);
@@ -125,8 +124,7 @@ class ProjectsController extends BaseController
 		Template::getInstance()->showHeader();
 		$this->render('detail', [
 			'project' => $project,
-			'tags' => $tags,
-			'allTags' => $allTags,
+			'allCategories' => $allCategories,
 			'links' => $links,
 			'projectInfo' => $projectInfo,
 			'saveSuccess' => isset($_GET['saved']) && $_GET['saved'] === '1',
@@ -160,12 +158,18 @@ class ProjectsController extends BaseController
 		$detailText = (string) ($_POST['detail_text'] ?? '');
 		$previewImageUrl = trim((string) ($_POST['preview_image_url_existing'] ?? (string) ($project->preview_image_url ?? '')));
 		$detailImageUrl = trim((string) ($_POST['detail_image_url_existing'] ?? (string) ($project->detail_image_url ?? '')));
-		$selectedTagIds = $this->normalizeTagIds($_POST['project_tag_ids'] ?? []);
+		$categoryId = $this->normalizeCategoryId($_POST['category_id'] ?? null);
+		$tags = $this->normalizeProjectTags($_POST['tags'] ?? '');
 		$projectLinks = $this->normalizeLinks($_POST['links'] ?? []);
 		$projectInfoItems = $this->normalizeProjectInfoItems($_POST['project_info'] ?? []);
 
 		if ($name === '') {
-			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Enter project name.'));
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Введите название проекта.'));
+			return;
+		}
+
+		if ($categoryId !== null && (new TagsModel())->findById($categoryId) === null) {
+			header('Location: /admin/projects/' . $id . '/?error=' . rawurlencode('Выбранная категория не найдена.'));
 			return;
 		}
 
@@ -188,12 +192,13 @@ class ProjectsController extends BaseController
 				$previewText,
 				$detailText,
 				$previewImageUrl,
-				$detailImageUrl
+				$detailImageUrl,
+				$categoryId,
+				$tags
 			)) {
 				throw new \RuntimeException('Unable to save changes.');
 			}
 
-			$this->saveProjectTags($id, $selectedTagIds);
 			$this->saveProjectLinks($id, $projectLinks);
 
 			$projectInfoModel = new ProjectsInfoModel();
@@ -229,22 +234,32 @@ class ProjectsController extends BaseController
 		}
 	}
 
-	private function normalizeTagIds(mixed $rawTagIds): array
+	private function normalizeCategoryId(mixed $rawCategoryId): ?int
 	{
-		if (!is_array($rawTagIds)) {
-			return [];
-		}
+		$categoryId = (int) $rawCategoryId;
+		return $categoryId > 0 ? $categoryId : null;
+	}
 
-		$result = [];
-		foreach ($rawTagIds as $tagId) {
-			$normalizedId = (int) $tagId;
-			if ($normalizedId > 0) {
-				$result[] = $normalizedId;
+	private function normalizeProjectTags(mixed $rawTags): string
+	{
+		$tags = [];
+		foreach (explode(',', (string) $rawTags) as $tag) {
+			$tag = trim($tag);
+			if ($tag === '' || in_array($tag, $tags, true)) {
+				continue;
 			}
+
+			if (mb_strlen($tag) > 100) {
+				throw new \RuntimeException('Один тег не может быть длиннее 100 символов.');
+			}
+
+			$tags[] = $tag;
 		}
 
-		$result = array_values(array_unique($result));
-		sort($result);
+		$result = implode(', ', $tags);
+		if (mb_strlen($result) > 1000) {
+			throw new \RuntimeException('Строка тегов не может быть длиннее 1000 символов.');
+		}
 
 		return $result;
 	}
@@ -305,21 +320,6 @@ class ProjectsController extends BaseController
 		}
 
 		return $result;
-	}
-
-	private function saveProjectTags(int $projectId, array $tagIds): void
-	{
-		try {
-			(new ProjectTagsModel())->replaceProjectTags($projectId, $tagIds);
-			return;
-		} catch (Throwable $primaryException) {
-			try {
-				(new ProjectsTagsRelationModel())->replaceProjectTags($projectId, $tagIds);
-				return;
-			} catch (Throwable) {
-				throw new \RuntimeException('Unable to save project tags.', 0, $primaryException);
-			}
-		}
 	}
 
 	private function saveProjectLinks(int $projectId, array $links): void
@@ -442,23 +442,12 @@ class ProjectsController extends BaseController
 		return true;
 	}
 
-	private function loadProjectTags(int $projectId): array
+	private function loadCategory(int $categoryId): ?object
 	{
 		try {
-			return (new ProjectTagsModel())->findAllByProjectId($projectId);
+			return (new TagsModel())->findById($categoryId);
 		} catch (Throwable) {
-			try {
-				$tagRelations = (new ProjectsTagsRelationModel())->findAllByProjectId($projectId);
-				return array_map(
-					static fn($tag) => (object) [
-						'id' => (int) ($tag->tag_id ?? $tag->id ?? 0),
-						'name' => (string) ($tag->name ?? ''),
-					],
-					$tagRelations
-				);
-			} catch (Throwable) {
-				return [];
-			}
+			return null;
 		}
 	}
 }

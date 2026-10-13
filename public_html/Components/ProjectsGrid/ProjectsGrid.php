@@ -55,12 +55,9 @@ class ProjectsGrid extends BaseComponent
 			];
 			foreach($this->getParam('items') ?? [] as $item)
 			{
-				foreach ($item->tags as $tag)
-				{
-					if ($tag->use_as_filter)
-					{
-						$filters[$tag->id] = $tag->name;
-					}
+				$category = $item->category ?? null;
+				if ($category !== null && (int) ($category->use_as_filter ?? 0) === 1) {
+					$filters[(int) $category->id] = (string) $category->name;
 				}
 			}
 

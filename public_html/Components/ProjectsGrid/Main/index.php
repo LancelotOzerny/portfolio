@@ -10,13 +10,14 @@ $fallbackImage = '/Components/ProjectsGrid/Default/img/no-image.webp';
 	$featuredName = trim((string) ($featuredProject->name ?? 'Без названия'));
 	$featuredText = trim((string) ($featuredProject->preview_text ?? ''));
 	$featuredImage = trim((string) ($featuredProject->preview_image_url ?? '')) ?: $fallbackImage;
-	$featuredTags = $this->getParam('show_tags') ? ($featuredProject->tags ?? []) : [];
+	$featuredCategory = trim((string) ($featuredProject->category->name ?? ''));
+	$featuredTags = $this->getParam('show_tags') ? array_slice($featuredProject->tags ?? [], 0, 4) : [];
 	?>
 	<div class="projects-main">
 		<article class="projects-main__featured">
 			<div class="projects-main__featured-content">
-				<?php if (!empty($featuredTags)): ?>
-					<span class="projects-main__label"><?= htmlspecialchars((string) ($featuredTags[0]->name ?? 'Проект')) ?></span>
+				<?php if ($featuredCategory !== ''): ?>
+					<span class="projects-main__label"><?= htmlspecialchars($featuredCategory) ?></span>
 				<?php endif; ?>
 
 				<h3 class="projects-main__featured-title"><?= htmlspecialchars($featuredName) ?></h3>
@@ -32,7 +33,7 @@ $fallbackImage = '/Components/ProjectsGrid/Default/img/no-image.webp';
 				<?php if (!empty($featuredTags)): ?>
 					<div class="projects-main__tags" aria-label="Технологии и направления">
 						<?php foreach ($featuredTags as $tag): ?>
-							<span class="projects-main__tag"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+							<span class="projects-main__tag"><?= htmlspecialchars((string) $tag) ?></span>
 						<?php endforeach; ?>
 					</div>
 				<?php endif; ?>
@@ -51,7 +52,8 @@ $fallbackImage = '/Components/ProjectsGrid/Default/img/no-image.webp';
 					$projectName = trim((string) ($project->name ?? 'Без названия'));
 					$projectText = trim((string) ($project->preview_text ?? ''));
 					$projectImage = trim((string) ($project->preview_image_url ?? '')) ?: $fallbackImage;
-					$projectTags = $this->getParam('show_tags') ? ($project->tags ?? []) : [];
+					$projectCategory = trim((string) ($project->category->name ?? ''));
+					$projectTags = $this->getParam('show_tags') ? array_slice($project->tags ?? [], 0, 4) : [];
 					?>
 					<article class="projects-main__card">
 						<a class="projects-main__card-media" href="/portfolio/<?= $projectId ?>/" aria-label="Открыть проект: <?= htmlspecialchars($projectName) ?>">
@@ -60,8 +62,8 @@ $fallbackImage = '/Components/ProjectsGrid/Default/img/no-image.webp';
 
 						<div class="projects-main__card-content">
 							<div class="projects-main__card-top">
-								<?php if (!empty($projectTags)): ?>
-									<span class="projects-main__label"><?= htmlspecialchars((string) ($projectTags[0]->name ?? 'Проект')) ?></span>
+								<?php if ($projectCategory !== ''): ?>
+									<span class="projects-main__label"><?= htmlspecialchars($projectCategory) ?></span>
 								<?php endif; ?>
 								<a class="projects-main__card-arrow" href="/portfolio/<?= $projectId ?>/" aria-label="Открыть проект: <?= htmlspecialchars($projectName) ?>">↗</a>
 							</div>
@@ -75,7 +77,7 @@ $fallbackImage = '/Components/ProjectsGrid/Default/img/no-image.webp';
 							<?php if (!empty($projectTags)): ?>
 								<div class="projects-main__tags" aria-label="Технологии и направления">
 									<?php foreach ($projectTags as $tag): ?>
-										<span class="projects-main__tag"><?= htmlspecialchars((string) ($tag->name ?? '')) ?></span>
+										<span class="projects-main__tag"><?= htmlspecialchars((string) $tag) ?></span>
 									<?php endforeach; ?>
 								</div>
 							<?php endif; ?>

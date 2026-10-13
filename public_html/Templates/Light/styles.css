@@ -446,7 +446,7 @@ body.light-page.status-layout .status-page {
 
 .project-detail__image {
 	margin: 0;
-	aspect-ratio: 16 / 9;
+	max-height: 480px;
 	overflow: hidden;
 	background: var(--ml-soft);
 }

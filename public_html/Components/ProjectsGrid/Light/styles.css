@@ -31,7 +31,6 @@
 
 .projects-light-card__media {
 	display: block;
-	width: 75%;
 	margin: 0 auto;
 	aspect-ratio: 16 / 9;
 	overflow: hidden;

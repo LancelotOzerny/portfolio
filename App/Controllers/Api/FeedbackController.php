@@ -58,7 +58,7 @@ class FeedbackController
 		$body .= "Сообщение:\n$message\n";
 
 		$headers = [
-			'From: ' . $email,
+			'From: LANCY <no-reply@lancy-dev.ru>',
 			'Reply-To: ' . $email,
 			'Content-Type: text/plain; charset=utf-8'
 		];

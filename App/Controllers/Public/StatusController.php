@@ -26,16 +26,33 @@ class StatusController extends BaseController
 		Template::getInstance()->showFooter();
 	}
 
-	public function page500()
+	public function page500() : void
 	{
 		$this->setSeo(SeoContext::custom('/', [
 			'title' => 'Внутренняя ошибка сервера',
 			'robots_index' => false,
 		]));
 		Template::getInstance()->setParam('title', 'Внутренняя ошибка сервера');
+		Template::getInstance()->setParam('show_contact_cta', false);
+		Template::getInstance()->setParam('body_class', 'status-layout');
 
-		\Modules\Main\Template::getInstance()->showHeader();
+		Template::getInstance()->showHeader();
 		$this->render('500');
-		\Modules\Main\Template::getInstance()->showFooter();
+		Template::getInstance()->showFooter();
+	}
+
+	public function page502() : void
+	{
+		$this->setSeo(SeoContext::custom('/', [
+			'title' => 'Сервис временно недоступен',
+			'robots_index' => false,
+		]));
+		Template::getInstance()->setParam('title', 'Сервис временно недоступен');
+		Template::getInstance()->setParam('show_contact_cta', false);
+		Template::getInstance()->setParam('body_class', 'status-layout');
+
+		Template::getInstance()->showHeader();
+		$this->render('502');
+		Template::getInstance()->showFooter();
 	}
 }

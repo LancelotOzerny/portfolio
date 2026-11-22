@@ -23,4 +23,6 @@ $router->post('/blog/{topic}/{article}/file/', \Controllers\Public\BlogControlle
 $router->get('/certificates/', \Controllers\Public\CertificatesController::class,  'index');
 $router->get('/contacts/', \Controllers\Public\ContactsController::class,  'index');
 $router->get('/cookies/', \Controllers\Public\CookiesController::class, 'index');
+$router->get('/errors/500/', \Controllers\Public\StatusController::class, 'page500');
+$router->get('/errors/502/', \Controllers\Public\StatusController::class, 'page502');
 $router->get('/auth/logout/', \Controllers\AuthController::class, 'logout');

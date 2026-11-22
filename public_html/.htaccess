@@ -1,6 +1,9 @@
 RewriteEngine On
 RewriteBase /
 
+ErrorDocument 500 /errors/500/
+ErrorDocument 502 /errors/502/
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/index.php [NC]

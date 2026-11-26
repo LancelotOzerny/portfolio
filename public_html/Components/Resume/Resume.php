@@ -42,6 +42,7 @@ class Resume extends BaseComponent
 		$sanitizer = new DescriptionSanitizer();
 		foreach ($items as $item) {
 			$isCurrent = (int) ($item->is_current ?? 0) === 1;
+			$item->duration_label = $this->calculateDuration([$item]);
 			$item->date_label = $this->formatMonth((string) ($item->start_date ?? ''))
 				. ' — '
 				. ($isCurrent ? $this->formatMonth((new DateTimeImmutable())->format('Y-m-01')) : $this->formatMonth((string) ($item->end_date ?? '')));

@@ -11,51 +11,32 @@ $duration = trim((string) $this->getParam('experience_duration'));
 				Опыт работы<?= $duration !== '' ? ' (' . htmlspecialchars($duration) . ')' : '' ?>
 			</h2>
 
-			<div class="resume-light__tabs" role="tablist" aria-label="Опыт работы">
+			<div class="resume-light__list">
 				<?php foreach ($experience as $index => $item): ?>
 					<?php
 					$itemId = (string) ((int) ($item->id ?? $index));
-					$hasDescription = trim((string) ($item->description ?? '')) !== '';
-					$buttonId = 'resume-light-tab-' . $itemId;
-					$panelId = 'resume-light-panel-' . $itemId;
+					$headerId = 'resume-light-header-' . $itemId;
+					$descriptionId = 'resume-light-description-' . $itemId;
 					?>
-					<button
-						class="resume-light-tab"
-						type="button"
-						id="<?= $buttonId ?>"
-						role="tab"
-						aria-selected="false"
-						aria-controls="<?= $panelId ?>"
-						<?= $hasDescription ? 'data-resume-tab="' . $itemId . '"' : 'disabled' ?>
-					>
-						<span class="resume-light-tab__position"><?= htmlspecialchars((string) ($item->position ?? '')) ?></span>
-						<span class="resume-light-tab__company"><?= htmlspecialchars((string) ($item->company ?? '')) ?></span>
-						<span class="resume-light-tab__period"><?= htmlspecialchars((string) ($item->date_label ?? '')) ?></span>
-					</button>
-				<?php endforeach; ?>
-			</div>
+					<article class="resume-light__item<?= (int) ($item->is_current ?? 0) === 1 ? ' resume-light__item--current' : '' ?>">
+						<?php if (!empty($item->duration_label)): ?>
+							<span class="resume-light__duration"><?= preg_replace('/(?<=лет) |(?<=года) |(?<=год) /u', '<br>', htmlspecialchars((string) $item->duration_label)) ?></span>
+						<?php endif; ?>
+						<button class="resume-light__header" type="button" id="<?= $headerId ?>" aria-expanded="false" aria-controls="<?= $descriptionId ?>">
+							<span class="resume-light__info">
+								<span class="resume-light__position"><?= htmlspecialchars((string) ($item->position ?? '')) ?></span>
+								<span class="resume-light__company"><?= htmlspecialchars((string) ($item->company ?? '')) ?></span>
+							</span>
+							<span class="resume-light__period"><?= htmlspecialchars((string) ($item->date_label ?? '')) ?></span>
+							<span class="resume-light__arrow" aria-hidden="true"></span>
+						</button>
 
-			<div class="resume-light__panels">
-				<?php foreach ($experience as $index => $item): ?>
-					<?php
-					$itemId = (string) ((int) ($item->id ?? $index));
-					$hasDescription = trim((string) ($item->description ?? '')) !== '';
-					$buttonId = 'resume-light-tab-' . $itemId;
-					$panelId = 'resume-light-panel-' . $itemId;
-					?>
-					<?php if ($hasDescription): ?>
-						<article class="resume-light-panel" id="<?= $panelId ?>" role="tabpanel" aria-labelledby="<?= $buttonId ?>" data-resume-panel="<?= $itemId ?>" hidden>
-							<div class="resume-light-panel__header">
-								<h3 class="resume-light-panel__position"><?= htmlspecialchars((string) ($item->position ?? '')) ?></h3>
-								<div class="resume-light-panel__meta">
-									<span><?= htmlspecialchars((string) ($item->company ?? '')) ?></span>
-									<span><?= htmlspecialchars((string) ($item->date_label ?? '')) ?></span>
-								</div>
+						<div class="resume-light__description" id="<?= $descriptionId ?>" role="region" aria-labelledby="<?= $headerId ?>">
+							<div class="resume-light__description-inner">
+								<div class="resume-light__description-content"><?= (string) ($item->description ?? '') ?></div>
 							</div>
-
-							<div class="resume-light-panel__description"><?= (string) $item->description ?></div>
-						</article>
-					<?php endif; ?>
+						</div>
+					</article>
 				<?php endforeach; ?>
 			</div>
 		</div>

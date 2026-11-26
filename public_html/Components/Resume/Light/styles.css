@@ -3,167 +3,211 @@
 	background: #fff;
 }
 
-.resume-light__tabs {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 18px;
-	align-items: flex-start;
+.resume-light__list {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-left: 150px;
 }
 
-.resume-light-tab {
-	display: grid;
-	width: 100%;
-	min-height: 150px;
-	gap: 8px;
-	align-content: start;
-	padding: 22px;
-	border: 1px solid var(--ml-line);
-	border-radius: 8px;
+.resume-light__list::before {
+	position: absolute;
+	top: 30px;
+	bottom: 30px;
+	left: 125px;
+	width: 1px;
+	background: #e5d9ca;
+	content: '';
+}
+
+.resume-light__item {
+	position: relative;
+	border: 1px solid #e8dfd4;
+	border-radius: 16px;
 	background: #fff;
-	box-shadow: 0 14px 34px rgba(23, 23, 23, 0.07);
+	transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.resume-light__item::before {
+	position: absolute;
+	top: 27px;
+	left: -30px;
+	width: 10px;
+	height: 10px;
+	border: 1px solid #987951;
+	border-radius: 50%;
+	background: #fff;
+	content: '';
+}
+
+.resume-light__duration {
+	position: absolute;
+	top: 23px;
+	right: calc(100% + 38px);
+	width: 108px;
+	color: #66543f;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.4;
+	text-align: right;
+}
+
+.resume-light__item:first-child {
+	background: #faf5ee;
+}
+
+.resume-light__item:first-child::before,
+.resume-light__item.is-open::before {
+	background: #987951;
+}
+
+.resume-light__item.resume-light__item--current::before {
+	border-color: #27864b;
+	background: #27864b;
+}
+
+.resume-light__item:hover {
+	background: #faf7f2;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.024);
+}
+
+.resume-light__header {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	width: 100%;
+	padding: 18px 24px;
+	border: 0;
+	background: transparent;
 	color: inherit;
 	cursor: pointer;
 	font: inherit;
 	text-align: left;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 }
 
-.resume-light-tab:disabled {
-	cursor: default;
+.resume-light__header:focus-visible {
+	outline: 2px solid #987951;
+	outline-offset: -4px;
+	border-radius: 16px;
 }
 
-.resume-light-tab:hover,
-.resume-light-tab:focus-visible,
-.resume-light-tab.is-active {
-	border-color: rgba(23, 23, 23, 0.24);
-	box-shadow: 0 18px 42px rgba(23, 23, 23, 0.1);
-	outline: none;
-	transform: translateY(-2px);
+.resume-light__info {
+	display: grid;
+	flex: 1;
+	gap: 5px;
 }
 
-.resume-light-tab.is-active {
-	background: var(--ml-soft);
-}
-
-.resume-light-tab__position {
-	color: var(--ml-ink);
-	font-size: 1.05rem;
+.resume-light__position {
+	font-size: 16px;
 	font-weight: 600;
-	line-height: 1.28;
+	line-height: 1.3;
 }
 
-.resume-light-tab__company {
+.resume-light__company {
 	color: #555;
-	font-size: 0.95rem;
-	font-weight: 500;
+	font-size: 14px;
 	line-height: 1.35;
 }
 
-.resume-light-tab__period {
-	margin-top: auto;
-	color: var(--ml-muted);
-	font-size: 0.86rem;
+.resume-light__period {
+	color: #58616d;
+	font-size: 13px;
+	font-weight: 600;
 	line-height: 1.4;
 }
 
-.resume-light__panels {
-	margin-top: 28px;
+.resume-light__arrow {
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid #987951;
+	border-bottom: 2px solid #987951;
+	transform: rotate(45deg);
+	transition: transform 0.3s;
 }
 
-.resume-light-panel {
-	padding: 28px;
-	border: 1px solid rgba(23, 23, 23, 0.18);
-	border-radius: 8px;
-	background: #fff;
-	box-shadow: var(--ml-shadow);
-	animation: resume-light-panel-open 0.5s ease forwards;
+.resume-light__item.is-open .resume-light__arrow {
+	transform: rotate(225deg);
 }
 
-.resume-light-panel.is-closing {
-	animation: resume-light-panel-close 0.25s ease forwards;
-}
-
-.resume-light-panel__header {
+.resume-light__description {
 	display: grid;
-	gap: 8px;
+	grid-template-rows: 0fr;
+	visibility: hidden;
+	opacity: 0;
+	transition: grid-template-rows 0.35s ease, opacity 0.35s ease, visibility 0.35s;
 }
 
-.resume-light-panel__position {
-	margin: 0;
-	color: var(--ml-ink);
-	font-size: 1.25rem;
-	font-weight: 600;
-	line-height: 1.25;
+.resume-light__item.is-open .resume-light__description {
+	grid-template-rows: 1fr;
+	visibility: visible;
+	opacity: 1;
 }
 
-.resume-light-panel__meta {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px 18px;
-	color: var(--ml-muted);
-	font-size: 0.92rem;
+.resume-light__description-inner {
+	min-height: 0;
+	overflow: hidden;
 }
 
-.resume-light-panel__description {
-	margin-top: 22px;
-	padding-top: 22px;
-	border-top: 1px solid var(--ml-line);
-	color: var(--ml-muted);
-	font-size: 0.96rem;
-	line-height: 1.75;
+.resume-light__description-content {
+	margin: 0 24px;
+	padding: 16px 0 24px;
+	border-top: 1px solid #e8dfd4;
+	color: #667085;
+	font-size: 14px;
+	line-height: 1.8;
 }
 
-.resume-light-panel__description > :first-child {
+.resume-light__description-content > :first-child {
 	margin-top: 0;
 }
 
-.resume-light-panel__description > :last-child {
+.resume-light__description-content > :last-child {
 	margin-bottom: 0;
 }
 
-.resume-light-panel__description li + li {
+.resume-light__description-content li + li {
 	margin-top: 0.7rem;
 }
 
-@keyframes resume-light-panel-open {
-	from {
-		opacity: 0;
-		transform: translateY(-8px);
+@media (max-width: 600px) {
+	.resume-light__list {
+		padding-left: 100px;
 	}
 
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-@keyframes resume-light-panel-close {
-	from {
-		opacity: 1;
-		transform: translateY(0);
+	.resume-light__list::before {
+		left: 75px;
 	}
 
-	to {
-		opacity: 0;
-		transform: translateY(-8px);
-	}
-}
-
-@media (max-width: 680px) {
-	.resume-light__tabs {
-		grid-template-columns: 1fr;
+	.resume-light__duration {
+		width: 60px;
+		font-size: 12px;
 	}
 
-	.resume-light-panel {
-		padding: 24px 20px;
+	.resume-light__header {
+		flex-wrap: wrap;
+		gap: 10px;
+		padding: 16px;
+	}
+
+	.resume-light__info {
+		flex-basis: 100%;
+	}
+
+	.resume-light__period {
+		flex: 1;
+	}
+
+	.resume-light__description-content {
+		margin: 0 16px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.resume-light-tab,
-	.resume-light-panel,
-	.resume-light-panel.is-closing {
-		transition-duration: 0.01ms !important;
-		animation-duration: 0.01ms !important;
+	.resume-light__item,
+	.resume-light__arrow,
+	.resume-light__description {
+		transition-duration: 0.01ms;
 	}
 }
